@@ -8,31 +8,6 @@ import (
 	"strconv"
 )
 
-type Application struct {
-	ID        string            `json:"id"`
-	Applicant *User             `json:"applicant"`
-	Status    ApplicationStatus `json:"status"`
-	Note      *string           `json:"note"`
-	CreatedOn string            `json:"createdOn"`
-}
-
-type Applications struct {
-	PendingCount  *int           `json:"pendingCount"`
-	AcceptedCount *int           `json:"acceptedCount"`
-	RejectedCount *int           `json:"rejectedCount"`
-	Applications  []*Application `json:"applications"`
-}
-
-type Comment struct {
-	ID          string `json:"id"`
-	Job         *Job   `json:"job"`
-	TimeCreated string `json:"timeCreated"`
-	TimeUpdated string `json:"timeUpdated"`
-	Content     string `json:"content"`
-	IsDeleted   bool   `json:"isDeleted"`
-	CreatedBy   *User  `json:"createdBy"`
-}
-
 type CreateJobInput struct {
 	Title      string            `json:"title"`
 	Desc       string            `json:"desc"`
@@ -46,46 +21,10 @@ type CreateUserInput struct {
 	PhotoURL string `json:"photoUrl"`
 }
 
-type Discussions struct {
-	Count       *int       `json:"count"`
-	Discussions []*Comment `json:"discussions"`
-}
-
-type Job struct {
-	ID              string        `json:"id"`
-	Title           string        `json:"title"`
-	CreatedBy       *User         `json:"createdBy"`
-	Desc            string        `json:"desc"`
-	Duration        string        `json:"duration"`
-	Difficulty      Difficulty    `json:"difficulty"`
-	Status          JobStatus     `json:"status"`
-	TimeCreated     string        `json:"timeCreated"`
-	TimeUpdated     string        `json:"timeUpdated"`
-	Discussion      *Discussions  `json:"discussion"`
-	Milestones      []*Milestone  `json:"milestones"`
-	Skills          []*Skill      `json:"skills"`
-	Applications    *Applications `json:"applications"`
-	MilestonesCount *int          `json:"milestonesCount"`
-}
-
 type JobsFilterInput struct {
 	Status    []*JobStatus `json:"status"`
 	Skills    []*string    `json:"skills"`
 	SortOrder *SortOrder   `json:"sortOrder"`
-}
-
-type Milestone struct {
-	ID          string     `json:"id"`
-	Job         *Job       `json:"job"`
-	Title       string     `json:"title"`
-	TimeCreated string     `json:"timeCreated"`
-	TimeUpdated string     `json:"timeUpdated"`
-	Desc        string     `json:"desc"`
-	Resolution  string     `json:"resolution"`
-	Duration    string     `json:"duration"`
-	Status      *JobStatus `json:"status"`
-	AssignedTo  *User      `json:"assignedTo"`
-	Skills      []*Skill   `json:"skills"`
 }
 
 type MilestoneInput struct {
@@ -95,18 +34,6 @@ type MilestoneInput struct {
 	Duration   string     `json:"duration"`
 	Status     *JobStatus `json:"status"`
 	Skills     []*string  `json:"skills"`
-}
-
-type Milestones struct {
-	Count      *int         `json:"count"`
-	Milestones []*Milestone `json:"milestones"`
-}
-
-type Skill struct {
-	ID          string `json:"id"`
-	CreatedBy   *User  `json:"createdBy"`
-	Value       string `json:"value"`
-	CreatedTime string `json:"createdTime"`
 }
 
 type UpdateJobInput struct {
@@ -127,23 +54,6 @@ type UpdateUserInput struct {
 	Bio        *string   `json:"bio"`
 	Contact    *string   `json:"contact"`
 	Skills     []*string `json:"skills"`
-}
-
-type User struct {
-	ID          string     `json:"id"`
-	Email       string     `json:"email"`
-	Name        string     `json:"name"`
-	Role        string     `json:"role"`
-	Department  string     `json:"department"`
-	PhotoURL    string     `json:"photoUrl"`
-	Bio         *string    `json:"bio"`
-	Contact     *string    `json:"contact"`
-	Skills      []*Skill   `json:"skills"`
-	TimeCreated string     `json:"timeCreated"`
-	TimeUpdated string     `json:"timeUpdated"`
-	CreatedJobs []*Job     `json:"createdJobs"`
-	AppliedJobs []*Job     `json:"appliedJobs"`
-	JobStats    *UserStats `json:"jobStats"`
 }
 
 type UserStats struct {

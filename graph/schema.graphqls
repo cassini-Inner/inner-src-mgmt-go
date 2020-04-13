@@ -94,19 +94,17 @@ type Job {
     timeCreated: String!
     timeUpdated: String!
     discussion: Discussions
-    milestones: [Milestone]!
-    skills: [Skill]!
+    milestones: Milestones
     applications: Applications
-    milestonesCount: Int
 }
 
 type Discussions {
-    count: Int
+    totalCount: Int
     discussions: [Comment]
 }
 
 type Milestones {
-    count: Int
+    totalCounnt: Int
     milestones: [Milestone]!
 }
 
@@ -120,7 +118,6 @@ type Applications {
 type Application {
     id: ID!
     applicant: User!
-    #
     status: ApplicationStatus!
     # Any message to be conveyed to the applicant
     note: String

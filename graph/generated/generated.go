@@ -8,6 +8,7 @@ import (
 	"errors"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -34,8 +35,14 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Application() ApplicationResolver
+	Comment() CommentResolver
+	Job() JobResolver
+	Milestone() MilestoneResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Skill() SkillResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
@@ -68,25 +75,24 @@ type ComplexityRoot struct {
 	}
 
 	Discussions struct {
-		Count       func(childComplexity int) int
 		Discussions func(childComplexity int) int
+		TotalCount  func(childComplexity int) int
 	}
 
 	Job struct {
-		Applications    func(childComplexity int) int
-		CreatedBy       func(childComplexity int) int
-		Desc            func(childComplexity int) int
-		Difficulty      func(childComplexity int) int
-		Discussion      func(childComplexity int) int
-		Duration        func(childComplexity int) int
-		ID              func(childComplexity int) int
-		Milestones      func(childComplexity int) int
-		MilestonesCount func(childComplexity int) int
-		Skills          func(childComplexity int) int
-		Status          func(childComplexity int) int
-		TimeCreated     func(childComplexity int) int
-		TimeUpdated     func(childComplexity int) int
-		Title           func(childComplexity int) int
+		Applications func(childComplexity int) int
+		CreatedBy    func(childComplexity int) int
+		Desc         func(childComplexity int) int
+		Difficulty   func(childComplexity int) int
+		Discussion   func(childComplexity int) int
+		Duration     func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Milestones   func(childComplexity int) int
+		Skills       func(childComplexity int) int
+		Status       func(childComplexity int) int
+		TimeCreated  func(childComplexity int) int
+		TimeUpdated  func(childComplexity int) int
+		Title        func(childComplexity int) int
 	}
 
 	Milestone struct {
@@ -104,8 +110,8 @@ type ComplexityRoot struct {
 	}
 
 	Milestones struct {
-		Count      func(childComplexity int) int
-		Milestones func(childComplexity int) int
+		Milestones  func(childComplexity int) int
+		TotalCounnt func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -159,6 +165,28 @@ type ComplexityRoot struct {
 	}
 }
 
+type ApplicationResolver interface {
+	Applicant(ctx context.Context, obj *model.Application) (*model.User, error)
+}
+type CommentResolver interface {
+	Job(ctx context.Context, obj *model.Comment) (*model.Job, error)
+
+	CreatedBy(ctx context.Context, obj *model.Comment) (*model.User, error)
+}
+type JobResolver interface {
+	CreatedBy(ctx context.Context, obj *model.Job) (*model.User, error)
+
+	Discussion(ctx context.Context, obj *model.Job) (*model.Discussions, error)
+	Milestones(ctx context.Context, obj *model.Job) (*model.Milestones, error)
+	Skills(ctx context.Context, obj *model.Job) ([]*model.Skill, error)
+	Applications(ctx context.Context, obj *model.Job) (*model.Applications, error)
+}
+type MilestoneResolver interface {
+	Job(ctx context.Context, obj *model.Milestone) (*model.Job, error)
+
+	AssignedTo(ctx context.Context, obj *model.Milestone) (*model.User, error)
+	Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error)
+}
 type MutationResolver interface {
 	UpdateUserProfile(ctx context.Context, user *model.UpdateUserInput) (*model.User, error)
 	CreateUserProfile(ctx context.Context, user *model.CreateUserInput) (*model.User, error)
@@ -176,6 +204,16 @@ type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
 	Job(ctx context.Context, id int) (*model.Job, error)
 	User(ctx context.Context, id int, jobsStatusFilter *model.JobStatus) (*model.User, error)
+}
+type SkillResolver interface {
+	CreatedBy(ctx context.Context, obj *model.Skill) (*model.User, error)
+}
+type UserResolver interface {
+	Skills(ctx context.Context, obj *model.User) ([]*model.Skill, error)
+
+	CreatedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error)
+	AppliedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error)
+	JobStats(ctx context.Context, obj *model.User) (*model.UserStats, error)
 }
 
 type executableSchema struct {
@@ -305,19 +343,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.TimeUpdated(childComplexity), true
 
-	case "Discussions.count":
-		if e.complexity.Discussions.Count == nil {
-			break
-		}
-
-		return e.complexity.Discussions.Count(childComplexity), true
-
 	case "Discussions.discussions":
 		if e.complexity.Discussions.Discussions == nil {
 			break
 		}
 
 		return e.complexity.Discussions.Discussions(childComplexity), true
+
+	case "Discussions.totalCount":
+		if e.complexity.Discussions.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.Discussions.TotalCount(childComplexity), true
 
 	case "Job.applications":
 		if e.complexity.Job.Applications == nil {
@@ -374,13 +412,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Job.Milestones(childComplexity), true
-
-	case "Job.milestonesCount":
-		if e.complexity.Job.MilestonesCount == nil {
-			break
-		}
-
-		return e.complexity.Job.MilestonesCount(childComplexity), true
 
 	case "Job.skills":
 		if e.complexity.Job.Skills == nil {
@@ -494,19 +525,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Milestone.Title(childComplexity), true
 
-	case "Milestones.count":
-		if e.complexity.Milestones.Count == nil {
-			break
-		}
-
-		return e.complexity.Milestones.Count(childComplexity), true
-
 	case "Milestones.milestones":
 		if e.complexity.Milestones.Milestones == nil {
 			break
 		}
 
 		return e.complexity.Milestones.Milestones(childComplexity), true
+
+	case "Milestones.totalCounnt":
+		if e.complexity.Milestones.TotalCounnt == nil {
+			break
+		}
+
+		return e.complexity.Milestones.TotalCounnt(childComplexity), true
 
 	case "Mutation.addCommentToJob":
 		if e.complexity.Mutation.AddCommentToJob == nil {
@@ -983,19 +1014,18 @@ type Job {
     timeCreated: String!
     timeUpdated: String!
     discussion: Discussions
-    milestones: [Milestone]!
+    milestones: Milestones
     skills: [Skill]!
     applications: Applications
-    milestonesCount: Int
 }
 
 type Discussions {
-    count: Int
+    totalCount: Int
     discussions: [Comment]
 }
 
 type Milestones {
-    count: Int
+    totalCounnt: Int
     milestones: [Milestone]!
 }
 
@@ -1009,7 +1039,6 @@ type Applications {
 type Application {
     id: ID!
     applicant: User!
-    #
     status: ApplicationStatus!
     # Any message to be conveyed to the applicant
     note: String
@@ -1440,13 +1469,13 @@ func (ec *executionContext) _Application_applicant(ctx context.Context, field gr
 		Object:   "Application",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Applicant, nil
+		return ec.resolvers.Application().Applicant(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1731,13 +1760,13 @@ func (ec *executionContext) _Comment_job(ctx context.Context, field graphql.Coll
 		Object:   "Comment",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Job, nil
+		return ec.resolvers.Comment().Job(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1901,13 +1930,13 @@ func (ec *executionContext) _Comment_createdBy(ctx context.Context, field graphq
 		Object:   "Comment",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedBy, nil
+		return ec.resolvers.Comment().CreatedBy(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1924,7 +1953,7 @@ func (ec *executionContext) _Comment_createdBy(ctx context.Context, field graphq
 	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Discussions_count(ctx context.Context, field graphql.CollectedField, obj *model.Discussions) (ret graphql.Marshaler) {
+func (ec *executionContext) _Discussions_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.Discussions) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1941,7 +1970,7 @@ func (ec *executionContext) _Discussions_count(ctx context.Context, field graphq
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Count, nil
+		return obj.TotalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2065,13 +2094,13 @@ func (ec *executionContext) _Job_createdBy(ctx context.Context, field graphql.Co
 		Object:   "Job",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedBy, nil
+		return ec.resolvers.Job().CreatedBy(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2303,13 +2332,13 @@ func (ec *executionContext) _Job_discussion(ctx context.Context, field graphql.C
 		Object:   "Job",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Discussion, nil
+		return ec.resolvers.Job().Discussion(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2334,27 +2363,24 @@ func (ec *executionContext) _Job_milestones(ctx context.Context, field graphql.C
 		Object:   "Job",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Milestones, nil
+		return ec.resolvers.Job().Milestones(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Milestone)
+	res := resTmp.(*model.Milestones)
 	fc.Result = res
-	return ec.marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
+	return ec.marshalOMilestones2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestones(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_skills(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2368,13 +2394,13 @@ func (ec *executionContext) _Job_skills(ctx context.Context, field graphql.Colle
 		Object:   "Job",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Skills, nil
+		return ec.resolvers.Job().Skills(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2402,13 +2428,13 @@ func (ec *executionContext) _Job_applications(ctx context.Context, field graphql
 		Object:   "Job",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Applications, nil
+		return ec.resolvers.Job().Applications(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2420,37 +2446,6 @@ func (ec *executionContext) _Job_applications(ctx context.Context, field graphql
 	res := resTmp.(*model.Applications)
 	fc.Result = res
 	return ec.marshalOApplications2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplications(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Job_milestonesCount(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Job",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MilestonesCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Milestone_id(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
@@ -2498,13 +2493,13 @@ func (ec *executionContext) _Milestone_job(ctx context.Context, field graphql.Co
 		Object:   "Milestone",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Job, nil
+		return ec.resolvers.Milestone().Job(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2767,13 +2762,13 @@ func (ec *executionContext) _Milestone_assignedTo(ctx context.Context, field gra
 		Object:   "Milestone",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AssignedTo, nil
+		return ec.resolvers.Milestone().AssignedTo(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2798,13 +2793,13 @@ func (ec *executionContext) _Milestone_skills(ctx context.Context, field graphql
 		Object:   "Milestone",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Skills, nil
+		return ec.resolvers.Milestone().Skills(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2821,7 +2816,7 @@ func (ec *executionContext) _Milestone_skills(ctx context.Context, field graphql
 	return ec.marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Milestones_count(ctx context.Context, field graphql.CollectedField, obj *model.Milestones) (ret graphql.Marshaler) {
+func (ec *executionContext) _Milestones_totalCounnt(ctx context.Context, field graphql.CollectedField, obj *model.Milestones) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2838,7 +2833,7 @@ func (ec *executionContext) _Milestones_count(ctx context.Context, field graphql
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Count, nil
+		return obj.TotalCounnt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3532,13 +3527,13 @@ func (ec *executionContext) _Skill_createdBy(ctx context.Context, field graphql.
 		Object:   "Skill",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedBy, nil
+		return ec.resolvers.Skill().CreatedBy(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3900,13 +3895,13 @@ func (ec *executionContext) _User_skills(ctx context.Context, field graphql.Coll
 		Object:   "User",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Skills, nil
+		return ec.resolvers.User().Skills(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3999,13 +3994,13 @@ func (ec *executionContext) _User_createdJobs(ctx context.Context, field graphql
 		Object:   "User",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedJobs, nil
+		return ec.resolvers.User().CreatedJobs(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4030,13 +4025,13 @@ func (ec *executionContext) _User_appliedJobs(ctx context.Context, field graphql
 		Object:   "User",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AppliedJobs, nil
+		return ec.resolvers.User().AppliedJobs(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4061,13 +4056,13 @@ func (ec *executionContext) _User_jobStats(ctx context.Context, field graphql.Co
 		Object:   "User",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.JobStats, nil
+		return ec.resolvers.User().JobStats(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5515,24 +5510,33 @@ func (ec *executionContext) _Application(ctx context.Context, sel ast.SelectionS
 		case "id":
 			out.Values[i] = ec._Application_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "applicant":
-			out.Values[i] = ec._Application_applicant(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Application_applicant(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "status":
 			out.Values[i] = ec._Application_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "note":
 			out.Values[i] = ec._Application_note(ctx, field, obj)
 		case "createdOn":
 			out.Values[i] = ec._Application_createdOn(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -5589,38 +5593,56 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Comment_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "job":
-			out.Values[i] = ec._Comment_job(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Comment_job(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "timeCreated":
 			out.Values[i] = ec._Comment_timeCreated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "timeUpdated":
 			out.Values[i] = ec._Comment_timeUpdated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "content":
 			out.Values[i] = ec._Comment_content(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "isDeleted":
 			out.Values[i] = ec._Comment_isDeleted(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdBy":
-			out.Values[i] = ec._Comment_createdBy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Comment_createdBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5643,8 +5665,8 @@ func (ec *executionContext) _Discussions(ctx context.Context, sel ast.SelectionS
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Discussions")
-		case "count":
-			out.Values[i] = ec._Discussions_count(ctx, field, obj)
+		case "totalCount":
+			out.Values[i] = ec._Discussions_totalCount(ctx, field, obj)
 		case "discussions":
 			out.Values[i] = ec._Discussions_discussions(ctx, field, obj)
 		default:
@@ -5672,64 +5694,104 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 		case "id":
 			out.Values[i] = ec._Job_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "title":
 			out.Values[i] = ec._Job_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdBy":
-			out.Values[i] = ec._Job_createdBy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_createdBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "desc":
 			out.Values[i] = ec._Job_desc(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "duration":
 			out.Values[i] = ec._Job_duration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "difficulty":
 			out.Values[i] = ec._Job_difficulty(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Job_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "timeCreated":
 			out.Values[i] = ec._Job_timeCreated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "timeUpdated":
 			out.Values[i] = ec._Job_timeUpdated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "discussion":
-			out.Values[i] = ec._Job_discussion(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_discussion(ctx, field, obj)
+				return res
+			})
 		case "milestones":
-			out.Values[i] = ec._Job_milestones(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_milestones(ctx, field, obj)
+				return res
+			})
 		case "skills":
-			out.Values[i] = ec._Job_skills(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_skills(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "applications":
-			out.Values[i] = ec._Job_applications(ctx, field, obj)
-		case "milestonesCount":
-			out.Values[i] = ec._Job_milestonesCount(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_applications(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5755,52 +5817,79 @@ func (ec *executionContext) _Milestone(ctx context.Context, sel ast.SelectionSet
 		case "id":
 			out.Values[i] = ec._Milestone_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "job":
-			out.Values[i] = ec._Milestone_job(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Milestone_job(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "title":
 			out.Values[i] = ec._Milestone_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "timeCreated":
 			out.Values[i] = ec._Milestone_timeCreated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "timeUpdated":
 			out.Values[i] = ec._Milestone_timeUpdated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "desc":
 			out.Values[i] = ec._Milestone_desc(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "resolution":
 			out.Values[i] = ec._Milestone_resolution(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "duration":
 			out.Values[i] = ec._Milestone_duration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Milestone_status(ctx, field, obj)
 		case "assignedTo":
-			out.Values[i] = ec._Milestone_assignedTo(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Milestone_assignedTo(ctx, field, obj)
+				return res
+			})
 		case "skills":
-			out.Values[i] = ec._Milestone_skills(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Milestone_skills(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5823,8 +5912,8 @@ func (ec *executionContext) _Milestones(ctx context.Context, sel ast.SelectionSe
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Milestones")
-		case "count":
-			out.Values[i] = ec._Milestones_count(ctx, field, obj)
+		case "totalCounnt":
+			out.Values[i] = ec._Milestones_totalCounnt(ctx, field, obj)
 		case "milestones":
 			out.Values[i] = ec._Milestones_milestones(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5966,22 +6055,31 @@ func (ec *executionContext) _Skill(ctx context.Context, sel ast.SelectionSet, ob
 		case "id":
 			out.Values[i] = ec._Skill_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdBy":
-			out.Values[i] = ec._Skill_createdBy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Skill_createdBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "value":
 			out.Values[i] = ec._Skill_value(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdTime":
 			out.Values[i] = ec._Skill_createdTime(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -6008,58 +6106,94 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._User_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._User_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "role":
 			out.Values[i] = ec._User_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "department":
 			out.Values[i] = ec._User_department(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "photoUrl":
 			out.Values[i] = ec._User_photoUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "bio":
 			out.Values[i] = ec._User_bio(ctx, field, obj)
 		case "contact":
 			out.Values[i] = ec._User_contact(ctx, field, obj)
 		case "skills":
-			out.Values[i] = ec._User_skills(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_skills(ctx, field, obj)
+				return res
+			})
 		case "timeCreated":
 			out.Values[i] = ec._User_timeCreated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "timeUpdated":
 			out.Values[i] = ec._User_timeUpdated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdJobs":
-			out.Values[i] = ec._User_createdJobs(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_createdJobs(ctx, field, obj)
+				return res
+			})
 		case "appliedJobs":
-			out.Values[i] = ec._User_appliedJobs(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_appliedJobs(ctx, field, obj)
+				return res
+			})
 		case "jobStats":
-			out.Values[i] = ec._User_jobStats(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_jobStats(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7253,6 +7387,17 @@ func (ec *executionContext) unmarshalOMilestoneInput2ᚖgithubᚗcomᚋcassini�
 	}
 	res, err := ec.unmarshalOMilestoneInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestoneInput(ctx, v)
 	return &res, err
+}
+
+func (ec *executionContext) marshalOMilestones2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestones(ctx context.Context, sel ast.SelectionSet, v model.Milestones) graphql.Marshaler {
+	return ec._Milestones(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOMilestones2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestones(ctx context.Context, sel ast.SelectionSet, v *model.Milestones) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Milestones(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSkill2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v model.Skill) graphql.Marshaler {

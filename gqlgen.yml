@@ -20,8 +20,8 @@ model:
 # Where should the resolver implementations go?
 resolver:
   layout: follow-schema
-  dir: graph
-  package: graph
+  dir: graph/resolver
+  package: resolver
 
 # Optional: turn on use `gqlgen:"fieldName"` tags in your models
 # struct_tag: json
@@ -54,3 +54,47 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+
+  Application:
+    fields:
+      applicant:
+        resolver: true
+  Comment:
+    fields:
+      job:
+        resolver: true
+      createdBy:
+        resolver: true
+  Job:
+    fields:
+      createdBy:
+        resolver: true
+      discussion:
+        resolver: true
+      milestones:
+        resolver: true
+      applications:
+        resolver: true
+  Milestone:
+    fields:
+      job:
+        resolver: true
+      assignedTo:
+        resolver: true
+      skills:
+        resolver: true
+
+  Skill:
+    fields:
+      createdBy:
+        resolver: true
+  User:
+    fields:
+      skills:
+        resolver: true
+      createdJobs:
+        resolver: true
+      appliedJobs:
+        resolver: true
+      jobStats:
+        resolver: true

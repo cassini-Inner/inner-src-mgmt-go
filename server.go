@@ -1,13 +1,13 @@
 package main
 
 import (
+	"github.com/cassini-inner/inner-source-mgmt-srv/graph/resolver"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph"
 	"github.com/cassini-inner/inner-source-mgmt-srv/graph/generated"
 )
 
@@ -19,7 +19,7 @@ func main() {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &resolver.Resolver{}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
