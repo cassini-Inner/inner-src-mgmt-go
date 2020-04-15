@@ -11,5 +11,5 @@ func (r *commentResolver) Job(ctx context.Context, obj *model.Comment) (*model.J
 }
 
 func (r *commentResolver) CreatedBy(ctx context.Context, obj *model.Comment) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.UsersRepo.getUserById(obj.CreatedBy)
 }
