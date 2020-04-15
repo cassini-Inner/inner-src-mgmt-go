@@ -146,7 +146,6 @@ type User {
 
 type Comment {
     id: ID!
-    job: Job!
     timeCreated: String!
     timeUpdated: String!
     content: String!

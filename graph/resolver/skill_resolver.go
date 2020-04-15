@@ -6,6 +6,6 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
-func (r *applicationResolver) Applicant(ctx context.Context, obj *model.Application) (*model.User, error) {
+func (r *skillResolver) CreatedBy(ctx context.Context, obj *model.Skill) (*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }

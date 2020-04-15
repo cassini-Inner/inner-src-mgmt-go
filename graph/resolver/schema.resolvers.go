@@ -4,11 +4,7 @@ package resolver
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	"context"
-	"fmt"
-
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph/generated"
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 )
 
 // Application returns generated.ApplicationResolver implementation.
