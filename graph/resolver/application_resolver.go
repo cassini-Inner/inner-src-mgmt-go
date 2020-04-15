@@ -7,5 +7,5 @@ import (
 )
 
 func (r *applicationResolver) Applicant(ctx context.Context, obj *model.Application) (*model.User, error) {
-	return r.UserRepo.getApplicantById(obj.ID)
+	return r.UsersRepo.getUserById(obj.ID)
 }
