@@ -7,5 +7,5 @@ import (
 )
 
 func (r *applicationResolver) Applicant(ctx context.Context, obj *model.Application) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.UserRepo.getApplicantById(obj.ID)
 }
