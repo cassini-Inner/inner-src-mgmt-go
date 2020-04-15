@@ -88,7 +88,6 @@ type ComplexityRoot struct {
 		Duration     func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Milestones   func(childComplexity int) int
-		Skills       func(childComplexity int) int
 		Status       func(childComplexity int) int
 		TimeCreated  func(childComplexity int) int
 		TimeUpdated  func(childComplexity int) int
@@ -178,7 +177,6 @@ type JobResolver interface {
 
 	Discussion(ctx context.Context, obj *model.Job) (*model.Discussions, error)
 	Milestones(ctx context.Context, obj *model.Job) (*model.Milestones, error)
-	Skills(ctx context.Context, obj *model.Job) ([]*model.Skill, error)
 	Applications(ctx context.Context, obj *model.Job) (*model.Applications, error)
 }
 type MilestoneResolver interface {
@@ -412,13 +410,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Job.Milestones(childComplexity), true
-
-	case "Job.skills":
-		if e.complexity.Job.Skills == nil {
-			break
-		}
-
-		return e.complexity.Job.Skills(childComplexity), true
 
 	case "Job.status":
 		if e.complexity.Job.Status == nil {
@@ -1015,7 +1006,6 @@ type Job {
     timeUpdated: String!
     discussion: Discussions
     milestones: Milestones
-    skills: [Skill]!
     applications: Applications
 }
 
@@ -1179,7 +1169,7 @@ func (ec *executionContext) field_Mutation_createJob_args(ctx context.Context, r
 	args := map[string]interface{}{}
 	var arg0 *model.CreateJobInput
 	if tmp, ok := rawArgs["job"]; ok {
-		arg0, err = ec.unmarshalOCreateJobInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐCreateJobInput(ctx, tmp)
+		arg0, err = ec.unmarshalOCreateJobInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1193,7 +1183,7 @@ func (ec *executionContext) field_Mutation_createUserProfile_args(ctx context.Co
 	args := map[string]interface{}{}
 	var arg0 *model.CreateUserInput
 	if tmp, ok := rawArgs["user"]; ok {
-		arg0, err = ec.unmarshalOCreateUserInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐCreateUserInput(ctx, tmp)
+		arg0, err = ec.unmarshalOCreateUserInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1287,7 +1277,7 @@ func (ec *executionContext) field_Mutation_updateJobApplication_args(ctx context
 	args["jobID"] = arg1
 	var arg2 *model.ApplicationStatus
 	if tmp, ok := rawArgs["status"]; ok {
-		arg2, err = ec.unmarshalOApplicationStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx, tmp)
+		arg2, err = ec.unmarshalOApplicationStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1301,7 +1291,7 @@ func (ec *executionContext) field_Mutation_updateJob_args(ctx context.Context, r
 	args := map[string]interface{}{}
 	var arg0 *model.UpdateJobInput
 	if tmp, ok := rawArgs["job"]; ok {
-		arg0, err = ec.unmarshalOUpdateJobInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUpdateJobInput(ctx, tmp)
+		arg0, err = ec.unmarshalOUpdateJobInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUpdateJobInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1315,7 +1305,7 @@ func (ec *executionContext) field_Mutation_updateUserProfile_args(ctx context.Co
 	args := map[string]interface{}{}
 	var arg0 *model.UpdateUserInput
 	if tmp, ok := rawArgs["user"]; ok {
-		arg0, err = ec.unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUpdateUserInput(ctx, tmp)
+		arg0, err = ec.unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUpdateUserInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1351,7 +1341,7 @@ func (ec *executionContext) field_Query_User_args(ctx context.Context, rawArgs m
 	args["id"] = arg0
 	var arg1 *model.JobStatus
 	if tmp, ok := rawArgs["jobsStatusFilter"]; ok {
-		arg1, err = ec.unmarshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, tmp)
+		arg1, err = ec.unmarshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1379,7 +1369,7 @@ func (ec *executionContext) field_Query_allJobs_args(ctx context.Context, rawArg
 	args := map[string]interface{}{}
 	var arg0 *model.JobsFilterInput
 	if tmp, ok := rawArgs["filter"]; ok {
-		arg0, err = ec.unmarshalOJobsFilterInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobsFilterInput(ctx, tmp)
+		arg0, err = ec.unmarshalOJobsFilterInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobsFilterInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1489,7 +1479,7 @@ func (ec *executionContext) _Application_applicant(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Application_status(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
@@ -1523,7 +1513,7 @@ func (ec *executionContext) _Application_status(ctx context.Context, field graph
 	}
 	res := resTmp.(model.ApplicationStatus)
 	fc.Result = res
-	return ec.marshalNApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx, field.Selections, res)
+	return ec.marshalNApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Application_note(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
@@ -1712,7 +1702,7 @@ func (ec *executionContext) _Applications_applications(ctx context.Context, fiel
 	}
 	res := resTmp.([]*model.Application)
 	fc.Result = res
-	return ec.marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
+	return ec.marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_id(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -1780,7 +1770,7 @@ func (ec *executionContext) _Comment_job(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.Job)
 	fc.Result = res
-	return ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_timeCreated(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -1950,7 +1940,7 @@ func (ec *executionContext) _Comment_createdBy(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Discussions_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.Discussions) (ret graphql.Marshaler) {
@@ -2012,7 +2002,7 @@ func (ec *executionContext) _Discussions_discussions(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_id(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2114,7 +2104,7 @@ func (ec *executionContext) _Job_createdBy(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_desc(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2216,7 +2206,7 @@ func (ec *executionContext) _Job_difficulty(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.Difficulty)
 	fc.Result = res
-	return ec.marshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐDifficulty(ctx, field.Selections, res)
+	return ec.marshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDifficulty(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_status(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2250,7 +2240,7 @@ func (ec *executionContext) _Job_status(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(model.JobStatus)
 	fc.Result = res
-	return ec.marshalNJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, field.Selections, res)
+	return ec.marshalNJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_timeCreated(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2349,7 +2339,7 @@ func (ec *executionContext) _Job_discussion(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Discussions)
 	fc.Result = res
-	return ec.marshalODiscussions2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐDiscussions(ctx, field.Selections, res)
+	return ec.marshalODiscussions2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDiscussions(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_milestones(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2380,41 +2370,7 @@ func (ec *executionContext) _Job_milestones(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Milestones)
 	fc.Result = res
-	return ec.marshalOMilestones2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestones(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Job_skills(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Job",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Job().Skills(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Skill)
-	fc.Result = res
-	return ec.marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx, field.Selections, res)
+	return ec.marshalOMilestones2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestones(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_applications(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
@@ -2445,7 +2401,7 @@ func (ec *executionContext) _Job_applications(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Applications)
 	fc.Result = res
-	return ec.marshalOApplications2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplications(ctx, field.Selections, res)
+	return ec.marshalOApplications2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplications(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Milestone_id(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
@@ -2513,7 +2469,7 @@ func (ec *executionContext) _Milestone_job(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Job)
 	fc.Result = res
-	return ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Milestone_title(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
@@ -2748,7 +2704,7 @@ func (ec *executionContext) _Milestone_status(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.JobStatus)
 	fc.Result = res
-	return ec.marshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, field.Selections, res)
+	return ec.marshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Milestone_assignedTo(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
@@ -2779,7 +2735,7 @@ func (ec *executionContext) _Milestone_assignedTo(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Milestone_skills(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
@@ -2813,7 +2769,7 @@ func (ec *executionContext) _Milestone_skills(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.Skill)
 	fc.Result = res
-	return ec.marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx, field.Selections, res)
+	return ec.marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Milestones_totalCounnt(ctx context.Context, field graphql.CollectedField, obj *model.Milestones) (ret graphql.Marshaler) {
@@ -2878,7 +2834,7 @@ func (ec *executionContext) _Milestones_milestones(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.Milestone)
 	fc.Result = res
-	return ec.marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
+	return ec.marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2916,7 +2872,7 @@ func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, fie
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createUserProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2954,7 +2910,7 @@ func (ec *executionContext) _Mutation_createUserProfile(ctx context.Context, fie
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2992,7 +2948,7 @@ func (ec *executionContext) _Mutation_createJob(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Job)
 	fc.Result = res
-	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3030,7 +2986,7 @@ func (ec *executionContext) _Mutation_updateJob(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Job)
 	fc.Result = res
-	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3068,7 +3024,7 @@ func (ec *executionContext) _Mutation_deleteJob(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Job)
 	fc.Result = res
-	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_addCommentToJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3106,7 +3062,7 @@ func (ec *executionContext) _Mutation_addCommentToJob(ctx context.Context, field
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3144,7 +3100,7 @@ func (ec *executionContext) _Mutation_updateComment(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteCommment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3182,7 +3138,7 @@ func (ec *executionContext) _Mutation_deleteCommment(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createJobApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3220,7 +3176,7 @@ func (ec *executionContext) _Mutation_createJobApplication(ctx context.Context, 
 	}
 	res := resTmp.(*model.Application)
 	fc.Result = res
-	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
+	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteJobApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3258,7 +3214,7 @@ func (ec *executionContext) _Mutation_deleteJobApplication(ctx context.Context, 
 	}
 	res := resTmp.(*model.Application)
 	fc.Result = res
-	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
+	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateJobApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3296,7 +3252,7 @@ func (ec *executionContext) _Mutation_updateJobApplication(ctx context.Context, 
 	}
 	res := resTmp.(*model.Application)
 	fc.Result = res
-	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
+	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_allJobs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3334,7 +3290,7 @@ func (ec *executionContext) _Query_allJobs(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Job)
 	fc.Result = res
-	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_Job(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3372,7 +3328,7 @@ func (ec *executionContext) _Query_Job(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(*model.Job)
 	fc.Result = res
-	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_User(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3410,7 +3366,7 @@ func (ec *executionContext) _Query_User(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3547,7 +3503,7 @@ func (ec *executionContext) _Skill_createdBy(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Skill_value(ctx context.Context, field graphql.CollectedField, obj *model.Skill) (ret graphql.Marshaler) {
@@ -3912,7 +3868,7 @@ func (ec *executionContext) _User_skills(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Skill)
 	fc.Result = res
-	return ec.marshalOSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx, field.Selections, res)
+	return ec.marshalOSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_timeCreated(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -4011,7 +3967,7 @@ func (ec *executionContext) _User_createdJobs(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.Job)
 	fc.Result = res
-	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobᚄ(ctx, field.Selections, res)
+	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_appliedJobs(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -4042,7 +3998,7 @@ func (ec *executionContext) _User_appliedJobs(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.Job)
 	fc.Result = res
-	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobᚄ(ctx, field.Selections, res)
+	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_jobStats(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -4076,7 +4032,7 @@ func (ec *executionContext) _User_jobStats(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.UserStats)
 	fc.Result = res
-	return ec.marshalNUserStats2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUserStats(ctx, field.Selections, res)
+	return ec.marshalNUserStats2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserStats(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserStats_completed(ctx context.Context, field graphql.CollectedField, obj *model.UserStats) (ret graphql.Marshaler) {
@@ -5256,13 +5212,13 @@ func (ec *executionContext) unmarshalInputCreateJobInput(ctx context.Context, ob
 			}
 		case "difficulty":
 			var err error
-			it.Difficulty, err = ec.unmarshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐDifficulty(ctx, v)
+			it.Difficulty, err = ec.unmarshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDifficulty(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "milestones":
 			var err error
-			it.Milestones, err = ec.unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestoneInput(ctx, v)
+			it.Milestones, err = ec.unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5310,7 +5266,7 @@ func (ec *executionContext) unmarshalInputJobsFilterInput(ctx context.Context, o
 		switch k {
 		case "status":
 			var err error
-			it.Status, err = ec.unmarshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, v)
+			it.Status, err = ec.unmarshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5322,7 +5278,7 @@ func (ec *executionContext) unmarshalInputJobsFilterInput(ctx context.Context, o
 			}
 		case "sortOrder":
 			var err error
-			it.SortOrder, err = ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSortOrder(ctx, v)
+			it.SortOrder, err = ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSortOrder(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5364,7 +5320,7 @@ func (ec *executionContext) unmarshalInputMilestoneInput(ctx context.Context, ob
 			}
 		case "status":
 			var err error
-			it.Status, err = ec.unmarshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, v)
+			it.Status, err = ec.unmarshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5406,19 +5362,19 @@ func (ec *executionContext) unmarshalInputUpdateJobInput(ctx context.Context, ob
 			}
 		case "difficulty":
 			var err error
-			it.Difficulty, err = ec.unmarshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐDifficulty(ctx, v)
+			it.Difficulty, err = ec.unmarshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDifficulty(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "status":
 			var err error
-			it.Status, err = ec.unmarshalNJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, v)
+			it.Status, err = ec.unmarshalNJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "milestones":
 			var err error
-			it.Milestones, err = ec.unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestoneInput(ctx, v)
+			it.Milestones, err = ec.unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5765,20 +5721,6 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 					}
 				}()
 				res = ec._Job_milestones(ctx, field, obj)
-				return res
-			})
-		case "skills":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Job_skills(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "applications":
@@ -6487,12 +6429,12 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, v interface{}) (model.ApplicationStatus, error) {
+func (ec *executionContext) unmarshalNApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, v interface{}) (model.ApplicationStatus, error) {
 	var res model.ApplicationStatus
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalNApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, sel ast.SelectionSet, v model.ApplicationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, sel ast.SelectionSet, v model.ApplicationStatus) graphql.Marshaler {
 	return v
 }
 
@@ -6510,12 +6452,12 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐDifficulty(ctx context.Context, v interface{}) (model.Difficulty, error) {
+func (ec *executionContext) unmarshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDifficulty(ctx context.Context, v interface{}) (model.Difficulty, error) {
 	var res model.Difficulty
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐDifficulty(ctx context.Context, sel ast.SelectionSet, v model.Difficulty) graphql.Marshaler {
+func (ec *executionContext) marshalNDifficulty2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDifficulty(ctx context.Context, sel ast.SelectionSet, v model.Difficulty) graphql.Marshaler {
 	return v
 }
 
@@ -6547,11 +6489,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNJob2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v model.Job) graphql.Marshaler {
+func (ec *executionContext) marshalNJob2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v model.Job) graphql.Marshaler {
 	return ec._Job(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v *model.Job) graphql.Marshaler {
+func (ec *executionContext) marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v *model.Job) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6561,16 +6503,16 @@ func (ec *executionContext) marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinne
 	return ec._Job(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) (model.JobStatus, error) {
+func (ec *executionContext) unmarshalNJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) (model.JobStatus, error) {
 	var res model.JobStatus
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalNJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx context.Context, sel ast.SelectionSet, v model.JobStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, sel ast.SelectionSet, v model.JobStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v []*model.Milestone) graphql.Marshaler {
+func (ec *executionContext) marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v []*model.Milestone) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6594,7 +6536,7 @@ func (ec *executionContext) marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑinn
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOMilestone2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestone(ctx, sel, v[i])
+			ret[i] = ec.marshalOMilestone2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6607,7 +6549,7 @@ func (ec *executionContext) marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑinn
 	return ret
 }
 
-func (ec *executionContext) unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestoneInput(ctx context.Context, v interface{}) ([]*model.MilestoneInput, error) {
+func (ec *executionContext) unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneInput(ctx context.Context, v interface{}) ([]*model.MilestoneInput, error) {
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -6619,7 +6561,7 @@ func (ec *executionContext) unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassin
 	var err error
 	res := make([]*model.MilestoneInput, len(vSlice))
 	for i := range vSlice {
-		res[i], err = ec.unmarshalOMilestoneInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestoneInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOMilestoneInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -6627,7 +6569,7 @@ func (ec *executionContext) unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassin
 	return res, nil
 }
 
-func (ec *executionContext) marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v []*model.Skill) graphql.Marshaler {
+func (ec *executionContext) marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v []*model.Skill) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6651,7 +6593,7 @@ func (ec *executionContext) marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinner�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSkill2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx, sel, v[i])
+			ret[i] = ec.marshalOSkill2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6707,11 +6649,11 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6721,11 +6663,11 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinn
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUserStats2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUserStats(ctx context.Context, sel ast.SelectionSet, v model.UserStats) graphql.Marshaler {
+func (ec *executionContext) marshalNUserStats2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserStats(ctx context.Context, sel ast.SelectionSet, v model.UserStats) graphql.Marshaler {
 	return ec._UserStats(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUserStats2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUserStats(ctx context.Context, sel ast.SelectionSet, v *model.UserStats) graphql.Marshaler {
+func (ec *executionContext) marshalNUserStats2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserStats(ctx context.Context, sel ast.SelectionSet, v *model.UserStats) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -6961,11 +6903,11 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOApplication2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v model.Application) graphql.Marshaler {
+func (ec *executionContext) marshalOApplication2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v model.Application) graphql.Marshaler {
 	return ec._Application(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v []*model.Application) graphql.Marshaler {
+func (ec *executionContext) marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v []*model.Application) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6992,7 +6934,7 @@ func (ec *executionContext) marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplication(ctx, sel, v[i])
+			ret[i] = ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7005,42 +6947,42 @@ func (ec *executionContext) marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑi
 	return ret
 }
 
-func (ec *executionContext) marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v *model.Application) graphql.Marshaler {
+func (ec *executionContext) marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v *model.Application) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Application(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, v interface{}) (model.ApplicationStatus, error) {
+func (ec *executionContext) unmarshalOApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, v interface{}) (model.ApplicationStatus, error) {
 	var res model.ApplicationStatus
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalOApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, sel ast.SelectionSet, v model.ApplicationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, sel ast.SelectionSet, v model.ApplicationStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalOApplicationStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, v interface{}) (*model.ApplicationStatus, error) {
+func (ec *executionContext) unmarshalOApplicationStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, v interface{}) (*model.ApplicationStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx, v)
+	res, err := ec.unmarshalOApplicationStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalOApplicationStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, sel ast.SelectionSet, v *model.ApplicationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOApplicationStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx context.Context, sel ast.SelectionSet, v *model.ApplicationStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOApplications2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplications(ctx context.Context, sel ast.SelectionSet, v model.Applications) graphql.Marshaler {
+func (ec *executionContext) marshalOApplications2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplications(ctx context.Context, sel ast.SelectionSet, v model.Applications) graphql.Marshaler {
 	return ec._Applications(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOApplications2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐApplications(ctx context.Context, sel ast.SelectionSet, v *model.Applications) graphql.Marshaler {
+func (ec *executionContext) marshalOApplications2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplications(ctx context.Context, sel ast.SelectionSet, v *model.Applications) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7070,11 +7012,11 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOComment2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalOComment2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v model.Comment) graphql.Marshaler {
 	return ec._Comment(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7101,7 +7043,7 @@ func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋcassiniᚑinner
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐComment(ctx, sel, v[i])
+			ret[i] = ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7114,42 +7056,42 @@ func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋcassiniᚑinner
 	return ret
 }
 
-func (ec *executionContext) marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalOComment2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Comment(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOCreateJobInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐCreateJobInput(ctx context.Context, v interface{}) (model.CreateJobInput, error) {
+func (ec *executionContext) unmarshalOCreateJobInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx context.Context, v interface{}) (model.CreateJobInput, error) {
 	return ec.unmarshalInputCreateJobInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOCreateJobInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐCreateJobInput(ctx context.Context, v interface{}) (*model.CreateJobInput, error) {
+func (ec *executionContext) unmarshalOCreateJobInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx context.Context, v interface{}) (*model.CreateJobInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOCreateJobInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐCreateJobInput(ctx, v)
+	res, err := ec.unmarshalOCreateJobInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) unmarshalOCreateUserInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (model.CreateUserInput, error) {
+func (ec *executionContext) unmarshalOCreateUserInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (model.CreateUserInput, error) {
 	return ec.unmarshalInputCreateUserInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOCreateUserInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (*model.CreateUserInput, error) {
+func (ec *executionContext) unmarshalOCreateUserInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (*model.CreateUserInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOCreateUserInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐCreateUserInput(ctx, v)
+	res, err := ec.unmarshalOCreateUserInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalODiscussions2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐDiscussions(ctx context.Context, sel ast.SelectionSet, v model.Discussions) graphql.Marshaler {
+func (ec *executionContext) marshalODiscussions2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDiscussions(ctx context.Context, sel ast.SelectionSet, v model.Discussions) graphql.Marshaler {
 	return ec._Discussions(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalODiscussions2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐDiscussions(ctx context.Context, sel ast.SelectionSet, v *model.Discussions) graphql.Marshaler {
+func (ec *executionContext) marshalODiscussions2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDiscussions(ctx context.Context, sel ast.SelectionSet, v *model.Discussions) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7179,11 +7121,11 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return ec.marshalOInt2int(ctx, sel, *v)
 }
 
-func (ec *executionContext) marshalOJob2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v model.Job) graphql.Marshaler {
+func (ec *executionContext) marshalOJob2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v model.Job) graphql.Marshaler {
 	return ec._Job(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v []*model.Job) graphql.Marshaler {
+func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v []*model.Job) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7210,7 +7152,7 @@ func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, sel, v[i])
+			ret[i] = ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7223,7 +7165,7 @@ func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋi
 	return ret
 }
 
-func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Job) graphql.Marshaler {
+func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Job) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7250,7 +7192,7 @@ func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx, sel, v[i])
+			ret[i] = ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7263,23 +7205,23 @@ func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋi
 	return ret
 }
 
-func (ec *executionContext) marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v *model.Job) graphql.Marshaler {
+func (ec *executionContext) marshalOJob2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v *model.Job) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Job(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) (model.JobStatus, error) {
+func (ec *executionContext) unmarshalOJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) (model.JobStatus, error) {
 	var res model.JobStatus
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalOJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx context.Context, sel ast.SelectionSet, v model.JobStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, sel ast.SelectionSet, v model.JobStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) ([]*model.JobStatus, error) {
+func (ec *executionContext) unmarshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) ([]*model.JobStatus, error) {
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -7291,7 +7233,7 @@ func (ec *executionContext) unmarshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑi
 	var err error
 	res := make([]*model.JobStatus, len(vSlice))
 	for i := range vSlice {
-		res[i], err = ec.unmarshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -7299,7 +7241,7 @@ func (ec *executionContext) unmarshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑi
 	return res, nil
 }
 
-func (ec *executionContext) marshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx context.Context, sel ast.SelectionSet, v []*model.JobStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, sel ast.SelectionSet, v []*model.JobStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7326,7 +7268,7 @@ func (ec *executionContext) marshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑinn
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, sel, v[i])
+			ret[i] = ec.marshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7339,72 +7281,72 @@ func (ec *executionContext) marshalOJobStatus2ᚕᚖgithubᚗcomᚋcassiniᚑinn
 	return ret
 }
 
-func (ec *executionContext) unmarshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) (*model.JobStatus, error) {
+func (ec *executionContext) unmarshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) (*model.JobStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx, v)
+	res, err := ec.unmarshalOJobStatus2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobStatus(ctx context.Context, sel ast.SelectionSet, v *model.JobStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOJobStatus2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, sel ast.SelectionSet, v *model.JobStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOJobsFilterInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobsFilterInput(ctx context.Context, v interface{}) (model.JobsFilterInput, error) {
+func (ec *executionContext) unmarshalOJobsFilterInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobsFilterInput(ctx context.Context, v interface{}) (model.JobsFilterInput, error) {
 	return ec.unmarshalInputJobsFilterInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOJobsFilterInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobsFilterInput(ctx context.Context, v interface{}) (*model.JobsFilterInput, error) {
+func (ec *executionContext) unmarshalOJobsFilterInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobsFilterInput(ctx context.Context, v interface{}) (*model.JobsFilterInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOJobsFilterInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐJobsFilterInput(ctx, v)
+	res, err := ec.unmarshalOJobsFilterInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobsFilterInput(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalOMilestone2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v model.Milestone) graphql.Marshaler {
+func (ec *executionContext) marshalOMilestone2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v model.Milestone) graphql.Marshaler {
 	return ec._Milestone(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOMilestone2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v *model.Milestone) graphql.Marshaler {
+func (ec *executionContext) marshalOMilestone2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v *model.Milestone) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Milestone(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOMilestoneInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestoneInput(ctx context.Context, v interface{}) (model.MilestoneInput, error) {
+func (ec *executionContext) unmarshalOMilestoneInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneInput(ctx context.Context, v interface{}) (model.MilestoneInput, error) {
 	return ec.unmarshalInputMilestoneInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOMilestoneInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestoneInput(ctx context.Context, v interface{}) (*model.MilestoneInput, error) {
+func (ec *executionContext) unmarshalOMilestoneInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneInput(ctx context.Context, v interface{}) (*model.MilestoneInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOMilestoneInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestoneInput(ctx, v)
+	res, err := ec.unmarshalOMilestoneInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneInput(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalOMilestones2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestones(ctx context.Context, sel ast.SelectionSet, v model.Milestones) graphql.Marshaler {
+func (ec *executionContext) marshalOMilestones2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestones(ctx context.Context, sel ast.SelectionSet, v model.Milestones) graphql.Marshaler {
 	return ec._Milestones(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOMilestones2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐMilestones(ctx context.Context, sel ast.SelectionSet, v *model.Milestones) graphql.Marshaler {
+func (ec *executionContext) marshalOMilestones2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestones(ctx context.Context, sel ast.SelectionSet, v *model.Milestones) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Milestones(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSkill2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v model.Skill) graphql.Marshaler {
+func (ec *executionContext) marshalOSkill2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v model.Skill) graphql.Marshaler {
 	return ec._Skill(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v []*model.Skill) graphql.Marshaler {
+func (ec *executionContext) marshalOSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v []*model.Skill) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7431,7 +7373,7 @@ func (ec *executionContext) marshalOSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinner�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSkill2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx, sel, v[i])
+			ret[i] = ec.marshalOSkill2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7444,31 +7386,31 @@ func (ec *executionContext) marshalOSkill2ᚕᚖgithubᚗcomᚋcassiniᚑinner�
 	return ret
 }
 
-func (ec *executionContext) marshalOSkill2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v *model.Skill) graphql.Marshaler {
+func (ec *executionContext) marshalOSkill2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v *model.Skill) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Skill(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSortOrder2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v interface{}) (model.SortOrder, error) {
+func (ec *executionContext) unmarshalOSortOrder2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v interface{}) (model.SortOrder, error) {
 	var res model.SortOrder
 	return res, res.UnmarshalGQL(v)
 }
 
-func (ec *executionContext) marshalOSortOrder2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v model.SortOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOrder2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v model.SortOrder) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v interface{}) (*model.SortOrder, error) {
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v interface{}) (*model.SortOrder, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOSortOrder2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSortOrder(ctx, v)
+	res, err := ec.unmarshalOSortOrder2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSortOrder(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *model.SortOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *model.SortOrder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7530,35 +7472,35 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
-func (ec *executionContext) unmarshalOUpdateJobInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUpdateJobInput(ctx context.Context, v interface{}) (model.UpdateJobInput, error) {
+func (ec *executionContext) unmarshalOUpdateJobInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUpdateJobInput(ctx context.Context, v interface{}) (model.UpdateJobInput, error) {
 	return ec.unmarshalInputUpdateJobInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOUpdateJobInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUpdateJobInput(ctx context.Context, v interface{}) (*model.UpdateJobInput, error) {
+func (ec *executionContext) unmarshalOUpdateJobInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUpdateJobInput(ctx context.Context, v interface{}) (*model.UpdateJobInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOUpdateJobInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUpdateJobInput(ctx, v)
+	res, err := ec.unmarshalOUpdateJobInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUpdateJobInput(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) unmarshalOUpdateUserInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUpdateUserInput(ctx context.Context, v interface{}) (model.UpdateUserInput, error) {
+func (ec *executionContext) unmarshalOUpdateUserInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUpdateUserInput(ctx context.Context, v interface{}) (model.UpdateUserInput, error) {
 	return ec.unmarshalInputUpdateUserInput(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUpdateUserInput(ctx context.Context, v interface{}) (*model.UpdateUserInput, error) {
+func (ec *executionContext) unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUpdateUserInput(ctx context.Context, v interface{}) (*model.UpdateUserInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOUpdateUserInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUpdateUserInput(ctx, v)
+	res, err := ec.unmarshalOUpdateUserInput2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUpdateUserInput(ctx, v)
 	return &res, err
 }
 
-func (ec *executionContext) marshalOUser2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2githubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsourceᚑmgmtᚑsrvᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcassiniᚑinnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

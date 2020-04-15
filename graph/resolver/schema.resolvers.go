@@ -1,15 +1,9 @@
 package resolver
 
+import "github.com/cassini-inner/inner-src-mgmt-go/graph/generated"
+
 // This file will be automatically regenerated based on the schema, any resolver implementations
 // will be copied through when generating and any unknown code will be moved to the end.
-
-import (
-	"context"
-	"fmt"
-
-	"github.com/cassini-inner/inner-src-mgmt-go/graph/generated"
-	"github.com/cassini-inner/inner-src-mgmt-go/graph/model"
-)
 
 // Application returns generated.ApplicationResolver implementation.
 func (r *Resolver) Application() generated.ApplicationResolver { return &applicationResolver{r} }
