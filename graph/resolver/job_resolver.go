@@ -3,7 +3,7 @@ package resolver
 import (
 	"context"
 	"fmt"
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph/model"
+	"github.com/cassini-inner/inner-src-mgmt-go/graph/model"
 )
 
 func (r *jobResolver) CreatedBy(ctx context.Context, obj *model.Job) (*model.User, error) {

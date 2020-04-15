@@ -1,4 +1,4 @@
-module github.com/cassini-inner/inner-source-mgmt-srv
+module github.com/cassini-inner/inner-src-mgmt-go
 
 go 1.14
 

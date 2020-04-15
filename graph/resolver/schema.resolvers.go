@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph/generated"
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph/model"
+	"github.com/cassini-inner/inner-src-mgmt-go/graph/generated"
+	"github.com/cassini-inner/inner-src-mgmt-go/graph/model"
 )
 
 // Application returns generated.ApplicationResolver implementation.
