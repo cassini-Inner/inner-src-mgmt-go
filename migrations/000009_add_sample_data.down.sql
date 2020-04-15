@@ -1,1 +1,0 @@
-insert into users(email, name, role, department, bio, photourl, contact, time_created, time_updated, isdeleted) VALUES ('tushar@email.com', 'Tushar Paliwal', 'Intern International', 'Risk', 'Crafter of meaningful experiences and constructor of pragmatic applications', 'https://avatars2.githubusercontent.com/u/11810442?s=460&v=4', '@tpaliwal', '')
