@@ -1,17 +1,16 @@
 package main
 
 import (
-	"github.com/cassini-inner/inner-source-mgmt-srv/postgres"
-	"github.com/go-pg/pg/v9"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver"
+	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
+	"github.com/go-pg/pg"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph/resolver"
-
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph/generated"
 )
 
 const defaultPort = "8080"

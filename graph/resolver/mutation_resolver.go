@@ -3,7 +3,7 @@ package resolver
 import (
 	"context"
 	"fmt"
-	"github.com/cassini-inner/inner-source-mgmt-srv/graph/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
 func (r *milestoneResolver) Job(ctx context.Context, obj *model.Milestone) (*model.Job, error) {
