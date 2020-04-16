@@ -10,10 +10,10 @@ func (r *queryResolver) AllJobs(ctx context.Context, filter *model.JobsFilterInp
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Job(ctx context.Context, id int) (*model.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Job(ctx context.Context, id string) (*model.Job, error) {
+	return r.JobsRepo.GetById(id)
 }
 
-func (r *queryResolver) User(ctx context.Context, id int, jobsStatusFilter *model.JobStatus) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) User(ctx context.Context, id string, jobsStatusFilter *model.JobStatus) (*model.User, error) {
+	return r.UsersRepo.GetById(id)
 }

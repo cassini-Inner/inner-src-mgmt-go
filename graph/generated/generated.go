@@ -128,8 +128,8 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AllJobs func(childComplexity int, filter *model.JobsFilterInput) int
-		Job     func(childComplexity int, id int) int
-		User    func(childComplexity int, id int, jobsStatusFilter *model.JobStatus) int
+		Job     func(childComplexity int, id string) int
+		User    func(childComplexity int, id string, jobsStatusFilter *model.JobStatus) int
 	}
 
 	Skill struct {
@@ -197,8 +197,8 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
-	Job(ctx context.Context, id int) (*model.Job, error)
-	User(ctx context.Context, id int, jobsStatusFilter *model.JobStatus) (*model.User, error)
+	Job(ctx context.Context, id string) (*model.Job, error)
+	User(ctx context.Context, id string, jobsStatusFilter *model.JobStatus) (*model.User, error)
 }
 type SkillResolver interface {
 	CreatedBy(ctx context.Context, obj *model.Skill) (*model.User, error)
@@ -674,7 +674,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Job(childComplexity, args["id"].(int)), true
+		return e.complexity.Query.Job(childComplexity, args["id"].(string)), true
 
 	case "Query.User":
 		if e.complexity.Query.User == nil {
@@ -686,7 +686,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.User(childComplexity, args["id"].(int), args["jobsStatusFilter"].(*model.JobStatus)), true
+		return e.complexity.Query.User(childComplexity, args["id"].(string), args["jobsStatusFilter"].(*model.JobStatus)), true
 
 	case "Skill.createdBy":
 		if e.complexity.Skill.CreatedBy == nil {
@@ -906,12 +906,12 @@ var sources = []*ast.Source{
     ): [Job]
     # To get the job details based on job id
     Job(
-        id: Int!
+        id: ID!
     ): Job
     # To get user information with user id with or without
     # job status filter (open/ongoing/completed)
     User (
-        id: Int!
+        id: ID!
         jobsStatusFilter: JobStatus
     ): User
 }
@@ -1306,9 +1306,9 @@ func (ec *executionContext) field_Mutation_updateUserProfile_args(ctx context.Co
 func (ec *executionContext) field_Query_Job_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int
+	var arg0 string
 	if tmp, ok := rawArgs["id"]; ok {
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1320,9 +1320,9 @@ func (ec *executionContext) field_Query_Job_args(ctx context.Context, rawArgs ma
 func (ec *executionContext) field_Query_User_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int
+	var arg0 string
 	if tmp, ok := rawArgs["id"]; ok {
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3272,7 +3272,7 @@ func (ec *executionContext) _Query_Job(ctx context.Context, field graphql.Collec
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Job(rctx, args["id"].(int))
+		return ec.resolvers.Query().Job(rctx, args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3310,7 +3310,7 @@ func (ec *executionContext) _Query_User(ctx context.Context, field graphql.Colle
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().User(rctx, args["id"].(int), args["jobsStatusFilter"].(*model.JobStatus))
+		return ec.resolvers.Query().User(rctx, args["id"].(string), args["jobsStatusFilter"].(*model.JobStatus))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
