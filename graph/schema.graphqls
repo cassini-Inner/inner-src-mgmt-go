@@ -5,12 +5,12 @@ type Query {
     ): [Job]
     # To get the job details based on job id
     Job(
-        id: Int!
+        id: ID!
     ): Job
     # To get user information with user id with or without
     # job status filter (open/ongoing/completed)
     User (
-        id: Int!
+        id: ID!
         jobsStatusFilter: JobStatus
     ): User
 }

@@ -15,5 +15,5 @@ func (r *queryResolver) Job(ctx context.Context, id int) (*model.Job, error) {
 }
 
 func (r *queryResolver) User(ctx context.Context, id int, jobsStatusFilter *model.JobStatus) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	//return r.usersRepo.GetById(id)
 }

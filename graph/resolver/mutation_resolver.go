@@ -6,18 +6,6 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
-func (r *milestoneResolver) Job(ctx context.Context, obj *model.Milestone) (*model.Job, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *model.Milestone) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *milestoneResolver) Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *model.UpdateUserInput) (*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
