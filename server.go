@@ -4,11 +4,12 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
-	"github.com/go-pg/pg/v9"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"log"
 	"net/http"
 	"os"
-
+	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 )
@@ -16,11 +17,12 @@ import (
 const defaultPort = "8080"
 
 func main() {
-	DB := postgres.New(&pg.Options{
-		User:     "postgres",
-		Password: "root",
-		Database: "innersource",
-	})
+	DB, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=innersource password=a sslmode=disable")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer DB.Close()
+
 	skillsRepo := postgres.NewSkillsRepo(DB)
 	usersRepo := postgres.NewUsersRepo(DB)
 	milestonesRepo := postgres.NewMilestonesRepo(DB)

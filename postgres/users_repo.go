@@ -2,15 +2,15 @@ package postgres
 
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	"github.com/go-pg/pg/v9"
+	"github.com/jinzhu/gorm"
 )
 
 // TODO: Implement
 type UsersRepo struct {
-	db *pg.DB
+	db *gorm.DB
 }
 
-func NewUsersRepo(db *pg.DB) *UsersRepo {
+func NewUsersRepo(db *gorm.DB) *UsersRepo {
 	return &UsersRepo{db: db}
 }
 

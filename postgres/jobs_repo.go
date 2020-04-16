@@ -2,14 +2,15 @@ package postgres
 
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	"github.com/go-pg/pg/v9"
+	"github.com/jinzhu/gorm"
+	"fmt"
 )
 
 type JobsRepo struct {
-	db *pg.DB
+	db *gorm.DB
 }
 
-func NewJobsRepo(db *pg.DB) *JobsRepo {
+func NewJobsRepo(db *gorm.DB) *JobsRepo {
 	return &JobsRepo{db: db}
 }
 

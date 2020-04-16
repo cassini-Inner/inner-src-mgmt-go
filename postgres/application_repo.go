@@ -2,14 +2,14 @@ package postgres
 
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	"github.com/go-pg/pg/v9"
+	"github.com/jinzhu/gorm"
 )
 
 type ApplicationsRepo struct{
-	db *pg.DB
+	db *gorm.DB
 }
 
-func NewApplicationsRepo(db *pg.DB) *ApplicationsRepo {
+func NewApplicationsRepo(db *gorm.DB) *ApplicationsRepo {
 	return &ApplicationsRepo{db:db}
 }
 
