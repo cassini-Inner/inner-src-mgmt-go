@@ -28,3 +28,7 @@ func (j *JobsRepo) GetByUserId(userId string) ([]*model.Job, error) {
 func (j *JobsRepo) GetStatsByUserId(userId string) (*model.UserStats, error) {
 	panic("not implemented")
 }
+
+func (j *JobsRepo) GetAll(filters *model.JobsFilterInput) ([]*model.Job, error) {
+	panic("not implemented")
+}

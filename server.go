@@ -3,8 +3,6 @@ package main
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver"
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
-	"github.com/go-pg/pg"
 	"log"
 	"net/http"
 	"os"
@@ -16,11 +14,12 @@ import (
 const defaultPort = "8080"
 
 func main() {
-	DB := postgres.New(&pg.Options{
-		User:     "postgres",
-		Password: "root",
-		Database: "innersource",
-	})
+	//DB := postgres.New(&pg.Options{
+	//	User:     "postgres",
+	//	Password: "root",
+	//	Database: "innersource",
+	//})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
