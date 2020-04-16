@@ -1,8 +1,17 @@
 package postgres
 
-import "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+import (
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/go-pg/pg/v9"
+)
 
-type ApplicationsRepo struct{}
+type ApplicationsRepo struct{
+	db *pg.DB
+}
+
+func NewApplicationsRepo(db *pg.DB) *ApplicationsRepo {
+	return &ApplicationsRepo{db:db}
+}
 
 func (a *ApplicationsRepo) CreateApplication(jobId string, userId string) (*model.Application, error) {
 	panic("Not implemented")

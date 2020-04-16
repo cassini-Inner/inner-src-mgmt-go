@@ -6,17 +6,17 @@ import (
 )
 
 func (r *userResolver) Skills(ctx context.Context, obj *model.User) ([]*model.Skill, error) {
-	return r.skillsRepo.GetByUserId(obj.ID)
+	return r.SkillsRepo.GetByUserId(obj.ID)
 }
 
 func (r *userResolver) CreatedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error) {
-	return r.jobsRepo.GetByUserId(obj.ID)
+	return r.JobsRepo.GetByUserId(obj.ID)
 }
 
 func (r *userResolver) AppliedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error) {
-	return r.applicationsRepo.GetUserJobApplications(obj.ID)
+	return r.ApplicationsRepo.GetUserJobApplications(obj.ID)
 }
 
 func (r *userResolver) JobStats(ctx context.Context, obj *model.User) (*model.UserStats, error) {
-	return r.jobsRepo.GetStatsByUserId(obj.ID)
+	return r.JobsRepo.GetStatsByUserId(obj.ID)
 }

@@ -9,10 +9,10 @@ import "github.com/cassini-Inner/inner-src-mgmt-go/postgres"
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	applicationsRepo *postgres.ApplicationsRepo
-	discussionsRepo  *postgres.DiscussionsRepo
-	jobsRepo         *postgres.JobsRepo
-	milestonesRepo   *postgres.MilestonesRepo
-	skillsRepo       *postgres.SkillsRepo
-	usersRepo        *postgres.UsersRepo
+	ApplicationsRepo *postgres.ApplicationsRepo
+	DiscussionsRepo  *postgres.DiscussionsRepo
+	JobsRepo         *postgres.JobsRepo
+	MilestonesRepo   *postgres.MilestonesRepo
+	SkillsRepo       *postgres.SkillsRepo
+	UsersRepo        *postgres.UsersRepo
 }

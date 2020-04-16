@@ -1,14 +1,17 @@
 package postgres
 
-import "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+import (
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/go-pg/pg/v9"
+)
 
 // TODO: Implement
 type UsersRepo struct {
-	skillsRepo *SkillsRepo
+	db *pg.DB
 }
 
-func NewUsersRepo(skillRepo *SkillsRepo) *UsersRepo {
-	return &UsersRepo{skillsRepo: skillRepo}
+func NewUsersRepo(db *pg.DB) *UsersRepo {
+	return &UsersRepo{db: db}
 }
 
 func (u *UsersRepo) CreateUser(input *model.CreateUserInput) (*model.User, error) {

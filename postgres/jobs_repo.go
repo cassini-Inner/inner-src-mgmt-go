@@ -1,8 +1,17 @@
 package postgres
 
-import "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+import (
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/go-pg/pg/v9"
+)
 
-type JobsRepo struct{}
+type JobsRepo struct {
+	db *pg.DB
+}
+
+func NewJobsRepo(db *pg.DB) *JobsRepo {
+	return &JobsRepo{db: db}
+}
 
 func (j *JobsRepo) CreateJob(input *model.CreateJobInput) (*model.Job, error) {
 	panic("Not implemented")
