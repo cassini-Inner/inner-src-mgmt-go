@@ -2,15 +2,15 @@ package postgres
 
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	"github.com/go-pg/pg/v9"
+	"github.com/jinzhu/gorm"
 )
 
 type DiscussionsRepo struct {
-	db *pg.DB
+	db *gorm.DB
 }
 
-func NewDiscussionsRepo(db *pg.DB) *DiscussionsRepo {
-return &DiscussionsRepo{    db:db}
+func NewDiscussionsRepo(db *gorm.DB) *DiscussionsRepo {
+	return &DiscussionsRepo{db: db}
 }
 
 //TODO: Implement
