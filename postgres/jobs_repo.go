@@ -3,7 +3,6 @@ package postgres
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/jinzhu/gorm"
-	"fmt"
 )
 
 type JobsRepo struct {
