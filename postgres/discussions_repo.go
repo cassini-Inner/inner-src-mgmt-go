@@ -10,7 +10,7 @@ type DiscussionsRepo struct {
 }
 
 func NewDiscussionsRepo(db *gorm.DB) *DiscussionsRepo {
-return &DiscussionsRepo{    db:db}
+	return &DiscussionsRepo{db: db}
 }
 
 //TODO: Implement

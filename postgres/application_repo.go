@@ -5,12 +5,12 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type ApplicationsRepo struct{
+type ApplicationsRepo struct {
 	db *gorm.DB
 }
 
 func NewApplicationsRepo(db *gorm.DB) *ApplicationsRepo {
-	return &ApplicationsRepo{db:db}
+	return &ApplicationsRepo{db: db}
 }
 
 func (a *ApplicationsRepo) CreateApplication(jobId string, userId string) (*model.Application, error) {

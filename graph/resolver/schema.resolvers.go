@@ -19,6 +19,9 @@ func (r *Resolver) Job() generated.JobResolver { return &jobResolver{r} }
 // Milestone returns generated.MilestoneResolver implementation.
 func (r *Resolver) Milestone() generated.MilestoneResolver { return &milestoneResolver{r} }
 
+// Milestones returns generated.MilestonesResolver implementation.
+func (r *Resolver) Milestones() generated.MilestonesResolver { return &milestonesResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -35,6 +38,7 @@ type applicationResolver struct{ *Resolver }
 type commentResolver struct{ *Resolver }
 type jobResolver struct{ *Resolver }
 type milestoneResolver struct{ *Resolver }
+type milestonesResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type skillResolver struct{ *Resolver }

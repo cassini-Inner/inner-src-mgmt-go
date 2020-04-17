@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
@@ -9,8 +11,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
 )
 
 const defaultPort = "8080"
@@ -28,7 +28,6 @@ func main() {
 	jobsRepo := postgres.NewJobsRepo(DB)
 	discussionsRepo := postgres.NewDiscussionsRepo(DB)
 	applicationsRepo := postgres.NewApplicationsRepo(DB)
-
 
 	port := os.Getenv("PORT")
 	if port == "" {
