@@ -13,7 +13,7 @@ type Application struct {
 	CreatedOn   string            `json:"createdOn"`
 }
 
-func (a *Application) mapDbToGql(dbApplication dbmodel.Application) {
+func (a *Application) MapDbToGql(dbApplication dbmodel.Application) {
 	a.ID = dbApplication.Id
 	a.ApplicantID = dbApplication.ApplicantId
 	a.Status = ApplicationStatus(dbApplication.Status)

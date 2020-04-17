@@ -21,7 +21,7 @@ type Job struct {
 }
 
 
-func (j *Job) mapDbToGql(dbJob dbmodel.Job) {
+func (j *Job) MapDbToGql(dbJob dbmodel.Job) {
 	j.ID = dbJob.Id
 	j.Title = dbJob.Title
 	j.CreatedBy = dbJob.CreatedBy

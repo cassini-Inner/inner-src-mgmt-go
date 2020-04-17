@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -13,7 +13,17 @@ func NewMilestonesRepo(db *sqlx.DB) *MilestonesRepo {
 	return &MilestonesRepo{db: db}
 }
 
-//TODO: Refactor this. Should return a list of milestones
-func (m *MilestonesRepo) GetByJobId(jobId string) (*model.Milestones, error) {
-	panic("not impl")
+func (m *MilestonesRepo) GetByJobId(jobId string) ([]*dbmodel.Milestone, error) {
+	var milestone dbmodel.Milestone
+	var milestones []*dbmodel.Milestone
+	query := "SELECT * FROM milestones WHERE job_id = $1"
+	rows, err := m.db.Queryx(query, jobId)
+	if err!= nil {
+		panic(err)
+	}
+	for rows.Next() {
+		rows.StructScan(&milestone)
+		milestones = append(milestones, &milestone)
+	}
+	return milestones, err
 }

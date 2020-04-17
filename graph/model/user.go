@@ -21,7 +21,7 @@ type User struct {
 	JobStats    *UserStats `json:"jobStats"`
 }
 
-func (u *User) mapDbToGql(dbUser dbmodel.User) {
+func (u *User) MapDbToGql(dbUser dbmodel.User) {
 		u.ID = dbUser.Id
 		u.Email = dbUser.Email
 		u.Name = dbUser.Name

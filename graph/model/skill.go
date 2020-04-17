@@ -11,7 +11,7 @@ type Skill struct {
 	CreatedTime string `json:"createdTime"`
 }
 
-func (s *Skill) mapDbToGql(dbSkill dbmodel.GlobalSkill) {
+func (s *Skill) MapDbToGql(dbSkill dbmodel.GlobalSkill) {
 	s.ID = dbSkill.Id
 	s.CreatedBy = dbSkill.CreatedBy
 	s.Value = dbSkill.Value
