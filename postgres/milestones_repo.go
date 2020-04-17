@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -19,11 +19,11 @@ func (m *MilestonesRepo) GetByJobId(jobId string) ([]*dbmodel.Milestone, error) 
 	query := "SELECT * FROM milestones WHERE job_id = $1"
 	rows, err := m.db.Queryx(query, jobId)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	for rows.Next() {
 		rows.StructScan(&milestone)
 		milestones = append(milestones, &milestone)
 	}
-	return milestones, err
+	return milestones, nil
 }

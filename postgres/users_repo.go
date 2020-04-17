@@ -31,6 +31,5 @@ func (u *UsersRepo) GetById(userId string) (*dbmodel.User, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &user, nil
 }

@@ -33,7 +33,10 @@ func (j *JobsRepo) GetById(jobId string) (*dbmodel.Job, error) {
 	var job dbmodel.Job
 	query := "SELECT * FROM jobs WHERE id = $1"
 	err := j.db.QueryRowx(query, jobId).StructScan(&job)
-	return &job, err
+	if err != nil {
+		return nil, err
+	}
+	return &job, nil
 }
 
 // GetByUserId returns all jobs created by that user
@@ -42,11 +45,14 @@ func (j *JobsRepo) GetByUserId(userId string) ([]*dbmodel.Job, error) {
 	var jobs []*dbmodel.Job
 	query := "SELECT * FROM jobs WHERE created_by = $1"
 	rows, err := j.db.Queryx(query, userId)
+	if err != nil {
+		return nil, err
+	}
 	for rows.Next() {
 		rows.StructScan(&job)
 		jobs = append(jobs, job)
 	}
-	return jobs, err
+	return jobs, nil
 }
 
 //TODO: Refactor this.
