@@ -2,6 +2,7 @@ package model
 
 import(
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	"strings"
 )
 
 type Job struct {
@@ -20,38 +21,13 @@ type Job struct {
 }
 
 
-func (gqlJob *Job) mapDbToGql(dbJob dbmodel.job) {
-
-	if dbJob.Id != nil {
-		gqlJob.ID = dbJob.Id
-	}
-
-	if dbJob.Title != nil {
-		gqlJob.Title = dbJob.Title
-	}
-
-	if dbJob.CreatedBy != nil {
-		gqlJob.CreatedBy = dbJob.CreatedBy
-	}
-
-	if dbJob.Description != nil {
-		gqlJob.Desc = dbJob.Description
-	}
-
-	if dbJob.Difficulty != nil {
-		gqlJob.Difficulty = dbJob.Difficulty
-	}
-
-	if dbJob.Status != nil {
-		gqlJob.Status = dbJob.Status
-	}
-
-	if dbJob.TimeCreated != nil {
-		gqlJob.TimeCreated = dbJob.TimeCreated
-	}
-
-	if dbJob.TimeUpdated != nil {
-		gqlJob.TimeUpdated = dbJob.TimeUpdated
-	}
-
+func (j *Job) MapDbToGql(dbJob dbmodel.Job) {
+	j.ID = dbJob.Id
+	j.Title = dbJob.Title
+	j.CreatedBy = dbJob.CreatedBy
+	j.Desc = dbJob.Description
+	j.Difficulty = Difficulty(dbJob.Difficulty)
+	j.Status = JobStatus(strings.ToUpper(dbJob.Status))
+	j.TimeCreated = dbJob.TimeCreated
+	j.TimeUpdated = dbJob.TimeUpdated
 }

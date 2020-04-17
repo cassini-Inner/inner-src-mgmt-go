@@ -11,7 +11,10 @@ func (r *queryResolver) AllJobs(ctx context.Context, filter *model.JobsFilterInp
 }
 
 func (r *queryResolver) Job(ctx context.Context, id string) (*model.Job, error) {
-	return r.JobsRepo.GetById(id)
+	var j model.Job 
+	dbjob, err := r.JobsRepo.GetById(id)
+	j.MapDbToGql(*dbjob)
+	return &j, err
 }
 
 func (r *queryResolver) User(ctx context.Context, id string, jobsStatusFilter *model.JobStatus) (*model.User, error) {

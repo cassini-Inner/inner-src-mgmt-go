@@ -1,19 +1,29 @@
 package postgres
 
 import (
-	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	"github.com/jinzhu/gorm"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	"github.com/jmoiron/sqlx"
 )
 
 type MilestonesRepo struct {
-	db *gorm.DB
+	db *sqlx.DB
 }
 
-func NewMilestonesRepo(db *gorm.DB) *MilestonesRepo {
+func NewMilestonesRepo(db *sqlx.DB) *MilestonesRepo {
 	return &MilestonesRepo{db: db}
 }
 
-//TODO: Implement
-func (m *MilestonesRepo) GetByJobId(jobId string) (*model.Milestones, error) {
-	panic("not impl")
+func (m *MilestonesRepo) GetByJobId(jobId string) ([]*dbmodel.Milestone, error) {
+	var milestone dbmodel.Milestone
+	var milestones []*dbmodel.Milestone
+	query := "SELECT * FROM milestones WHERE job_id = $1"
+	rows, err := m.db.Queryx(query, jobId)
+	if err!= nil {
+		panic(err)
+	}
+	for rows.Next() {
+		rows.StructScan(&milestone)
+		milestones = append(milestones, &milestone)
+	}
+	return milestones, err
 }

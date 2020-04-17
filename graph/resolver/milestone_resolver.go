@@ -6,7 +6,10 @@ import (
 )
 
 func (r *milestoneResolver) Job(ctx context.Context, obj *model.Milestone) (*model.Job, error) {
-	return r.JobsRepo.GetById(obj.JobID)
+	var j model.Job 
+	dbjob, err := r.JobsRepo.GetById(obj.JobID)
+	j.MapDbToGql(*dbjob)
+	return &j, err
 }
 
 func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *model.Milestone) (*model.User, error) {
@@ -16,3 +19,9 @@ func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *model.Milestone
 func (r *milestoneResolver) Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error) {
 	return r.SkillsRepo.GetByMilestoneId(obj.ID)
 }
+
+//TODO: Should not exist, or find a better way to implement
+func (m milestonesResolver) TotalCount(ctx context.Context, obj *model.Milestones) (*int, error) {
+	totalCount := len(obj.Milestones)
+	return &totalCount, nil
+ }
