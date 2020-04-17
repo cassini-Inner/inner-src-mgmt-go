@@ -19,7 +19,7 @@ const defaultPort = "8080"
 func main() {
 	DB, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=innersource password=a sslmode=disable")
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 	defer DB.Close()
 
