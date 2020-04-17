@@ -39,6 +39,7 @@ type ResolverRoot interface {
 	Comment() CommentResolver
 	Job() JobResolver
 	Milestone() MilestoneResolver
+	Milestones() MilestonesResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Skill() SkillResolver
@@ -108,8 +109,8 @@ type ComplexityRoot struct {
 	}
 
 	Milestones struct {
-		Milestones  func(childComplexity int) int
-		TotalCounnt func(childComplexity int) int
+		Milestones func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -181,6 +182,9 @@ type MilestoneResolver interface {
 
 	AssignedTo(ctx context.Context, obj *model.Milestone) (*model.User, error)
 	Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error)
+}
+type MilestonesResolver interface {
+	TotalCount(ctx context.Context, obj *model.Milestones) (*int, error)
 }
 type MutationResolver interface {
 	UpdateUserProfile(ctx context.Context, user *model.UpdateUserInput) (*model.User, error)
@@ -513,12 +517,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Milestones.Milestones(childComplexity), true
 
-	case "Milestones.totalCounnt":
-		if e.complexity.Milestones.TotalCounnt == nil {
+	case "Milestones.totalCount":
+		if e.complexity.Milestones.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.Milestones.TotalCounnt(childComplexity), true
+		return e.complexity.Milestones.TotalCount(childComplexity), true
 
 	case "Mutation.addCommentToJob":
 		if e.complexity.Mutation.AddCommentToJob == nil {
@@ -1005,7 +1009,7 @@ type Discussions {
 }
 
 type Milestones {
-    totalCounnt: Int
+    totalCount: Int
     milestones: [Milestone]!
 }
 
@@ -2727,7 +2731,7 @@ func (ec *executionContext) _Milestone_skills(ctx context.Context, field graphql
 	return ec.marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Milestones_totalCounnt(ctx context.Context, field graphql.CollectedField, obj *model.Milestones) (ret graphql.Marshaler) {
+func (ec *executionContext) _Milestones_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.Milestones) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2738,13 +2742,13 @@ func (ec *executionContext) _Milestones_totalCounnt(ctx context.Context, field g
 		Object:   "Milestones",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TotalCounnt, nil
+		return ec.resolvers.Milestones().TotalCount(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5795,12 +5799,21 @@ func (ec *executionContext) _Milestones(ctx context.Context, sel ast.SelectionSe
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Milestones")
-		case "totalCounnt":
-			out.Values[i] = ec._Milestones_totalCounnt(ctx, field, obj)
+		case "totalCount":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Milestones_totalCount(ctx, field, obj)
+				return res
+			})
 		case "milestones":
 			out.Values[i] = ec._Milestones_milestones(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))

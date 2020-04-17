@@ -10,5 +10,5 @@ CREATE TABLE IF NOT EXISTS MILESTONES
     status      VARCHAR(20)    NOT NULL,
     time_created timestamptz    NOT NULL default current_timestamp,
     time_updated timestamptz    NOT NULL default current_timestamp,
-    isDeleted   BOOLEAN        NOT NULL default false
+    is_deleted BOOLEAN NOT NULL default false
 )
