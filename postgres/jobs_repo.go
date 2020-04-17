@@ -15,7 +15,8 @@ func NewJobsRepo(db *gorm.DB) *JobsRepo {
 }
 
 func (j *JobsRepo) CreateJob(input *gqlmodel.CreateJobInput) (*dbmodel.job, error) {
-	panic("Not implemented")
+	// query := "INSERT INTO jobs (CreatedBy, Title, Description, Difficulty, Status, TimeCreated, TimeUpdated, IsDeleted) VALUES ("
+	// err := j.db.QueryRowx()
 }
 
 func (j *JobsRepo) UpdateJob(input *gqlmodel.UpdateJobInput) (*dbmodel.job, error) {
@@ -28,12 +29,17 @@ func (j *JobsRepo) DeleteJob(jobId string) (*dbmodel.job, error) {
 
 // Get the complete job details based on the job id
 func (j *JobsRepo) GetById(jobId string) (*dbmodel.job, error) {
-	panic("Not implemented")
+	var job dbmodel.job
+	query := "SELECT * FROM jobs WHERE id = $1"
+	err := j.db.QueryRowx(query, JobId).StructScan(&job)
+	return job, err
 }
 
 // GetByUserId returns all jobs created by that user
 func (j *JobsRepo) GetByUserId(userId string) ([]*dbmodel.job, error) {
-	panic("Not implemented")
+	var job dbmodel.job
+	query := "SELECT * FROM jobs WHERE created_by = $1" 
+	
 }
 
 func (j *JobsRepo) GetStatsByUserId(userId string) (*dbmodel.UserStats, error) {
