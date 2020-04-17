@@ -2,7 +2,7 @@ package postgres
 
 import (
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 )
 

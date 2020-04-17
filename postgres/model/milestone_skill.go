@@ -1,4 +1,4 @@
-package models
+package model
 
 // MilestoneSkills table model
 type MilestoneSkill struct {

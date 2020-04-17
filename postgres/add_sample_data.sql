@@ -146,13 +146,14 @@ values (1, 1, 'such job, many discussions', '2020-07-22 19:10:25-07', '2020-07-2
        (2, 1, 'We should go with chi because they already have a decent jwt auth middleware', '2020-07-22 19:13:25-07',
         '2020-07-23 19:13:25-07', false);
 
-insert into applications(milestone_id, applicant_id, status, notes, time_created, time_updated)
-values (1, 1, 'rejected', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
-       (2, 1, 'rejected', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
+insert into applications(milestone_id, applicant_id, status, note, time_created, time_updated)
+values (1, 1, 'rejected', 'Sorry, you don''t seem to have sufficient experience' , '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
+       (2, 1, 'rejected', 'Sorry, you don''t seem to have sufficient experience' , '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
        (3, 2, 'pending', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
        (4, 2, 'pending', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
        (5, 2, 'pending', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
        (6, 3, 'accepted', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
        (7, 3, 'accepted', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
-       (7, 1, 'withdrawn', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
-       (8, 1, 'withdrawn', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07');
+       (8, 3, 'accepted', 'welcome to the project', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
+       (7, 1, 'withdrawn', '', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07'),
+       (8, 1, 'withdrawn', '', '2020-06-22 19:10:25-07', '2020-06-23 19:10:25-07');

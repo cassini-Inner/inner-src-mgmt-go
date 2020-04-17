@@ -2,6 +2,7 @@ package postgres
 
 import (
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -19,10 +20,17 @@ func (u *UsersRepo) CreateUser(input *gqlmodel.CreateUserInput) (*gqlmodel.User,
 	panic("not implemented")
 }
 
+//TODO: Implement
 func (u *UsersRepo) UpdateUser(input *gqlmodel.CreateUserInput) (*gqlmodel.User, error) {
 	panic("not implemented")
 }
 
-func (u *UsersRepo) GetById(userId string) (*gqlmodel.User, error) {
-	panic("not implemented")
+func (u *UsersRepo) GetById(userId string) (*dbmodel.User, error) {
+	var user dbmodel.User
+	err := u.db.QueryRowx("select * from users where id=$1", userId).StructScan(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

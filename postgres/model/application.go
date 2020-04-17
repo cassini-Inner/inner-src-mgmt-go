@@ -1,4 +1,4 @@
-package models
+package model
 
 // Applications table model
 type Application struct {

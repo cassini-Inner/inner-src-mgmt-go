@@ -39,6 +39,8 @@ type commentResolver struct{ *Resolver }
 type jobResolver struct{ *Resolver }
 type milestoneResolver struct{ *Resolver }
 type milestonesResolver struct{ *Resolver }
+
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type skillResolver struct{ *Resolver }

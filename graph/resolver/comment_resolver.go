@@ -6,5 +6,7 @@ import (
 )
 
 func (r *commentResolver) CreatedBy(ctx context.Context, obj *model.Comment) (*model.User, error) {
-	return r.UsersRepo.GetById(obj.CreatedBy)
+	//return r.UsersRepo.GetById(obj.CreatedBy)
+	panic("not implemented")
 }
+

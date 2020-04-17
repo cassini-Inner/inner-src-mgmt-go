@@ -1,9 +1,9 @@
-package models
+package model
 
 // Milestones table model
 type Milestone struct {
 	Id          string
-	AssignedTo  string `db:"assigned_to"`
+	AssignedTo string `db:"assigned_to"`
 	JobId       string `db:"job_id"`
 	Title       string
 	Description string

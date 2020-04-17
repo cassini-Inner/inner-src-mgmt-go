@@ -6,5 +6,6 @@ import (
 )
 
 func (r *skillResolver) CreatedBy(ctx context.Context, obj *model.Skill) (*model.User, error) {
-	return r.UsersRepo.GetById(obj.CreatedBy)
+	//return r.UsersRepo.GetById(obj.CreatedBy)
+	panic("not implemented")
 }

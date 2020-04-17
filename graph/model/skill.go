@@ -1,7 +1,7 @@
 package model
 
 import (
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 )
 
 type Skill struct {
