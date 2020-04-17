@@ -1,6 +1,6 @@
-insert into users(email, name, role, department, bio, photourl, contact, isdeleted)
+insert into users(email, name, role, department, bio, photo_url, contact, is_deleted)
 VALUES ('tushar@email.com', 'Tushar Paliwal', 'Intern', 'Risk', 'Tech Enthusiast',
-        'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@tushar',  false),
+        'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@tushar', false),
        ('arjun@email.com', 'Arjun Ramachandran', 'Intern', 'Risk', 'Tech Enthusiast',
         'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@arjun', false),
        ('prashant@email.com', 'Prashant Agarwal', 'Intern', 'Risk', 'Data science Enthusiast',
@@ -15,7 +15,7 @@ VALUES (1, 'nodejs', '2019-06-22 19:10:25-07'),
        (3, 'powerbi', '2019-07-23 19:10:25-07'),
        (3, 'spark', '2019-07-23 19:10:25-07');
 
-insert into userskills(user_id, skill_id, time_created, time_updated, isdeleted)
+insert into userskills(user_id, skill_id, time_created, time_updated, is_deleted)
 VALUES (1, 1, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false),
        (1, 2, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false),
        (2, 1, '2019-07-22 19:10:25-07', '2019-07-22 19:10:25-07', false),
@@ -24,7 +24,7 @@ VALUES (1, 1, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false),
        (3, 5, '2019-07-23 19:10:25-07', '2019-07-23 19:10:25-07', false),
        (3, 6, '2019-07-23 19:10:25-07', '2019-07-23 19:10:25-07', false);
 
-INSERT INTO JOBS (createdby, title, description, difficulty, status, time_created, time_updated, isdeleted)
+INSERT INTO JOBS (created_by, title, description, difficulty, status, time_created, time_updated, is_deleted)
 VALUES (1,
         'Explain Activity lifting requirement doesn''t allow selection of current date',
         'In the limitation flow when selecting the "explain activity" lifting requirement the calendar does not allow selection of the current date. This seems to be a new feature that was implemented in a recent push and it is important for the fraud dept to be able to select the current date since they review accounts real time.',
@@ -49,7 +49,8 @@ VALUES (1,
         '2019-08-22 19:10:25-07',
         'FALSE');
 
-INSERT INTO milestones (job_id, title, description, duration, resolution, status, time_created, time_updated, isdeleted)
+INSERT INTO milestones (job_id, title, description, duration, resolution, status, time_created, time_updated,
+                        is_deleted)
 VALUES (1,
         'This a sample milestone title that''s very difficult to achieve',
         'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry''s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. ',
@@ -121,7 +122,7 @@ VALUES (1,
         '2019-08-22 19:10:25-07',
         'FALSE');
 
-insert into milestoneskills(milestone_id, skill_id, time_created, time_updated, isdeleted)
+insert into milestoneskills(milestone_id, skill_id, time_created, time_updated, is_deleted)
 values (1, 2, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false),
        (1, 1, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false),
        (2, 1, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false),
@@ -133,7 +134,7 @@ values (1, 2, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false),
        (5, 5, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false),
        (5, 6, '2019-06-22 19:10:25-07', '2019-06-22 19:10:25-07', false);
 
-insert into discussions(job_id, created_by, content, time_created, time_updated, isdeleted)
+insert into discussions(job_id, created_by, content, time_created, time_updated, is_deleted)
 values (1, 1, 'such job, many discussions', '2020-07-22 19:10:25-07', '2020-07-22 19:10:25-07', false),
        (1, 2, 'Doesn''t look like anyone has picked this up yet. I will do it', '2020-07-22 19:10:25-07',
         '2020-07-22 19:10:25-07', false),
