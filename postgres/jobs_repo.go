@@ -3,7 +3,6 @@ package postgres
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/jinzhu/gorm"
-	"fmt"
 )
 
 type JobsRepo struct {
@@ -26,7 +25,10 @@ func (j *JobsRepo) DeleteJob(jobId string) (*model.Job, error) {
 	panic("Not implemented")
 }
 
+// Get the complete job details based on the job id
 func (j *JobsRepo) GetById(jobId string) (*model.Job, error) {
+	query := "SELECT * FROM jobs WHERE id = ?"
+	result := j.db.Raw(query, jobId)
 	panic("Not implemented")
 }
 

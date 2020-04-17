@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 )
@@ -19,7 +18,7 @@ const defaultPort = "8080"
 func main() {
 	DB, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=innersource password=a sslmode=disable")
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 	defer DB.Close()
 
