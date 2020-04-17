@@ -104,7 +104,7 @@ type Discussions {
 }
 
 type Milestones {
-    totalCounnt: Int
+    totalCount: Int
     milestones: [Milestone]!
 }
 
