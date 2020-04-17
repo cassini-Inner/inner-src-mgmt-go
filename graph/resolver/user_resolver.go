@@ -10,12 +10,13 @@ func (r *userResolver) Skills(ctx context.Context, obj *model.User) ([]*model.Sk
 }
 
 func (r *userResolver) CreatedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error) {
-	//return r.JobsRepo.GetByUserId(obj.ID)
-	panic("not implemented")
+	// return r.JobsRepo.GetByUserId(obj.ID)
+	panic("Not implemented")
 }
 
 func (r *userResolver) AppliedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error) {
-	return r.ApplicationsRepo.GetUserJobApplications(obj.ID)
+	// return r.ApplicationsRepo.GetUserJobApplications(obj.ID)
+	panic("Not implemented")
 }
 
 func (r *userResolver) JobStats(ctx context.Context, obj *model.User) (*model.UserStats, error) {

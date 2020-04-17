@@ -6,20 +6,22 @@ import (
 )
 
 func (r *milestoneResolver) Job(ctx context.Context, obj *model.Milestone) (*model.Job, error) {
-	//return r.JobsRepo.GetById(obj.JobID)
-	panic("not implemented")
-}
-
-//TODO: Should not exist, or find a better way to implement
-func (m milestonesResolver) TotalCount(ctx context.Context, obj *model.Milestones) (*int, error) {
-	panic("implement me")
+	var j model.Job
+	dbjob, err := r.JobsRepo.GetById(obj.JobID)
+	j.MapDbToGql(*dbjob)
+	return &j, err
 }
 
 func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *model.Milestone) (*model.User, error) {
-	//return r.UsersRepo.GetById(obj.AssignedTo)
-	panic("not implemented")
+	return r.UsersRepo.GetById(obj.AssignedTo)
 }
 
 func (r *milestoneResolver) Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error) {
 	return r.SkillsRepo.GetByMilestoneId(obj.ID)
+}
+
+//TODO: Should not exist, or find a better way to implement
+func (m milestonesResolver) TotalCount(ctx context.Context, obj *model.Milestones) (*int, error) {
+	totalCount := len(obj.Milestones)
+	return &totalCount, nil
 }

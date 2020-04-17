@@ -1,6 +1,6 @@
 package model
 
-import(
+import (
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 )
 
@@ -13,7 +13,7 @@ type Comment struct {
 	CreatedBy   string `json:"createdBy"`
 }
 
-func (c *Comment) mapDbToGql(dbComment dbmodel.Discussion) {
+func (c *Comment) MapDbToGql(dbComment dbmodel.Discussion) {
 	c.ID = dbComment.Id
 	c.TimeCreated = dbComment.TimeCreated
 	c.TimeCreated = dbComment.TimeUpdated
