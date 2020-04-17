@@ -13,29 +13,11 @@ type Comment struct {
 	CreatedBy   string `json:"createdBy"`
 }
 
-func (gqlCommnet *Commnet) mapDbToGql(dbCommnet dbmodel.discussion) {
-
-	if dbCommnet.Id != nil {
-		gqlCommnet.ID = dbCommnet.Id
-	}
-
-	if dbCommnet.TimeCreated != nil {
-		gqlCommnet.TimeCreated = dbCommnet.TimeCreated
-	}
-
-	if dbCommnet.TimeUpdated != nil {
-		gqlCommnet.TimeUpdated = dbCommnet.TimeUpdated
-	}
-
-	if dbCommnet.Content != nil {
-		gqlCommnet.Content = dbCommnet.Content
-	}
-
-	if dbCommnet.CreatedBy != nil {
-		gqlCommnet.CreatedBy = dbCommnet.CreatedBy
-	}
-
-	if dbCommnet.IsDeleted != nil {
-		gqlCommnet.IsDeleted = dbCommnet.IsDeleted
-	}
+func (c *Comment) mapDbToGql(dbComment dbmodel.Discussion) {
+	c.ID = dbComment.Id
+	c.TimeCreated = dbComment.TimeCreated
+	c.TimeCreated = dbComment.TimeUpdated
+	c.Content = dbComment.Content
+	c.CreatedBy = dbComment.CreatedBy
+	c.IsDeleted = dbComment.IsDeleted
 }

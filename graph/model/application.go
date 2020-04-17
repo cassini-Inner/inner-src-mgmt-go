@@ -13,25 +13,10 @@ type Application struct {
 	CreatedOn   string            `json:"createdOn"`
 }
 
-func (gqlApplication *Application) mapDbToGql(dbApplication dbmodel.application) {
-
-	if dbApplication.Id != nil{
-		gqlApplication.ID = dbApplication.Id
-	}
-
-	if dbApplication.ApplicantID != nil{
-		gqlApplication.ApplicantID = dbApplication.ApplicantID
-	}
-
-	if dbApplication.Status != nil{
-		gqlApplication.Status = dbApplication.Status
-	}
-
-	if dbApplication.Notes != nil{
-		gqlApplication.Note = dbApplication.Notes
-	}
-
-	if dbApplication.TimeCreated != nil{
-		gqlApplication.CreatedOn = dbApplication.TimeCreated
-	}
+func (a *Application) mapDbToGql(dbApplication dbmodel.Application) {
+	a.ID = dbApplication.Id
+	a.ApplicantID = dbApplication.ApplicantId
+	a.Status = ApplicationStatus(dbApplication.Status)
+	a.Note = &dbApplication.Note
+	a.CreatedOn = dbApplication.TimeCreated
 }

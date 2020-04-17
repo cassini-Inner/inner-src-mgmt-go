@@ -3,7 +3,7 @@ package models
 // GlobalSkills table model
 type GlobalSkill struct {
 	Id          string
-	CreatedBy   string
+	CreatedBy   string `db:"created_by"`
 	Value       string
-	TimeCreated string
+	TimeCreated string `db:"time_created"`
 }

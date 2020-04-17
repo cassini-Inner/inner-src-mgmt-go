@@ -8,9 +8,9 @@ type User struct {
 	Role        string
 	Department  string
 	Bio         string
-	PhotoUrl    string
+	PhotoUrl    string `db:"photo_url"`
 	Contact     string
-	TimeCreated string
-	TimeUpdated string
-	IsDeleted   bool
+	TimeCreated string `db:"time_created"`
+	TimeUpdated string `db:"time_updated"`
+	IsDeleted   bool   `db:"is_deleted"`
 }

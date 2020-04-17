@@ -3,10 +3,10 @@ package models
 // Applications table model
 type Application struct {
 	Id          string
-	MilestoneId string
-	ApplicantId string
+	MilestoneId string `db:"milestone_id"`
+	ApplicantId string `db:"applicant_id"`
 	Status      string
-	Notes       string
-	TimeCreated string
-	TimeUpdated string
+	Note        string
+	TimeCreated string `db:"time_created"`
+	TimeUpdated string `db:"time_updated"`
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
@@ -16,7 +16,7 @@ import (
 const defaultPort = "8080"
 
 func main() {
-	DB, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=innersource password=a sslmode=disable")
+	DB, err := sqlx.Connect("postgres", "host=localhost port=5432 user=postgres dbname=innersource password=a sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
