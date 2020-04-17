@@ -6,7 +6,7 @@ type Application struct {
 	MilestoneId string
 	ApplicantId string
 	Status      string
-	Notes       string
+	Note     string
 	TimeCreated string
 	TimeUpdated string
 }
