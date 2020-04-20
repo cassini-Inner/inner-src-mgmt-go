@@ -28,6 +28,16 @@ func (m *MilestonesRepo) GetByJobId(jobId string) ([]*dbmodel.Milestone, error) 
 	return milestones, nil
 }
 
+func (m *MilestonesRepo) GetById(milestoneId string) (*dbmodel.Milestone, error) {
+	var milestone dbmodel.Milestone
+	err :=m.db.QueryRowx(selectMilestoneByIdQuery, milestoneId).StructScan(&milestone)
+	if err != nil {
+		return nil, err
+	}
+	return &milestone, nil
+}
+
 const (
-	selectMilestonesByJobId = `SELECT * FROM milestones WHERE job_id = $1`
+	selectMilestonesByJobId = `SELECT * FROM milestones WHERE job_id = $1 and is_deleted = false`
+	selectMilestoneByIdQuery = `SELECT * FROM milestones WHERE id = $1 and is_deleted=false`
 )

@@ -50,5 +50,5 @@ func (u *UsersRepo) GetById(userId string) (*dbmodel.User, error) {
 }
 
 const (
-	getUserByIdQuery = `select * from users where users.id = $1`
+	getUserByIdQuery = `select * from users where users.id = $1 and users.is_deleted = false`
 )

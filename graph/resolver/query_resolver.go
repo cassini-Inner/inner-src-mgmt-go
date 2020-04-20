@@ -2,12 +2,22 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
 func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilterInput) ([]*gqlmodel.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	jobsFromDb, err := r.JobsRepo.GetAll(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*gqlmodel.Job
+	for _, dbJob := range jobsFromDb {
+		var tempJob gqlmodel.Job
+		tempJob.MapDbToGql(*dbJob)
+		result = append(result, &tempJob)
+	}
+	return result, nil
 }
 
 func (r *queryResolver) Job(ctx context.Context, id string) (*gqlmodel.Job, error) {
