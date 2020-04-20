@@ -38,6 +38,6 @@ func (m *MilestonesRepo) GetById(milestoneId string) (*dbmodel.Milestone, error)
 }
 
 const (
-	selectMilestonesByJobId = `SELECT * FROM milestones WHERE job_id = $1`
-	selectMilestoneByIdQuery = `SELECT * FROM milestones WHERE id = $1`
+	selectMilestonesByJobId = `SELECT * FROM milestones WHERE job_id = $1 and is_deleted = false`
+	selectMilestoneByIdQuery = `SELECT * FROM milestones WHERE id = $1 and is_deleted=false`
 )

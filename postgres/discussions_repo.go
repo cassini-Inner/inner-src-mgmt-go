@@ -42,5 +42,5 @@ func (d *DiscussionsRepo) GetByJobId(jobId string) ([]*dbmodel.Discussion, error
 }
 
 const (
-	getDiscussionByJobId = `select * from discussions where job_id = $1 order by time_created`
+	getDiscussionByJobId = `select * from discussions where job_id = $1 and is_deleted=false order by time_created`
 )

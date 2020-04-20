@@ -65,7 +65,7 @@ const (
 		applications.time_created, 
 		applications.time_updated
 		from applications
-		join milestones on milestones.id = applications.milestone_id
+		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
 		where milestones.job_id = $1 and applications.status in ('pending', 'accepted' )`
 
 	selectAppliedJobsByUserIdQuery = `select distinct jobs.id,
@@ -78,7 +78,7 @@ const (
 		jobs.time_updated,
 		jobs.is_deleted
 		from applications
-		join milestones on milestones.id = applications.milestone_id
-		join jobs on milestones.job_id = jobs.id
+		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
+		join jobs on milestones.job_id = jobs.id and jobs.is_deleted = false
 		where applicant_id = $1 and applications.status in ('pending', 'accepted', 'rejected')`
 )
