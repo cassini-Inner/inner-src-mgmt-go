@@ -15,11 +15,11 @@ func NewUsersRepo(db *sqlx.DB) *UsersRepo {
 	return &UsersRepo{db: db}
 }
 
-
 func (u *UsersRepo) CreateUser(input *gqlmodel.CreateUserInput) (*dbmodel.User, error) {
 	var user dbmodel.User
 	query := "SELECT * FROM users WHERE email = $1 AND is_deleted = FALSE"
 	err := u.db.QueryRowx(query, input.Email).StructScan(&user)
+
 	if err != nil {
 		var lastInsertId string
 		query = "INSERT INTO users (name, email, photo_url) VALUES($1, $2, $3) RETURNING id"

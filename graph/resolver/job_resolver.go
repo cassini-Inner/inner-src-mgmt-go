@@ -40,6 +40,8 @@ func (r *jobResolver) Milestones(ctx context.Context, obj *gqlmodel.Job) (*gqlmo
 		milestone.MapDbToGql(*m)
 		milestones.Milestones = append(milestones.Milestones, &milestone)
 	}
+	totalLength := len(milestones.Milestones)
+	milestones.TotalCount = &totalLength
 	return &milestones, err
 }
 
