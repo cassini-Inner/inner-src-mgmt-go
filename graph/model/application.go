@@ -8,6 +8,7 @@ import (
 type Application struct {
 	ID          string            `json:"id"`
 	ApplicantID string            `json:"applicant"`
+	MilestoneID string            `json:"applicant"`
 	Status      ApplicationStatus `json:"status"`
 	Note        *string           `json:"note"`
 	CreatedOn   string            `json:"createdOn"`
@@ -18,5 +19,6 @@ func (a *Application) MapDbToGql(dbApplication dbmodel.Application) {
 	a.ApplicantID = dbApplication.ApplicantId
 	a.Status = ApplicationStatus(strings.ToUpper(dbApplication.Status))
 	a.Note = &dbApplication.Note
+	a.MilestoneID = dbApplication.MilestoneId
 	a.CreatedOn = dbApplication.TimeCreated
 }

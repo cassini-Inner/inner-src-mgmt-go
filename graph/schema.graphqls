@@ -119,6 +119,7 @@ type Application {
     id: ID!
     applicant: User!
     status: ApplicationStatus!
+    milestone: Milestone!
     # Any message to be conveyed to the applicant
     note: String
     createdOn: String!

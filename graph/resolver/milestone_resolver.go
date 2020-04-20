@@ -36,6 +36,5 @@ func (r *milestoneResolver) Skills(ctx context.Context, obj *gqlmodel.Milestone)
 		gqlSkill.MapDbToGql(*skill)
 		result = append(result, &gqlSkill)
 	}
-
 	return result, nil
 }
