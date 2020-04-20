@@ -56,6 +56,11 @@ type UpdateUserInput struct {
 	Skills     []*string `json:"skills"`
 }
 
+type UserAuthenticationPayload struct {
+	Profile *User  `json:"profile"`
+	Token   string `json:"token"`
+}
+
 type UserJobApplication struct {
 	ApplicationStatus ApplicationStatus `json:"applicationStatus"`
 	Job               *Job              `json:"job"`

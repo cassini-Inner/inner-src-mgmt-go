@@ -57,3 +57,9 @@ func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID strin
 func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *gqlmodel.ApplicationStatus) (*gqlmodel.Application, error) {
 	panic(fmt.Errorf("not implemented"))
 }
+
+
+func (r *mutationResolver) Authenticate(ctx context.Context, githubCode string) (*gqlmodel.UserAuthenticationPayload, error) {
+	//http.Post("https://github.com/login/oauth/access_token","application/json", )
+	panic("not implemented")
+}

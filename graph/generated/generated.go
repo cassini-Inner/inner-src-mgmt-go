@@ -116,6 +116,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AddCommentToJob      func(childComplexity int, comment string, jobID string) int
+		Authenticate         func(childComplexity int, githubCode string) int
 		CreateJob            func(childComplexity int, job *model.CreateJobInput) int
 		CreateJobApplication func(childComplexity int, jobID string) int
 		CreateUserProfile    func(childComplexity int, user *model.CreateUserInput) int
@@ -156,6 +157,11 @@ type ComplexityRoot struct {
 		Skills      func(childComplexity int) int
 		TimeCreated func(childComplexity int) int
 		TimeUpdated func(childComplexity int) int
+	}
+
+	UserAuthenticationPayload struct {
+		Profile func(childComplexity int) int
+		Token   func(childComplexity int) int
 	}
 
 	UserJobApplication struct {
@@ -205,6 +211,7 @@ type MutationResolver interface {
 	CreateJobApplication(ctx context.Context, jobID string) (*model.Application, error)
 	DeleteJobApplication(ctx context.Context, jobID string) (*model.Application, error)
 	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus) (*model.Application, error)
+	Authenticate(ctx context.Context, githubCode string) (*model.UserAuthenticationPayload, error)
 }
 type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
@@ -557,6 +564,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AddCommentToJob(childComplexity, args["comment"].(string), args["jobID"].(string)), true
 
+	case "Mutation.authenticate":
+		if e.complexity.Mutation.Authenticate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_authenticate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Authenticate(childComplexity, args["githubCode"].(string)), true
+
 	case "Mutation.createJob":
 		if e.complexity.Mutation.CreateJob == nil {
 			break
@@ -839,6 +858,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.TimeUpdated(childComplexity), true
 
+	case "UserAuthenticationPayload.profile":
+		if e.complexity.UserAuthenticationPayload.Profile == nil {
+			break
+		}
+
+		return e.complexity.UserAuthenticationPayload.Profile(childComplexity), true
+
+	case "UserAuthenticationPayload.token":
+		if e.complexity.UserAuthenticationPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.UserAuthenticationPayload.Token(childComplexity), true
+
 	case "UserJobApplication.applicationStatus":
 		if e.complexity.UserJobApplication.ApplicationStatus == nil {
 			break
@@ -953,6 +986,7 @@ var sources = []*ast.Source{
         id: ID!
         jobsStatusFilter: JobStatus
     ): User
+
 }
 type Mutation {
     # To update the user information like name, email ...
@@ -977,7 +1011,14 @@ type Mutation {
     deleteJobApplication(jobID: ID!): Application
     # create, accept or reject applicants
     updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): Application
+    authenticate(githubCode: String!): UserAuthenticationPayload
 }
+
+type UserAuthenticationPayload {
+    profile: User!
+    token: String!
+}
+
 # For updating a job
 input UpdateJobInput {
     id: ID!
@@ -1182,6 +1223,20 @@ func (ec *executionContext) field_Mutation_addCommentToJob_args(ctx context.Cont
 		}
 	}
 	args["jobID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_authenticate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["githubCode"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["githubCode"] = arg0
 	return args, nil
 }
 
@@ -3321,6 +3376,44 @@ func (ec *executionContext) _Mutation_updateJobApplication(ctx context.Context, 
 	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_authenticate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_authenticate_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().Authenticate(rctx, args["githubCode"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserAuthenticationPayload)
+	fc.Result = res
+	return ec.marshalOUserAuthenticationPayload2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserAuthenticationPayload(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_allJobs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4099,6 +4192,74 @@ func (ec *executionContext) _User_jobStats(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.UserStats)
 	fc.Result = res
 	return ec.marshalNUserStats2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserStats(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserAuthenticationPayload_profile(ctx context.Context, field graphql.CollectedField, obj *model.UserAuthenticationPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "UserAuthenticationPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Profile, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserAuthenticationPayload_token(ctx context.Context, field graphql.CollectedField, obj *model.UserAuthenticationPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "UserAuthenticationPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserJobApplication_applicationStatus(ctx context.Context, field graphql.CollectedField, obj *model.UserJobApplication) (ret graphql.Marshaler) {
@@ -6054,6 +6215,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_deleteJobApplication(ctx, field)
 		case "updateJobApplication":
 			out.Values[i] = ec._Mutation_updateJobApplication(ctx, field)
+		case "authenticate":
+			out.Values[i] = ec._Mutation_authenticate(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6281,6 +6444,38 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				}
 				return res
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var userAuthenticationPayloadImplementors = []string{"UserAuthenticationPayload"}
+
+func (ec *executionContext) _UserAuthenticationPayload(ctx context.Context, sel ast.SelectionSet, obj *model.UserAuthenticationPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userAuthenticationPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserAuthenticationPayload")
+		case "profile":
+			out.Values[i] = ec._UserAuthenticationPayload_profile(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "token":
+			out.Values[i] = ec._UserAuthenticationPayload_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7764,6 +7959,17 @@ func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinn
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserAuthenticationPayload2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserAuthenticationPayload(ctx context.Context, sel ast.SelectionSet, v model.UserAuthenticationPayload) graphql.Marshaler {
+	return ec._UserAuthenticationPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOUserAuthenticationPayload2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserAuthenticationPayload(ctx context.Context, sel ast.SelectionSet, v *model.UserAuthenticationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserAuthenticationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUserJobApplication2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserJobApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserJobApplication) graphql.Marshaler {

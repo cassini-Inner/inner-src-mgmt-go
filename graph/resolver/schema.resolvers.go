@@ -6,7 +6,6 @@ package resolver
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 )
-
 // Application returns generated.ApplicationResolver implementation.
 func (r *Resolver) Application() generated.ApplicationResolver { return &applicationResolver{r} }
 
@@ -36,6 +35,8 @@ type commentResolver struct{ *Resolver }
 type jobResolver struct{ *Resolver }
 type milestoneResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+
+
 type queryResolver struct{ *Resolver }
 type skillResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
