@@ -1,4 +1,4 @@
-package models
+package model
 
 // Discussions table model
 type Discussion struct {

@@ -1,7 +1,7 @@
 package model
 
-import(
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+import (
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"strings"
 )
 
@@ -19,7 +19,6 @@ type Job struct {
 	Milestones   *Milestones   `json:"milestones"`
 	Applications *Applications `json:"applications"`
 }
-
 
 func (j *Job) MapDbToGql(dbJob dbmodel.Job) {
 	j.ID = dbJob.Id

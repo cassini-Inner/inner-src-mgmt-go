@@ -2,7 +2,7 @@ package postgres
 
 import (
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -31,22 +31,28 @@ func (j *JobsRepo) DeleteJob(jobId string) (*dbmodel.Job, error) {
 // Get the complete job details based on the job id
 func (j *JobsRepo) GetById(jobId string) (*dbmodel.Job, error) {
 	var job dbmodel.Job
-	query := "SELECT * FROM jobs WHERE id = $1"
-	err := j.db.QueryRowx(query, jobId).StructScan(&job)
-	return &job, err
+	err := j.db.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
+	if err != nil {
+		return nil, err
+	}
+	return &job, nil
 }
 
 // GetByUserId returns all jobs created by that user
 func (j *JobsRepo) GetByUserId(userId string) ([]*dbmodel.Job, error) {
-	var job *dbmodel.Job
-	var jobs []*dbmodel.Job
-	query := "SELECT * FROM jobs WHERE created_by = $1" 
-	rows, err := j.db.Queryx(query, userId)
-	for rows.Next() {
-		rows.StructScan(&job)
-		jobs = append(jobs, job)
+
+	rows, err := j.db.Queryx(selectJobsByUserIdQuery, userId)
+	if err != nil {
+		return nil, err
 	}
-	return jobs, err
+
+	var jobs []*dbmodel.Job
+	for rows.Next() {
+		var job dbmodel.Job
+		rows.StructScan(&job)
+		jobs = append(jobs, &job)
+	}
+	return jobs, nil
 }
 
 //TODO: Refactor this.
@@ -57,3 +63,8 @@ func (j *JobsRepo) GetStatsByUserId(userId string) (*gqlmodel.UserStats, error) 
 func (j *JobsRepo) GetAll(filters *gqlmodel.JobsFilterInput) ([]*dbmodel.Job, error) {
 	panic("not implemented")
 }
+
+const (
+	selectJobByIdQuery = `SELECT * FROM jobs WHERE id = $1`
+	selectJobsByUserIdQuery = `SELECT * FROM jobs WHERE created_by = $1`
+)

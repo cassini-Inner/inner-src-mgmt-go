@@ -2,6 +2,7 @@ package postgres
 
 import (
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -24,6 +25,22 @@ func (d *DiscussionsRepo) DeleteComment(commentId string) (*gqlmodel.Comment, er
 	panic("not implemented")
 }
 
-func (d *DiscussionsRepo) GetByJobId(jobId string) (*gqlmodel.Discussions, error) {
-	panic("not implemented")
+func (d *DiscussionsRepo) GetByJobId(jobId string) ([]*dbmodel.Discussion, error) {
+	rows, err := d.db.Queryx(getDiscussionByJobId, jobId)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*dbmodel.Discussion
+	for rows != nil && rows.Next() {
+		var discussion dbmodel.Discussion
+		rows.StructScan(&discussion)
+		result = append(result, &discussion)
+	}
+
+	return result, nil
 }
+
+const (
+	getDiscussionByJobId = `select * from discussions where job_id = $1 order by time_created`
+)

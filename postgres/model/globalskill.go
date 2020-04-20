@@ -1,4 +1,4 @@
-package models
+package model
 
 // GlobalSkills table model
 type GlobalSkill struct {

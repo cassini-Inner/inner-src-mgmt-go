@@ -16,7 +16,7 @@ import (
 const defaultPort = "8080"
 
 func main() {
-	DB, err := sqlx.Connect("postgres", "host=localhost port=5432 user=postgres dbname=innersource password=a sslmode=disable")
+	DB, err := sqlx.Connect("postgres", "host=localhost port=5432 user=postgres dbname=innersource password=root sslmode=disable")
 	if err != nil {
 		panic(err)
 	}

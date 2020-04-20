@@ -1,12 +1,14 @@
-package models
+package model
 
-import("database/sql")
+import (
+	"database/sql"
+)
 
 // Milestones table model
 type Milestone struct {
 	Id          string
 	AssignedTo  sql.NullString `db:"assigned_to"`
-	JobId       string `db:"job_id"`
+	JobId       string         `db:"job_id"`
 	Title       string
 	Description string
 	Duration    string
