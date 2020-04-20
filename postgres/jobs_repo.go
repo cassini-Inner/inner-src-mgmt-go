@@ -65,6 +65,6 @@ func (j *JobsRepo) GetAll(filters *gqlmodel.JobsFilterInput) ([]*dbmodel.Job, er
 }
 
 const (
-	selectJobByIdQuery = `SELECT * FROM jobs WHERE id = $1`
-	selectJobsByUserIdQuery = `SELECT * FROM jobs WHERE created_by = $1`
+	selectJobByIdQuery = `SELECT * FROM jobs WHERE id = $1 and is_deleted=false`
+	selectJobsByUserIdQuery = `SELECT * FROM jobs WHERE created_by = $1 and is_deleted=false`
 )

@@ -56,10 +56,10 @@ const (
 		globalskills.value,
 		globalskills.time_created
 		from jobs
-		join milestones on jobs.id = milestones.job_id	 
-		join milestoneskills on milestoneskills.milestone_id = milestones.id
+		join milestones on jobs.id = milestones.job_id and milestones.is_deleted = false
+		join milestoneskills on milestoneskills.milestone_id = milestones.id and milestoneskills.is_deleted = false
 		join globalskills on milestoneskills.skill_id = globalskills.id
-		where jobs.id = $1
+		where jobs.id = $1 and jobs.is_deleted = false
 		order by globalskills.value`
 
 	selectSkillsByMilestoneIdQuery = `select
@@ -67,10 +67,9 @@ const (
 			globalskills.created_by,
 			globalskills.value,
 			globalskills.time_created
-		from milestones
-		join milestoneskills on milestoneskills.milestone_id = milestones.id
-		join globalskills on milestoneskills.skill_id = globalskills.id
-		where milestones.id = $1
+		from milestoneskills
+		join globalskills on milestoneskills.skill_id = globalskills.id and milestoneskills.is_deleted = false
+		where milestoneskills.milestone_id = 5
 		order by globalskills.value`
 
 	selectSkillsByUserIdQuery = `select
@@ -79,7 +78,7 @@ const (
 			globalskills.value,
 			globalskills.time_created
 		from users
-		join userskills on userskills.user_id = users.id
+		join userskills on userskills.user_id = users.id and userskills.is_deleted = false
 		join globalskills on globalskills.id = userskills.id
-		where users.id = $1`
+		where users.id = $1 and users.is_deleted = false`
 )
