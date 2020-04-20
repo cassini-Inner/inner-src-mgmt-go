@@ -1,9 +1,9 @@
 package model
 
-import(
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+import (
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"strings"
 )
-
 
 type Application struct {
 	ID          string            `json:"id"`
@@ -16,7 +16,7 @@ type Application struct {
 func (a *Application) MapDbToGql(dbApplication dbmodel.Application) {
 	a.ID = dbApplication.Id
 	a.ApplicantID = dbApplication.ApplicantId
-	a.Status = ApplicationStatus(dbApplication.Status)
+	a.Status = ApplicationStatus(strings.ToUpper(dbApplication.Status))
 	a.Note = &dbApplication.Note
 	a.CreatedOn = dbApplication.TimeCreated
 }

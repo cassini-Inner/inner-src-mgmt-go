@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 )
 
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -13,10 +13,13 @@ func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel
 
 func (r *mutationResolver) CreateUserProfile(ctx context.Context, user *gqlmodel.CreateUserInput) (*gqlmodel.User, error) {
 	var dbuser *dbmodel.User
-	var gqluser *gqlmodel.User
+	var gqluser gqlmodel.User
 	dbuser, err := r.UsersRepo.CreateUser(user)
+	if err != nil {
+		return nil, err
+	}
 	gqluser.MapDbToGql(*dbuser)
-	return gqluser, err
+	return &gqluser, err
 }
 
 func (r *mutationResolver) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (*gqlmodel.Job, error) {

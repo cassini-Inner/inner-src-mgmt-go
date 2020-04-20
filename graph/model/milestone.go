@@ -1,21 +1,22 @@
 package model
 
 import (
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"strings"
 )
 
 type Milestone struct {
-	ID          string    `json:"id"`
-	JobID       string    `json:"job"`
-	Title       string    `json:"title"`
-	TimeCreated string    `json:"timeCreated"`
-	TimeUpdated string    `json:"timeUpdated"`
-	Desc        string    `json:"desc"`
-	Resolution  string    `json:"resolution"`
-	Duration    string    `json:"duration"`
+	ID          string     `json:"id"`
+	JobID       string     `json:"job"`
+	Title       string     `json:"title"`
+	TimeCreated string     `json:"timeCreated"`
+	TimeUpdated string     `json:"timeUpdated"`
+	Desc        string     `json:"desc"`
+	Resolution  string     `json:"resolution"`
+	Duration    string     `json:"duration"`
 	Status      *JobStatus `json:"status"`
-	AssignedTo  string    `json:"assignedTo"`
-	Skills      []*Skill  `json:"skills"`
+	AssignedTo  string     `json:"assignedTo"`
+	Skills      []*Skill   `json:"skills"`
 }
 
 func (m *Milestone) MapDbToGql(dbMilestone dbmodel.Milestone) {
@@ -29,8 +30,8 @@ func (m *Milestone) MapDbToGql(dbMilestone dbmodel.Milestone) {
 	m.Duration = dbMilestone.Duration
 
 	//TODO: Check how jobStatus enums work
-	// status := JobStatus(strings.ToUpper(dbMilestone.Status))
-	// m.Status = &status
+	status := JobStatus(strings.ToUpper(dbMilestone.Status))
+	m.Status = &status
 	if dbMilestone.AssignedTo.Valid {
 		m.AssignedTo = dbMilestone.AssignedTo.String
 	}

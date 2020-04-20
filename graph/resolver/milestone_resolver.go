@@ -2,25 +2,39 @@ package resolver
 
 import (
 	"context"
-	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
-func (r *milestoneResolver) Job(ctx context.Context, obj *model.Milestone) (*model.Job, error) {
-	var j model.Job 
+func (r *milestoneResolver) Job(ctx context.Context, obj *gqlmodel.Milestone) (*gqlmodel.Job, error) {
+	var job gqlmodel.Job
 	dbjob, err := r.JobsRepo.GetById(obj.JobID)
-	j.MapDbToGql(*dbjob)
-	return &j, err
+	if err != nil {
+		return nil, err
+	}
+	job.MapDbToGql(*dbjob)
+	return &job, nil
 }
 
-func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *model.Milestone) (*model.User, error) {
-	return r.UsersRepo.GetById(obj.AssignedTo)
+func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *gqlmodel.Milestone) (*gqlmodel.User, error) {
+	user, err := r.UsersRepo.GetById(obj.AssignedTo)
+	if err != nil {
+		return nil, err
+	}
+	var gqlUser gqlmodel.User
+	gqlUser.MapDbToGql(*user)
+	return &gqlUser, nil
 }
 
-func (r *milestoneResolver) Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error) {
-	return r.SkillsRepo.GetByMilestoneId(obj.ID)
+func (r *milestoneResolver) Skills(ctx context.Context, obj *gqlmodel.Milestone) ([]*gqlmodel.Skill, error) {
+	skills, err := r.SkillsRepo.GetByMilestoneId(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	var result []*gqlmodel.Skill
+	for _, skill := range skills {
+		var gqlSkill gqlmodel.Skill
+		gqlSkill.MapDbToGql(*skill)
+		result = append(result, &gqlSkill)
+	}
+	return result, err
 }
-
-func (m milestonesResolver) TotalCount(ctx context.Context, obj *model.Milestones) (*int, error) {
-	totalCount := len(obj.Milestones)
-	return &totalCount, nil
- }

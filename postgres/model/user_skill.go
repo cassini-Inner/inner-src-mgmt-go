@@ -1,4 +1,4 @@
-package models
+package model
 
 // UserSkills table model
 type UserSkill struct {

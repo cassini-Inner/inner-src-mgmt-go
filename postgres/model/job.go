@@ -1,4 +1,4 @@
-package models
+package model
 
 // Jobs table model
 type Job struct {

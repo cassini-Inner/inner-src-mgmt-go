@@ -2,9 +2,15 @@ package resolver
 
 import (
 	"context"
-	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
-func (r *applicationResolver) Applicant(ctx context.Context, obj *model.Application) (*model.User, error) {
-	return r.UsersRepo.GetById(obj.ApplicantID)
+func (r *applicationResolver) Applicant(ctx context.Context, obj *gqlmodel.Application) (*gqlmodel.User, error) {
+	user, err := r.UsersRepo.GetById(obj.ApplicantID)
+	if err != nil {
+		return nil, err
+	}
+	var gqlUser gqlmodel.User
+	gqlUser.MapDbToGql(*user)
+	return &gqlUser, nil
 }

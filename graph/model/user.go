@@ -1,7 +1,7 @@
 package model
 
-import(
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+import (
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 )
 
 type User struct {
@@ -22,14 +22,14 @@ type User struct {
 }
 
 func (u *User) MapDbToGql(dbUser dbmodel.User) {
-		u.ID = dbUser.Id
-		u.Email = dbUser.Email
-		u.Name = dbUser.Name
-		u.Role = dbUser.Role
-		u.Department = dbUser.Department
-		u.PhotoURL = dbUser.PhotoUrl
-		u.Bio = &dbUser.Bio
-		u.Contact = &dbUser.Contact
-		u.TimeCreated = dbUser.TimeCreated
-		u.TimeUpdated = dbUser.TimeUpdated
+	u.ID = dbUser.Id
+	u.Email = dbUser.Email
+	u.Name = dbUser.Name
+	u.Role = dbUser.Role
+	u.Department = dbUser.Department
+	u.PhotoURL = dbUser.PhotoUrl
+	u.Bio = &dbUser.Bio
+	u.Contact = &dbUser.Contact
+	u.TimeCreated = dbUser.TimeCreated
+	u.TimeUpdated = dbUser.TimeUpdated
 }

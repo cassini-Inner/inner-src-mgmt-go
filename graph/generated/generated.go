@@ -39,7 +39,6 @@ type ResolverRoot interface {
 	Comment() CommentResolver
 	Job() JobResolver
 	Milestone() MilestoneResolver
-	Milestones() MilestonesResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Skill() SkillResolver
@@ -157,6 +156,11 @@ type ComplexityRoot struct {
 		TimeUpdated func(childComplexity int) int
 	}
 
+	UserJobApplication struct {
+		ApplicationStatus func(childComplexity int) int
+		Job               func(childComplexity int) int
+	}
+
 	UserStats struct {
 		Completed func(childComplexity int) int
 		Created   func(childComplexity int) int
@@ -183,9 +187,6 @@ type MilestoneResolver interface {
 	AssignedTo(ctx context.Context, obj *model.Milestone) (*model.User, error)
 	Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error)
 }
-type MilestonesResolver interface {
-	TotalCount(ctx context.Context, obj *model.Milestones) (*int, error)
-}
 type MutationResolver interface {
 	UpdateUserProfile(ctx context.Context, user *model.UpdateUserInput) (*model.User, error)
 	CreateUserProfile(ctx context.Context, user *model.CreateUserInput) (*model.User, error)
@@ -211,7 +212,7 @@ type UserResolver interface {
 	Skills(ctx context.Context, obj *model.User) ([]*model.Skill, error)
 
 	CreatedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error)
-	AppliedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error)
+	AppliedJobs(ctx context.Context, obj *model.User) ([]*model.UserJobApplication, error)
 	JobStats(ctx context.Context, obj *model.User) (*model.UserStats, error)
 }
 
@@ -818,6 +819,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.TimeUpdated(childComplexity), true
 
+	case "UserJobApplication.applicationStatus":
+		if e.complexity.UserJobApplication.ApplicationStatus == nil {
+			break
+		}
+
+		return e.complexity.UserJobApplication.ApplicationStatus(childComplexity), true
+
+	case "UserJobApplication.job":
+		if e.complexity.UserJobApplication.Job == nil {
+			break
+		}
+
+		return e.complexity.UserJobApplication.Job(childComplexity), true
+
 	case "UserStats.completed":
 		if e.complexity.UserStats.Completed == nil {
 			break
@@ -1044,9 +1059,14 @@ type User {
     # Jobs created by the user
     createdJobs: [Job!]
     # Jobs user has applied to
-    appliedJobs: [Job!]
+    appliedJobs: [UserJobApplication!]
     # Number of jobs the user has taken/working on/completed
     jobStats: UserStats!
+}
+
+type UserJobApplication {
+    applicationStatus: ApplicationStatus!
+    job: Job!
 }
 
 type Comment {
@@ -2742,13 +2762,13 @@ func (ec *executionContext) _Milestones_totalCount(ctx context.Context, field gr
 		Object:   "Milestones",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Milestones().TotalCount(rctx, obj)
+		return obj.TotalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3955,9 +3975,9 @@ func (ec *executionContext) _User_appliedJobs(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Job)
+	res := resTmp.([]*model.UserJobApplication)
 	fc.Result = res
-	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobᚄ(ctx, field.Selections, res)
+	return ec.marshalOUserJobApplication2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserJobApplicationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_jobStats(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -3992,6 +4012,74 @@ func (ec *executionContext) _User_jobStats(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.UserStats)
 	fc.Result = res
 	return ec.marshalNUserStats2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserStats(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserJobApplication_applicationStatus(ctx context.Context, field graphql.CollectedField, obj *model.UserJobApplication) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "UserJobApplication",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ApplicationStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.ApplicationStatus)
+	fc.Result = res
+	return ec.marshalNApplicationStatus2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserJobApplication_job(ctx context.Context, field graphql.CollectedField, obj *model.UserJobApplication) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "UserJobApplication",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Job, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Job)
+	fc.Result = res
+	return ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserStats_completed(ctx context.Context, field graphql.CollectedField, obj *model.UserStats) (ret graphql.Marshaler) {
@@ -5800,20 +5888,11 @@ func (ec *executionContext) _Milestones(ctx context.Context, sel ast.SelectionSe
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Milestones")
 		case "totalCount":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Milestones_totalCount(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Milestones_totalCount(ctx, field, obj)
 		case "milestones":
 			out.Values[i] = ec._Milestones_milestones(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -6090,6 +6169,38 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				}
 				return res
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var userJobApplicationImplementors = []string{"UserJobApplication"}
+
+func (ec *executionContext) _UserJobApplication(ctx context.Context, sel ast.SelectionSet, obj *model.UserJobApplication) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userJobApplicationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserJobApplication")
+		case "applicationStatus":
+			out.Values[i] = ec._UserJobApplication_applicationStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "job":
+			out.Values[i] = ec._UserJobApplication_job(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6615,6 +6726,20 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinn
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserJobApplication2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserJobApplication(ctx context.Context, sel ast.SelectionSet, v model.UserJobApplication) graphql.Marshaler {
+	return ec._UserJobApplication(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserJobApplication2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserJobApplication(ctx context.Context, sel ast.SelectionSet, v *model.UserJobApplication) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._UserJobApplication(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUserStats2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserStats(ctx context.Context, sel ast.SelectionSet, v model.UserStats) graphql.Marshaler {
@@ -7459,6 +7584,46 @@ func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinn
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserJobApplication2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserJobApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserJobApplication) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUserJobApplication2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserJobApplication(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
