@@ -53,6 +53,7 @@ type ComplexityRoot struct {
 		Applicant func(childComplexity int) int
 		CreatedOn func(childComplexity int) int
 		ID        func(childComplexity int) int
+		Milestone func(childComplexity int) int
 		Note      func(childComplexity int) int
 		Status    func(childComplexity int) int
 	}
@@ -170,6 +171,8 @@ type ComplexityRoot struct {
 
 type ApplicationResolver interface {
 	Applicant(ctx context.Context, obj *model.Application) (*model.User, error)
+
+	Milestone(ctx context.Context, obj *model.Application) (*model.Milestone, error)
 }
 type CommentResolver interface {
 	CreatedBy(ctx context.Context, obj *model.Comment) (*model.User, error)
@@ -251,6 +254,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Application.ID(childComplexity), true
+
+	case "Application.milestone":
+		if e.complexity.Application.Milestone == nil {
+			break
+		}
+
+		return e.complexity.Application.Milestone(childComplexity), true
 
 	case "Application.note":
 		if e.complexity.Application.Note == nil {
@@ -1039,6 +1049,7 @@ type Application {
     id: ID!
     applicant: User!
     status: ApplicationStatus!
+    milestone: Milestone!
     # Any message to be conveyed to the applicant
     note: String
     createdOn: String!
@@ -1527,6 +1538,40 @@ func (ec *executionContext) _Application_status(ctx context.Context, field graph
 	res := resTmp.(model.ApplicationStatus)
 	fc.Result = res
 	return ec.marshalNApplicationStatus2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Application_milestone(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Application",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Application().Milestone(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Milestone)
+	fc.Result = res
+	return ec.marshalNMilestone2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Application_note(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
@@ -5534,6 +5579,20 @@ func (ec *executionContext) _Application(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "milestone":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Application_milestone(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "note":
 			out.Values[i] = ec._Application_note(ctx, field, obj)
 		case "createdOn":
@@ -6577,6 +6636,10 @@ func (ec *executionContext) marshalNJobStatus2githubᚗcomᚋcassiniᚑInnerᚋi
 	return v
 }
 
+func (ec *executionContext) marshalNMilestone2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v model.Milestone) graphql.Marshaler {
+	return ec._Milestone(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v []*model.Milestone) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -6612,6 +6675,16 @@ func (ec *executionContext) marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑInn
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNMilestone2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx context.Context, sel ast.SelectionSet, v *model.Milestone) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Milestone(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneInput(ctx context.Context, v interface{}) ([]*model.MilestoneInput, error) {
