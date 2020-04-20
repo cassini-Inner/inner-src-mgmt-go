@@ -4,8 +4,10 @@ package resolver
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 )
+
 
 // Application returns generated.ApplicationResolver implementation.
 func (r *Resolver) Application() generated.ApplicationResolver { return &applicationResolver{r} }
@@ -18,9 +20,6 @@ func (r *Resolver) Job() generated.JobResolver { return &jobResolver{r} }
 
 // Milestone returns generated.MilestoneResolver implementation.
 func (r *Resolver) Milestone() generated.MilestoneResolver { return &milestoneResolver{r} }
-
-// Milestones returns generated.MilestonesResolver implementation.
-func (r *Resolver) Milestones() generated.MilestonesResolver { return &milestonesResolver{r} }
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
@@ -38,10 +37,14 @@ type applicationResolver struct{ *Resolver }
 type commentResolver struct{ *Resolver }
 type jobResolver struct{ *Resolver }
 type milestoneResolver struct{ *Resolver }
-type milestonesResolver struct{ *Resolver }
-
-
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type skillResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.

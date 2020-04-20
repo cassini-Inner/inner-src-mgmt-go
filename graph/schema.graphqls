@@ -139,9 +139,14 @@ type User {
     # Jobs created by the user
     createdJobs: [Job!]
     # Jobs user has applied to
-    appliedJobs: [Job!]
+    appliedJobs: [UserJobApplication!]
     # Number of jobs the user has taken/working on/completed
     jobStats: UserStats!
+}
+
+type UserJobApplication {
+    applicationStatus: ApplicationStatus!
+    job: Job!
 }
 
 type Comment {

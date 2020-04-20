@@ -14,7 +14,7 @@ func NewSkillsRepo(db *sqlx.DB) *SkillsRepo {
 }
 
 func (s *SkillsRepo) GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error) {
-	rows, err := s.db.Queryx(getSkillsByJobIdQuery, jobId)
+	rows, err := s.db.Queryx(selectSkillsByJobIdQuery, jobId)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func (s *SkillsRepo) GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error) {
 }
 
 func (s *SkillsRepo) GetByUserId(userId string) ([]*dbmodel.GlobalSkill, error) {
-	rows, err := s.db.Queryx(getSkillsByUserIdQuery, userId)
+	rows, err := s.db.Queryx(selectSkillsByUserIdQuery, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (s *SkillsRepo) GetByUserId(userId string) ([]*dbmodel.GlobalSkill, error) 
 }
 
 func (s *SkillsRepo) GetByMilestoneId(milestoneId string) ([]*dbmodel.GlobalSkill, error) {
-	rows, err := s.db.Queryx(getSkillsByMilestoneIdQuery, milestoneId)
+	rows, err := s.db.Queryx(selectSkillsByMilestoneIdQuery, milestoneId)
 	if err != nil {
 		return nil, err
 	}
@@ -39,17 +39,20 @@ func (s *SkillsRepo) GetByMilestoneId(milestoneId string) ([]*dbmodel.GlobalSkil
 
 func (s *SkillsRepo) scanSkills(rows *sqlx.Rows) ([]*dbmodel.GlobalSkill, error) {
 	var result []*dbmodel.GlobalSkill
-	var skill dbmodel.GlobalSkill
 
 	for rows != nil && rows.Next() {
-		rows.StructScan(&skill)
+		var skill dbmodel.GlobalSkill
+		err := rows.StructScan(&skill)
+		if err != nil {
+			return nil, err
+		}
 		result = append(result, &skill)
 	}
 	return result, nil
 }
 
 const (
-	getSkillsByJobIdQuery = `select distinct (globalskills.id), globalskills.created_by,
+	selectSkillsByJobIdQuery = `select distinct (globalskills.id), globalskills.created_by,
 		globalskills.value,
 		globalskills.time_created
 		from jobs
@@ -59,7 +62,7 @@ const (
 		where jobs.id = $1
 		order by globalskills.value`
 
-	getSkillsByMilestoneIdQuery = `select
+	selectSkillsByMilestoneIdQuery = `select
 		distinct (globalskills.id),
 			globalskills.created_by,
 			globalskills.value,
@@ -70,7 +73,7 @@ const (
 		where milestones.id = $1
 		order by globalskills.value`
 
-	getSkillsByUserIdQuery = `select
+	selectSkillsByUserIdQuery = `select
 		distinct (globalskills.id),
 			globalskills.created_by,
 			globalskills.value,

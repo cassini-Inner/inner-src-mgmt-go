@@ -26,14 +26,14 @@ func (a *ApplicationsRepo) DeleteApplication(jobId string, userId string) (*mode
 }
 
 func (a *ApplicationsRepo) GetByJobId(jobId string) ([]*dbmodel.Application, error) {
-	var result []*dbmodel.Application
-	var application dbmodel.Application
-
-	rows, err := a.db.Queryx(getApplicationsForJobID, jobId)
+	rows, err := a.db.Queryx(selectApplicationsForJobIDQuery, jobId)
 	if err != nil {
 		return nil, err
 	}
+
+	var result []*dbmodel.Application
 	for rows != nil && rows.Next() {
+		var application dbmodel.Application
 		rows.StructScan(&application)
 		result = append(result, &application)
 	}
@@ -41,15 +41,15 @@ func (a *ApplicationsRepo) GetByJobId(jobId string) ([]*dbmodel.Application, err
 }
 
 func (a *ApplicationsRepo) GetUserJobApplications(userId string) ([]*dbmodel.Job, error) {
-	var result[]*dbmodel.Job
-	var job dbmodel.Job
 
-	rows, err := a.db.Queryx(getAppliedJobsByUserIdQuery, userId)
+	rows, err := a.db.Queryx(selectAppliedJobsByUserIdQuery, userId)
 	if err != nil {
 		return nil, err
 	}
 
+	var result []*dbmodel.Job
 	for rows != nil && rows.Next() {
+		var job dbmodel.Job
 		rows.StructScan(&job)
 		result = append(result, &job)
 	}
@@ -57,22 +57,28 @@ func (a *ApplicationsRepo) GetUserJobApplications(userId string) ([]*dbmodel.Job
 }
 
 const (
-	getApplicationsForJobID = `select applications.id,
-		milestones.id as "milestone_id",
-		applications.applicant_id as "applicant_id",
-		applications.status as "status",
+	selectApplicationsForJobIDQuery = `select applications.id, 
+		applications.milestone_id, 
+		applications.applicant_id, 
+		applications.status, 
 		applications.note,
-		applications.time_created,
+		applications.time_created, 
 		applications.time_updated
-		from milestones
-		join applications on applications.milestone_id = milestones.id
-		join users on applications.applicant_id = users.id
-		where milestones.job_id = $1`
+		from applications
+		join milestones on milestones.id = applications.milestone_id
+		where milestones.job_id = $1 and applications.status in ('pending', 'accepted' )`
 
-	getAppliedJobsByUserIdQuery = `select distinct(jobs.id),
-		jobs.title
+	selectAppliedJobsByUserIdQuery = `select distinct jobs.id,
+		jobs.created_by,
+		jobs.title,
+		jobs.description,
+		jobs.difficulty,
+		jobs.status,
+		jobs.time_created,
+		jobs.time_updated,
+		jobs.is_deleted
 		from applications
 		join milestones on milestones.id = applications.milestone_id
 		join jobs on milestones.job_id = jobs.id
-		where applicant_id = $1 and applications.status <> 'withdrawn'`
+		where applicant_id = $1 and applications.status in ('pending', 'accepted', 'rejected')`
 )

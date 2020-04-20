@@ -56,6 +56,11 @@ type UpdateUserInput struct {
 	Skills     []*string `json:"skills"`
 }
 
+type UserJobApplication struct {
+	ApplicationStatus ApplicationStatus `json:"applicationStatus"`
+	Job               *Job              `json:"job"`
+}
+
 type UserStats struct {
 	Completed int `json:"completed"`
 	Ongoing   int `json:"ongoing"`

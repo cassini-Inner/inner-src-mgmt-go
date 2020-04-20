@@ -27,9 +27,13 @@ func (u *UsersRepo) UpdateUser(input *gqlmodel.CreateUserInput) (*gqlmodel.User,
 
 func (u *UsersRepo) GetById(userId string) (*dbmodel.User, error) {
 	var user dbmodel.User
-	err := u.db.QueryRowx("select * from users where id=$1", userId).StructScan(&user)
+	err := u.db.QueryRowx(getUserByIdQuery, userId).StructScan(&user)
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
+
+const (
+	getUserByIdQuery = `select * from users where users.id = $1`
+)

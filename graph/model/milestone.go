@@ -1,7 +1,8 @@
 package model
 
 import (
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/models"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"strings"
 )
 
 type Milestone struct {
@@ -29,8 +30,8 @@ func (m *Milestone) MapDbToGql(dbMilestone dbmodel.Milestone) {
 	m.Duration = dbMilestone.Duration
 
 	//TODO: Check how jobStatus enums work
-	// status := JobStatus(strings.ToUpper(dbMilestone.Status))
-	// m.Status = &status
+	status := JobStatus(strings.ToUpper(dbMilestone.Status))
+	m.Status = &status
 	if dbMilestone.AssignedTo.Valid {
 		m.AssignedTo = dbMilestone.AssignedTo.String
 	}

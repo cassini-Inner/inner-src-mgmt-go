@@ -14,16 +14,20 @@ func NewMilestonesRepo(db *sqlx.DB) *MilestonesRepo {
 }
 
 func (m *MilestonesRepo) GetByJobId(jobId string) ([]*dbmodel.Milestone, error) {
-	var milestone dbmodel.Milestone
-	var milestones []*dbmodel.Milestone
-	query := "SELECT * FROM milestones WHERE job_id = $1"
-	rows, err := m.db.Queryx(query, jobId)
+	rows, err := m.db.Queryx(selectMilestonesByJobId, jobId)
 	if err != nil {
 		return nil, err
 	}
+
+	var milestones []*dbmodel.Milestone
 	for rows.Next() {
+	var milestone dbmodel.Milestone
 		rows.StructScan(&milestone)
 		milestones = append(milestones, &milestone)
 	}
 	return milestones, nil
 }
+
+const (
+	selectMilestonesByJobId = `SELECT * FROM milestones WHERE job_id = $1`
+)

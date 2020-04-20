@@ -26,14 +26,14 @@ func (d *DiscussionsRepo) DeleteComment(commentId string) (*gqlmodel.Comment, er
 }
 
 func (d *DiscussionsRepo) GetByJobId(jobId string) ([]*dbmodel.Discussion, error) {
-	var discussion dbmodel.Discussion
-	var result []*dbmodel.Discussion
-
 	rows, err := d.db.Queryx(getDiscussionByJobId, jobId)
 	if err != nil {
 		return nil, err
 	}
+
+	var result []*dbmodel.Discussion
 	for rows != nil && rows.Next() {
+		var discussion dbmodel.Discussion
 		rows.StructScan(&discussion)
 		result = append(result, &discussion)
 	}

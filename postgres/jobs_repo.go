@@ -31,8 +31,7 @@ func (j *JobsRepo) DeleteJob(jobId string) (*dbmodel.Job, error) {
 // Get the complete job details based on the job id
 func (j *JobsRepo) GetById(jobId string) (*dbmodel.Job, error) {
 	var job dbmodel.Job
-	query := "SELECT * FROM jobs WHERE id = $1"
-	err := j.db.QueryRowx(query, jobId).StructScan(&job)
+	err := j.db.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
 	if err != nil {
 		return nil, err
 	}
@@ -41,16 +40,17 @@ func (j *JobsRepo) GetById(jobId string) (*dbmodel.Job, error) {
 
 // GetByUserId returns all jobs created by that user
 func (j *JobsRepo) GetByUserId(userId string) ([]*dbmodel.Job, error) {
-	var job *dbmodel.Job
-	var jobs []*dbmodel.Job
-	query := "SELECT * FROM jobs WHERE created_by = $1"
-	rows, err := j.db.Queryx(query, userId)
+
+	rows, err := j.db.Queryx(selectJobsByUserIdQuery, userId)
 	if err != nil {
 		return nil, err
 	}
+
+	var jobs []*dbmodel.Job
 	for rows.Next() {
+		var job dbmodel.Job
 		rows.StructScan(&job)
-		jobs = append(jobs, job)
+		jobs = append(jobs, &job)
 	}
 	return jobs, nil
 }
@@ -63,3 +63,8 @@ func (j *JobsRepo) GetStatsByUserId(userId string) (*gqlmodel.UserStats, error) 
 func (j *JobsRepo) GetAll(filters *gqlmodel.JobsFilterInput) ([]*dbmodel.Job, error) {
 	panic("not implemented")
 }
+
+const (
+	selectJobByIdQuery = `SELECT * FROM jobs WHERE id = $1`
+	selectJobsByUserIdQuery = `SELECT * FROM jobs WHERE created_by = $1`
+)
