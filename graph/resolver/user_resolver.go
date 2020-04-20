@@ -2,7 +2,6 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
@@ -36,11 +35,22 @@ func (r *userResolver) CreatedJobs(ctx context.Context, obj *gqlmodel.User) ([]*
 	return result, nil
 }
 
-//TODO: Implement
+//TODO: Fix this
 func (r *userResolver) AppliedJobs(ctx context.Context, obj *gqlmodel.User) ([]*gqlmodel.UserJobApplication, error) {
-	panic(fmt.Errorf("not implemented"))
-}
+	applications, err := r.ApplicationsRepo.GetUserJobApplications(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	var result []*gqlmodel.UserJobApplication
 
+	for _, application := range applications {
+		var gqlJob gqlmodel.Job
+		gqlJob.MapDbToGql(*application)
+		result = append(result, &gqlmodel.UserJobApplication{Job: &gqlJob})
+	}
+
+	return result, nil
+}
 
 func (r *userResolver) JobStats(ctx context.Context, obj *gqlmodel.User) (*gqlmodel.UserStats, error) {
 	return r.JobsRepo.GetStatsByUserId(obj.ID)
