@@ -4,6 +4,7 @@ import (
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
+	"strings"
 )
 
 type JobsRepo struct {
@@ -60,11 +61,46 @@ func (j *JobsRepo) GetStatsByUserId(userId string) (*gqlmodel.UserStats, error) 
 	panic("not implemented")
 }
 
+//TODO: Add sorting order functionality
 func (j *JobsRepo) GetAll(filters *gqlmodel.JobsFilterInput) ([]*dbmodel.Job, error) {
-	panic("not implemented")
+	var jobSkills []string
+	for _, skill := range filters.Skills {
+		jobSkills = append(jobSkills, strings.ToLower(*skill))
+	}
+
+	var jobStatuses []string
+	for _, status := range filters.Status {
+		jobStatuses = append(jobStatuses, strings.ToLower(status.String()))
+	}
+
+	query, args, err := sqlx.In(selectAllJobsWithFiltersQuery, jobSkills, jobStatuses)
+	if err != nil {
+		return nil, err
+	}
+	query = j.db.Rebind(query)
+
+	rows, err := j.db.Queryx(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*dbmodel.Job
+	for rows != nil && rows.Next() {
+		var tempJob dbmodel.Job
+		rows.StructScan(&tempJob)
+		result = append(result, &tempJob)
+	}
+	return result, nil
 }
 
 const (
-	selectJobByIdQuery = `SELECT * FROM jobs WHERE id = $1 and is_deleted=false`
-	selectJobsByUserIdQuery = `SELECT * FROM jobs WHERE created_by = $1 and is_deleted=false`
+	selectJobByIdQuery            = `SELECT * FROM jobs WHERE id = $1 and is_deleted=false`
+	selectJobsByUserIdQuery       = `SELECT * FROM jobs WHERE created_by = $1 and is_deleted=false`
+	selectAllJobsWithFiltersQuery = `select * from jobs where jobs.id in (
+		select milestones.job_id from globalskills 
+		join milestoneskills on globalskills.id = milestoneskills.skill_id
+		join milestones on milestones.id = milestoneskills.milestone_id
+		where globalskills.value in (?)
+		)
+		and jobs.status in (?)`
 )
