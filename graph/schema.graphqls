@@ -88,6 +88,7 @@ type Job {
     title: String!
     createdBy: User!
     desc: String!
+    skills: [Skill!]
     duration: String!
     difficulty: Difficulty!
     status: JobStatus!
@@ -119,6 +120,7 @@ type Application {
     id: ID!
     applicant: User!
     status: ApplicationStatus!
+    milestone: Milestone!
     # Any message to be conveyed to the applicant
     note: String
     createdOn: String!

@@ -14,3 +14,14 @@ func (r *applicationResolver) Applicant(ctx context.Context, obj *gqlmodel.Appli
 	gqlUser.MapDbToGql(*user)
 	return &gqlUser, nil
 }
+
+func (r *applicationResolver) Milestone(ctx context.Context, obj *gqlmodel.Application) (*gqlmodel.Milestone, error) {
+	dbMilestone, err := r.MilestonesRepo.GetById(obj.MilestoneID)
+	if err != nil {
+		return nil, err
+	}
+
+	var result gqlmodel.Milestone
+	result.MapDbToGql(*dbMilestone)
+	return &result, nil
+}
