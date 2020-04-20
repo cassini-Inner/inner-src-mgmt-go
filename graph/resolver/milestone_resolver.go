@@ -20,7 +20,6 @@ func (r *milestoneResolver) Skills(ctx context.Context, obj *model.Milestone) ([
 	return r.SkillsRepo.GetByMilestoneId(obj.ID)
 }
 
-//TODO: Should not exist, or find a better way to implement
 func (m milestonesResolver) TotalCount(ctx context.Context, obj *model.Milestones) (*int, error) {
 	totalCount := len(obj.Milestones)
 	return &totalCount, nil
