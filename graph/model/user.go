@@ -11,6 +11,7 @@ type User struct {
 	Role        string     `json:"role"`
 	Department  string     `json:"department"`
 	PhotoURL    string     `json:"photoUrl"`
+	GithubURL   string     `json:"githubUrl"`
 	Bio         *string    `json:"bio"`
 	Contact     *string    `json:"contact"`
 	Skills      []*Skill   `json:"skills"`
@@ -25,11 +26,18 @@ func (u *User) MapDbToGql(dbUser dbmodel.User) {
 	u.ID = dbUser.Id
 	u.Email = dbUser.Email
 	u.Name = dbUser.Name
-	u.Role = dbUser.Role
-	u.Department = dbUser.Department
-	u.PhotoURL = dbUser.PhotoUrl
+	if dbUser.Role.Valid {
+		u.Role = dbUser.Role.String
+	}
+	if dbUser.Department.Valid {
+		u.Department = dbUser.Department.String
+	}
 	u.Bio = &dbUser.Bio
-	u.Contact = &dbUser.Contact
+	if dbUser.Contact.Valid {
+		u.Contact = &dbUser.Contact.String
+	}
+	u.GithubURL = dbUser.GithubUrl
+	u.PhotoURL = dbUser.PhotoUrl
 	u.TimeCreated = dbUser.TimeCreated
 	u.TimeUpdated = dbUser.TimeUpdated
 }

@@ -21,7 +21,9 @@ const defaultPort = "8080"
 
 func main() {
 	//TODO: Make this more secure
-	os.Setenv("jwt_secret", "innersource_jwt_secret_key")
+	_ = os.Setenv("jwt_secret", "innersource_jwt_secret_key")
+	_ = os.Setenv("client_id", "5a4ff35b849d9cc3cab7")
+	_ = os.Setenv("client_secret", "f94c5d74e099ed894f88ac6c75ac19c4c3194427")
 
 	DB, err := sqlx.Connect("postgres", "host=localhost port=5432 user=postgres dbname=innersource password=root sslmode=disable")
 	if err != nil {
@@ -54,7 +56,7 @@ func main() {
 	// Add CORS middleware around every request
 	// See https://github.com/rs/cors for full option listing
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8081","http://localhost:8080","http://localhost:3000"},
+		AllowedOrigins:   []string{"http://localhost:8081", "http://localhost:8080", "http://localhost:3000"},
 		AllowCredentials: true,
 	}).Handler)
 	router.Use(middleware.RequestID)
@@ -67,5 +69,3 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
-
-

@@ -58,8 +58,18 @@ func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID
 	panic(fmt.Errorf("not implemented"))
 }
 
-
 func (r *mutationResolver) Authenticate(ctx context.Context, githubCode string) (*gqlmodel.UserAuthenticationPayload, error) {
-	//http.Post("https://github.com/login/oauth/access_token","application/json", )
-	panic("not implemented")
+	user, err := r.UsersRepo.AuthenticateAndGetUser(githubCode)
+	if err != nil {
+		return nil, err
+	}
+
+	var resultUser gqlmodel.User
+	resultUser.MapDbToGql(*user)
+
+	resultPayload := &gqlmodel.UserAuthenticationPayload{
+		Profile: &resultUser,
+		Token:   "",
+	}
+	return resultPayload, nil
 }
