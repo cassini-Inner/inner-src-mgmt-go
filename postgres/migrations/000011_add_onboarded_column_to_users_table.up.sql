@@ -1,1 +1,1 @@
-alter table users add column onboared bool default false;
+alter table users add column onboarded bool default false;
