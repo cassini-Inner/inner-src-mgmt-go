@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/dgrijalva/jwt-go"
 	"log"
@@ -28,7 +29,34 @@ func (r *mutationResolver) CreateUserProfile(ctx context.Context, user *gqlmodel
 }
 
 func (r *mutationResolver) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (*gqlmodel.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	if len(job.Desc) < 5 {
+		return nil, errors.New("description not long enough")
+	}
+	if len(job.Title) < 5 {
+		return nil, errors.New("title not long enough")
+	}
+	if len(job.Difficulty) == 5 {
+		return nil, errors.New("diff not long enough")
+	}
+	if len(job.Milestones) == 0 {
+		return nil, errors.New("just must have at least one milestone")
+	}
+	for _, milestone := range job.Milestones {
+		if len(milestone.Skills) == 0 {
+			return nil, errors.New("milestone must have at least one skill")
+		}
+	}
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	newJob, err := r.JobsRepo.CreateJob(ctx, job, user)
+	if err != nil {
+		return nil, err
+	}
+	var gqlJob gqlmodel.Job
+	gqlJob.MapDbToGql(*newJob)
+	return &gqlJob, nil
 }
 
 func (r *mutationResolver) UpdateJob(ctx context.Context, job *gqlmodel.UpdateJobInput) (*gqlmodel.Job, error) {
@@ -95,11 +123,13 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, token string) (*gql
 
 	if err != nil {
 		log.Printf("error while refreshing token %v", token)
+		log.Println(err)
 		if err == jwt.ErrSignatureInvalid {
 			return nil, errors.New("invalid token signature")
 		}
-		return nil, errors.New("something went wrong")
+		return nil, err
 	}
+
 	if !tkn.Valid {
 		return nil, errors.New("token is not valid")
 	}

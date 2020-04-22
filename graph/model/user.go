@@ -52,7 +52,7 @@ func (u *User) GenerateJwtToken() (*string, error){
 	if u.ID == "" {
 		return nil, errors.New("user.ID is empty or invalid")
 	}
-	expiresAt := time.Now().Add(time.Hour * 1)
+	expiresAt := time.Now().Add(time.Hour * 24 * 7)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		ExpiresAt: expiresAt.Unix(),
