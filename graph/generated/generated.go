@@ -123,6 +123,7 @@ type ComplexityRoot struct {
 		DeleteCommment       func(childComplexity int, id string) int
 		DeleteJob            func(childComplexity int, jobID string) int
 		DeleteJobApplication func(childComplexity int, jobID string) int
+		RefreshToken         func(childComplexity int, token string) int
 		UpdateComment        func(childComplexity int, id string, comment string) int
 		UpdateJob            func(childComplexity int, job *model.UpdateJobInput) int
 		UpdateJobApplication func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus) int
@@ -214,6 +215,7 @@ type MutationResolver interface {
 	DeleteJobApplication(ctx context.Context, jobID string) (*model.Application, error)
 	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus) (*model.Application, error)
 	Authenticate(ctx context.Context, githubCode string) (*model.UserAuthenticationPayload, error)
+	RefreshToken(ctx context.Context, token string) (*model.UserAuthenticationPayload, error)
 }
 type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
@@ -650,6 +652,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteJobApplication(childComplexity, args["jobID"].(string)), true
 
+	case "Mutation.refreshToken":
+		if e.complexity.Mutation.RefreshToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_refreshToken_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RefreshToken(childComplexity, args["token"].(string)), true
+
 	case "Mutation.updateComment":
 		if e.complexity.Mutation.UpdateComment == nil {
 			break
@@ -1028,6 +1042,7 @@ type Mutation {
     # create, accept or reject applicants
     updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): Application
     authenticate(githubCode: String!): UserAuthenticationPayload
+    refreshToken(token: String!): UserAuthenticationPayload
 }
 
 type UserAuthenticationPayload {
@@ -1339,6 +1354,20 @@ func (ec *executionContext) field_Mutation_deleteJob_args(ctx context.Context, r
 		}
 	}
 	args["jobID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["token"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["token"] = arg0
 	return args, nil
 }
 
@@ -3419,6 +3448,44 @@ func (ec *executionContext) _Mutation_authenticate(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().Authenticate(rctx, args["githubCode"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserAuthenticationPayload)
+	fc.Result = res
+	return ec.marshalOUserAuthenticationPayload2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserAuthenticationPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_refreshToken_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RefreshToken(rctx, args["token"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6303,6 +6370,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_updateJobApplication(ctx, field)
 		case "authenticate":
 			out.Values[i] = ec._Mutation_authenticate(ctx, field)
+		case "refreshToken":
+			out.Values[i] = ec._Mutation_refreshToken(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

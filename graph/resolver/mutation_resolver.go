@@ -6,7 +6,10 @@ import (
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"github.com/dgrijalva/jwt-go"
 	"log"
+	"os"
+	"time"
 )
 
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -61,14 +64,17 @@ func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID
 }
 
 func (r *mutationResolver) Authenticate(ctx context.Context, githubCode string) (*gqlmodel.UserAuthenticationPayload, error) {
+	// authenticate the user with github and store them in db
 	user, err := r.UsersRepo.AuthenticateAndGetUser(githubCode)
 	if err != nil {
 		return nil, err
 	}
 
+	// map db user to graphql model
 	var resultUser gqlmodel.User
 	resultUser.MapDbToGql(*user)
-	authToken,err := resultUser.GenerateJwtToken()
+	//generate a token for the user and return
+	authToken, err := resultUser.GenerateJwtToken()
 	if err != nil {
 		log.Println(err)
 		return nil, errors.New("something went wrong")
@@ -78,4 +84,44 @@ func (r *mutationResolver) Authenticate(ctx context.Context, githubCode string) 
 		Token:   *authToken,
 	}
 	return resultPayload, nil
+}
+
+func (r *mutationResolver) RefreshToken(ctx context.Context, token string) (*gqlmodel.UserAuthenticationPayload, error) {
+	// get the claims for the user
+	claims := &jwt.StandardClaims{}
+	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (i interface{}, err error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if err != nil {
+		log.Printf("error while refreshing token %v", token)
+		if err == jwt.ErrSignatureInvalid {
+			return nil, errors.New("invalid token signature")
+		}
+		return nil, errors.New("something went wrong")
+	}
+	if !tkn.Valid {
+		return nil, errors.New("token is not valid")
+	}
+	// only refresh the token if it's expiring in 2 minutes
+	if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) > (time.Minute * 2) {
+		return nil, errors.New("token can only be refreshed 2 minutes from expiry time")
+	}
+	//generate a new token for the user
+	user, err := r.UsersRepo.GetById(claims.Id)
+	if err != nil {
+		log.Printf("error getting user from claims for user id %v", claims.Id)
+		return nil, err
+	}
+	var gqlUser gqlmodel.User
+	gqlUser.MapDbToGql(*user)
+	newToken, err := gqlUser.GenerateJwtToken()
+	if err != nil {
+		log.Printf("error generating token for user %+v", gqlUser)
+		return nil, err
+	}
+	return &gqlmodel.UserAuthenticationPayload{
+		Profile: &gqlUser,
+		Token:   *newToken,
+	}, nil
 }
