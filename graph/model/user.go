@@ -48,11 +48,23 @@ func (u *User) MapDbToGql(dbUser dbmodel.User) {
 	u.TimeUpdated = dbUser.TimeUpdated
 }
 
-func (u *User) GenerateJwtToken() (*string, error){
+func (u *User) GenerateAccessToken() (*string, error){
 	if u.ID == "" {
 		return nil, errors.New("user.ID is empty or invalid")
 	}
 	expiresAt := time.Now().Add(time.Hour * 24 * 7)
+	return u.generateToken(expiresAt)
+}
+func (u *User) GenerateRefreshToken() (*string, error){
+	if u.ID == "" {
+		return nil, errors.New("user.ID is empty or invalid")
+	}
+	expiresAt := time.Now().Add(time.Hour * 24 * 7)
+	return u.generateToken(expiresAt)
+}
+
+
+func (u *User) generateToken(expiresAt time.Time) (*string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		ExpiresAt: expiresAt.Unix(),

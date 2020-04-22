@@ -7,7 +7,6 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 )
 
-
 // Application returns generated.ApplicationResolver implementation.
 func (r *Resolver) Application() generated.ApplicationResolver { return &applicationResolver{r} }
 
