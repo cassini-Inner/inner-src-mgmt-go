@@ -224,8 +224,6 @@ type SkillResolver interface {
 	CreatedBy(ctx context.Context, obj *model.Skill) (*model.User, error)
 }
 type UserResolver interface {
-	Onboarded(ctx context.Context, obj *model.User) (bool, error)
-
 	Skills(ctx context.Context, obj *model.User) ([]*model.Skill, error)
 
 	CreatedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error)
@@ -3798,13 +3796,13 @@ func (ec *executionContext) _User_onboarded(ctx context.Context, field graphql.C
 		Object:   "User",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Onboarded(rctx, obj)
+		return obj.Onboarded, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6447,19 +6445,10 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "onboarded":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_onboarded(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._User_onboarded(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

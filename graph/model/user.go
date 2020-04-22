@@ -1,7 +1,11 @@
 package model
 
 import (
+	"errors"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"github.com/dgrijalva/jwt-go"
+	"os"
+	"time"
 )
 
 type User struct {
@@ -42,4 +46,24 @@ func (u *User) MapDbToGql(dbUser dbmodel.User) {
 	u.PhotoURL = dbUser.PhotoUrl
 	u.TimeCreated = dbUser.TimeCreated
 	u.TimeUpdated = dbUser.TimeUpdated
+}
+
+func (u *User) GenerateJwtToken() (*string, error){
+	if u.ID == "" {
+		return nil, errors.New("user.ID is empty or invalid")
+	}
+	expiresAt := time.Now().Add(time.Hour * 1)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		ExpiresAt: expiresAt.Unix(),
+		Id:        u.ID,
+		IssuedAt:  time.Now().Unix(),
+		Issuer:    "innersource",
+	})
+
+	accessToken, err := token.SignedString([]byte(os.Getenv("jwt_secret")))
+	if err != nil {
+		return nil, err
+	}
+	return &accessToken, nil
 }

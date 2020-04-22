@@ -18,3 +18,4 @@ type User struct {
 	TimeUpdated string `db:"time_updated"`
 	IsDeleted   bool   `db:"is_deleted"`
 }
+

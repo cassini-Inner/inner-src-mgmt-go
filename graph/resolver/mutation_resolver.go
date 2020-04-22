@@ -2,9 +2,11 @@ package resolver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"log"
 )
 
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -66,10 +68,14 @@ func (r *mutationResolver) Authenticate(ctx context.Context, githubCode string) 
 
 	var resultUser gqlmodel.User
 	resultUser.MapDbToGql(*user)
-
+	authToken,err := resultUser.GenerateJwtToken()
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("something went wrong")
+	}
 	resultPayload := &gqlmodel.UserAuthenticationPayload{
 		Profile: &resultUser,
-		Token:   "",
+		Token:   *authToken,
 	}
 	return resultPayload, nil
 }

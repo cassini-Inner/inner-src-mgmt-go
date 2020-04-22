@@ -39,6 +39,7 @@ type Mutation {
     # create, accept or reject applicants
     updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): Application
     authenticate(githubCode: String!): UserAuthenticationPayload
+    refreshToken(token: String!): UserAuthenticationPayload
 }
 
 type UserAuthenticationPayload {
