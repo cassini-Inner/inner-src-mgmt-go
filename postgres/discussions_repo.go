@@ -15,8 +15,36 @@ func NewDiscussionsRepo(db *sqlx.DB) *DiscussionsRepo {
 }
 
 //TODO: Implement
-func (d *DiscussionsRepo) CreateComment(jobId string, comment string) (*gqlmodel.Comment, error) {
-	panic("not implemented")
+func (d *DiscussionsRepo) CreateComment(jobId, comment, userId string) (*dbmodel.Discussion, error) {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	insertedCommentId := 0
+	err = tx.QueryRow(`insert into discussions(job_id, created_by, content) values ($1,$2, $3) returning id`, jobId, userId, comment).Scan(&insertedCommentId)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+	var id,job, createdBy, content, timeCreated, timeUpdated string
+	err = tx.QueryRow(`select id, job_id, created_by,content, time_created, time_updated from discussions where id = $1`, insertedCommentId).Scan(&id, &job, &createdBy, &content, &timeCreated, &timeUpdated)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return &dbmodel.Discussion{
+		Id:          id,
+		JobId:       job,
+		CreatedBy:   createdBy,
+		Content:     content,
+		TimeCreated: timeCreated,
+		TimeUpdated: timeUpdated,
+	}, nil
 }
 func (d *DiscussionsRepo) UpdateComment(commentId string, comment string) (*gqlmodel.Comment, error) {
 	panic("not implemented")

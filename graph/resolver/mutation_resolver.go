@@ -68,7 +68,19 @@ func (r *mutationResolver) DeleteJob(ctx context.Context, jobID string) (*gqlmod
 }
 
 func (r *mutationResolver) AddCommentToJob(ctx context.Context, comment string, jobID string) (*gqlmodel.Comment, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	newComment, err := r.DiscussionsRepo.CreateComment(jobID,comment, user.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	var gqlComment gqlmodel.Comment
+	gqlComment.MapDbToGql(*newComment)
+	return &gqlComment, nil
 }
 
 func (r *mutationResolver) UpdateComment(ctx context.Context, id string, comment string) (*gqlmodel.Comment, error) {
