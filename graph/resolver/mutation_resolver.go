@@ -79,15 +79,46 @@ func (r *mutationResolver) DeleteCommment(ctx context.Context, id string) (*gqlm
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID string) (*gqlmodel.Application, error) {
+func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID string) ([]*gqlmodel.Application, error) {
+	var result []*gqlmodel.Application
+
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	job, err := r.JobsRepo.GetById(jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	if job.CreatedBy == user.Id {
+		return nil, errors.New("user cannot apply to their own job")
+	}
+
+	milestones, err := r.MilestonesRepo.GetByJobId(jobID)
+	if err != nil {
+		return nil, err
+	}
+	applications, err := r.ApplicationsRepo.CreateApplication(milestones, user.Id, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, application := range applications {
+		var gqlApplication gqlmodel.Application
+		gqlApplication.MapDbToGql(application)
+		result = append(result, &gqlApplication)
+	}
+
+	return result, nil
+}
+
+func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID string) ([]*gqlmodel.Application, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID string) (*gqlmodel.Application, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *gqlmodel.ApplicationStatus) (*gqlmodel.Application, error) {
+func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *gqlmodel.ApplicationStatus) ([]*gqlmodel.Application, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

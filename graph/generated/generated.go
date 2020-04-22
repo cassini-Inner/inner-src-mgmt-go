@@ -211,9 +211,9 @@ type MutationResolver interface {
 	AddCommentToJob(ctx context.Context, comment string, jobID string) (*model.Comment, error)
 	UpdateComment(ctx context.Context, id string, comment string) (*model.Comment, error)
 	DeleteCommment(ctx context.Context, id string) (*model.Comment, error)
-	CreateJobApplication(ctx context.Context, jobID string) (*model.Application, error)
-	DeleteJobApplication(ctx context.Context, jobID string) (*model.Application, error)
-	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus) (*model.Application, error)
+	CreateJobApplication(ctx context.Context, jobID string) ([]*model.Application, error)
+	DeleteJobApplication(ctx context.Context, jobID string) ([]*model.Application, error)
+	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus) ([]*model.Application, error)
 	Authenticate(ctx context.Context, githubCode string) (*model.UserAuthenticationPayload, error)
 	RefreshToken(ctx context.Context, token string) (*model.UserAuthenticationPayload, error)
 }
@@ -1036,11 +1036,11 @@ type Mutation {
     # To delete a comment based on comment id
     deleteCommment(id: ID!) : Comment
     # Create an application to a job, user id obtained through auth
-    createJobApplication(jobID: ID!): Application
+    createJobApplication(jobID: ID!): [Application]
     # To withdraw application from a job
-    deleteJobApplication(jobID: ID!): Application
+    deleteJobApplication(jobID: ID!): [Application]
     # create, accept or reject applicants
-    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): Application
+    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): [Application]
     authenticate(githubCode: String!): UserAuthenticationPayload
     refreshToken(token: String!): UserAuthenticationPayload
 }
@@ -3342,9 +3342,9 @@ func (ec *executionContext) _Mutation_createJobApplication(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Application)
+	res := resTmp.([]*model.Application)
 	fc.Result = res
-	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
+	return ec.marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteJobApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3380,9 +3380,9 @@ func (ec *executionContext) _Mutation_deleteJobApplication(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Application)
+	res := resTmp.([]*model.Application)
 	fc.Result = res
-	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
+	return ec.marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateJobApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3418,9 +3418,9 @@ func (ec *executionContext) _Mutation_updateJobApplication(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Application)
+	res := resTmp.([]*model.Application)
 	fc.Result = res
-	return ec.marshalOApplication2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
+	return ec.marshalOApplication2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplication(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_authenticate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {

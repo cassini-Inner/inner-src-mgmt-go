@@ -61,7 +61,7 @@ func (r *jobResolver) Applications(ctx context.Context, obj *gqlmodel.Job) (*gql
 	var gqlApplicationsList []*gqlmodel.Application
 	for _, application := range applications {
 		var gqlApplication gqlmodel.Application
-		gqlApplication.MapDbToGql(*application)
+		gqlApplication.MapDbToGql(application)
 		gqlApplicationsList = append(gqlApplicationsList, &gqlApplication)
 	}
 
