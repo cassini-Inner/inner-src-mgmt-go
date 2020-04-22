@@ -6,6 +6,7 @@ import (
 
 type User struct {
 	ID          string     `json:"id"`
+	Onboarded   bool       `json:"onboarded"`
 	Email       string     `json:"email"`
 	Name        string     `json:"name"`
 	Role        string     `json:"role"`
@@ -26,6 +27,7 @@ func (u *User) MapDbToGql(dbUser dbmodel.User) {
 	u.ID = dbUser.Id
 	u.Email = dbUser.Email
 	u.Name = dbUser.Name
+	u.Onboarded = dbUser.Onboarded
 	if dbUser.Role.Valid {
 		u.Role = dbUser.Role.String
 	}

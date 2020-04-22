@@ -5,6 +5,7 @@ import "database/sql"
 // Users table model
 type User struct {
 	Id          string
+	Onboarded	bool
 	Email       string
 	Name        string
 	Role        sql.NullString

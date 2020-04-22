@@ -136,6 +136,7 @@ type Application {
 
 type User {
     id: ID!
+    onboarded: Boolean!
     email: String!
     name: String!
     role: String!
