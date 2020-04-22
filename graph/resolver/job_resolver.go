@@ -6,13 +6,7 @@ import (
 )
 
 func (r *jobResolver) CreatedBy(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.User, error) {
-	user, err := r.UsersRepo.GetById(obj.CreatedBy)
-	if err != nil {
-		return nil, err
-	}
-	var gqlUser gqlmodel.User
-	gqlUser.MapDbToGql(*user)
-	return &gqlUser, nil
+	return getUserLoader(ctx).Load(obj.CreatedBy)
 }
 
 func (r *jobResolver) Discussion(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Discussions, error) {

@@ -16,13 +16,10 @@ func (r *milestoneResolver) Job(ctx context.Context, obj *gqlmodel.Milestone) (*
 }
 
 func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *gqlmodel.Milestone) (*gqlmodel.User, error) {
-	user, err := r.UsersRepo.GetById(obj.AssignedTo)
-	if err != nil {
-		return nil, err
+	if obj.AssignedTo == "" {
+		return nil, nil
 	}
-	var gqlUser gqlmodel.User
-	gqlUser.MapDbToGql(*user)
-	return &gqlUser, nil
+	return getUserLoader(ctx).Load(obj.AssignedTo)
 }
 
 func (r *milestoneResolver) Skills(ctx context.Context, obj *gqlmodel.Milestone) ([]*gqlmodel.Skill, error) {
