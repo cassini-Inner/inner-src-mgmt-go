@@ -23,7 +23,6 @@ type User struct {
 	TimeCreated string     `json:"timeCreated"`
 	TimeUpdated string     `json:"timeUpdated"`
 	CreatedJobs []*Job     `json:"createdJobs"`
-	AppliedJobs []*Job     `json:"appliedJobs"`
 	JobStats    *UserStats `json:"jobStats"`
 }
 

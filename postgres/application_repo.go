@@ -45,7 +45,6 @@ func (a *ApplicationsRepo) CreateApplication(milestones []*dbmodel.Milestone, us
 		existingApplications = append(existingApplications, &application)
 	}
 
-
 	if len(existingApplications) == len(milestones) {
 		return existingApplications, nil
 	}
@@ -160,6 +159,17 @@ func (a *ApplicationsRepo) GetUserJobApplications(userId string) ([]*dbmodel.Job
 	return result, nil
 }
 
+func (a *ApplicationsRepo) GetApplicationStatusForUserAndJob(userId, jobId string) (string, error) {
+	// TODO: Will need to refactor this when we allow users to apply to milestones
+	result := ""
+	err := a.db.QueryRowx(SELECT_APPLICATIONSTATUS_BY_USER_JOB, jobId, userId).Scan(&result)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.ToLower(result), nil
+}
+
 const (
 	selectApplicationsForJobIDQuery = `select applications.id, 
 		applications.milestone_id, 
@@ -185,4 +195,7 @@ const (
 		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
 		join jobs on milestones.job_id = jobs.id and jobs.is_deleted = false
 		where applicant_id = $1 and applications.status in ('pending', 'accepted', 'rejected')`
+
+	SELECT_APPLICATIONSTATUS_BY_USER_JOB = `select applications.status from milestones join applications on milestones.id = applications.milestone_id
+where milestones.job_id = $1 and applications.applicant_id = $2 limit 1`
 )
