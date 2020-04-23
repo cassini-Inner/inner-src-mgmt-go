@@ -3,10 +3,11 @@ package resolver
 import (
 	"context"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
 
 func (r *jobResolver) CreatedBy(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.User, error) {
-	return getUserLoader(ctx).Load(obj.CreatedBy)
+	return dataloader.GetUserByUserIdLoader(ctx).Load(obj.CreatedBy)
 }
 
 func (r *jobResolver) Discussion(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Discussions, error) {
@@ -27,7 +28,7 @@ func (r *jobResolver) Discussion(ctx context.Context, obj *gqlmodel.Job) (*gqlmo
 
 //Get the list of milestones in dbmodel type, converts it to gqlmodel type and returns list of milestones
 func (r *jobResolver) Milestones(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Milestones, error) {
-	milestones, err := getMilestoneByJobIdLoader(ctx).Load(obj.ID)
+	milestones, err := dataloader.GetMilestonesByJobIdLoader(ctx).Load(obj.ID)
 	if err != nil {
 		return nil, err
 	}

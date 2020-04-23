@@ -69,7 +69,7 @@ const (
 			globalskills.time_created
 		from milestoneskills
 		join globalskills on milestoneskills.skill_id = globalskills.id and milestoneskills.is_deleted = false
-		where milestoneskills.milestone_id = 5
+		where milestoneskills.milestone_id = $1
 		order by globalskills.value`
 
 	selectSkillsByUserIdQuery = `select
