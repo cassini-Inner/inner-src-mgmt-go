@@ -13,6 +13,10 @@ import (
 	"time"
 )
 
+const (
+	ErrUserNotAuthenticated = "unauthorized request, invalid accessToken"
+)
+
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
@@ -73,7 +77,7 @@ func (r *mutationResolver) AddCommentToJob(ctx context.Context, comment string, 
 		return nil, err
 	}
 
-	newComment, err := r.DiscussionsRepo.CreateComment(jobID,comment, user.Id)
+	newComment, err := r.DiscussionsRepo.CreateComment(jobID, comment, user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +88,26 @@ func (r *mutationResolver) AddCommentToJob(ctx context.Context, comment string, 
 }
 
 func (r *mutationResolver) UpdateComment(ctx context.Context, id string, comment string) (*gqlmodel.Comment, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, errors.New(ErrUserNotAuthenticated)
+	}
+
+	existingDiscussion, err := r.DiscussionsRepo.GetById(id)
+	if err != nil {
+		return nil, err
+	}
+	if existingDiscussion.CreatedBy != user.Id {
+		return nil, errors.New("unauthorized: current user is not the author of this discussion")
+	}
+
+	updatedDiscussion, err := r.DiscussionsRepo.UpdateComment(id, comment)
+	if err != nil {
+		return nil, err
+	}
+	var gqlUpdatedDiscussion gqlmodel.Comment
+	gqlUpdatedDiscussion.MapDbToGql(*updatedDiscussion)
+	return &gqlUpdatedDiscussion, nil
 }
 
 func (r *mutationResolver) DeleteCommment(ctx context.Context, id string) (*gqlmodel.Comment, error) {
