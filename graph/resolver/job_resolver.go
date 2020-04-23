@@ -40,17 +40,7 @@ func (r *jobResolver) Milestones(ctx context.Context, obj *gqlmodel.Job) (*gqlmo
 }
 
 func (r *jobResolver) Skills(ctx context.Context, obj *gqlmodel.Job) ([]*gqlmodel.Skill, error) {
-	skills, err := r.SkillsRepo.GetByJobId(obj.ID)
-	if err != nil {
-		return nil, err
-	}
-	var result []*gqlmodel.Skill
-	for _, skill := range skills {
-		var gqlskill gqlmodel.Skill
-		gqlskill.MapDbToGql(*skill)
-		result = append(result, &gqlskill)
-	}
-	return result, nil
+	return dataloader.GetSkillByJobIdLoader(ctx).Load(obj.ID)
 }
 
 func (r *jobResolver) Applications(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Applications, error) {

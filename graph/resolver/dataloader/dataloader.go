@@ -11,6 +11,7 @@ const (
 	userLoaderKey                = "userloader"
 	milestoneByJobIdLoaderKey    = "milestoneByIdLoader"
 	skillsByMilestoneIdLoaderKey = "skillsByMilestoneIdLoader"
+	skillsByJobIdLoaderKey       = "skillsByJobIdLoader"
 )
 
 func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
@@ -18,12 +19,14 @@ func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
 		userloader := NewUserByUserIdLoader(db)
 		milestoneByJobIdLoader := NewMilestoneByJobIdLoader(db)
 		skillsByMilestoneIdLoader := NewSkillByMilestoneIdLoader(db)
+		skillsByJobIdLoader := NewSkillByJobIdLoader(db)
 
 		ctxWithuserloader := context.WithValue(r.Context(), userLoaderKey, userloader)
 		ctxWithmilestonebyidloader := context.WithValue(ctxWithuserloader, milestoneByJobIdLoaderKey, milestoneByJobIdLoader)
 		ctxWithSkillByMilestoneIdLoader := context.WithValue(ctxWithmilestonebyidloader, skillsByMilestoneIdLoaderKey, skillsByMilestoneIdLoader)
+		ctxWithSkillByJobIdLoader := context.WithValue(ctxWithSkillByMilestoneIdLoader, skillsByJobIdLoaderKey, skillsByJobIdLoader)
 
-		next.ServeHTTP(w, r.WithContext(ctxWithSkillByMilestoneIdLoader))
+		next.ServeHTTP(w, r.WithContext(ctxWithSkillByJobIdLoader))
 	})
 }
 
@@ -39,4 +42,7 @@ func GetMilestonesByJobIdLoader(ctx context.Context) *generated.MilestoneByJobId
 
 func GetSkillByMilestoneIdLoader(ctx context.Context) *generated.SkillByMilestoneIdLoader {
 	return ctx.Value(skillsByMilestoneIdLoaderKey).(*generated.SkillByMilestoneIdLoader)
+}
+func GetSkillByJobIdLoader(ctx context.Context) *generated.SkillByJobIdLoader {
+	return ctx.Value(skillsByJobIdLoaderKey).(*generated.SkillByJobIdLoader)
 }
