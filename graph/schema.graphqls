@@ -145,6 +145,8 @@ type User {
     department: String!
     photoUrl: String!
     githubUrl: String!
+    githubId: ID!
+    githubName: String!
     bio: String
     contact: String
     skills: [Skill]

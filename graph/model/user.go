@@ -24,12 +24,18 @@ type User struct {
 	TimeUpdated string     `json:"timeUpdated"`
 	CreatedJobs []*Job     `json:"createdJobs"`
 	JobStats    *UserStats `json:"jobStats"`
+	GithubId    string     `json:"githubId"`
+	GithubName  string     `json:"githubNeam"`
 }
 
 func (u *User) MapDbToGql(dbUser dbmodel.User) {
 	u.ID = dbUser.Id
-	u.Email = dbUser.Email
-	u.Name = dbUser.Name
+	if dbUser.Email.Valid {
+		u.Email = dbUser.Email.String
+	}
+	if dbUser.Name.Valid {
+		u.Name = dbUser.Name.String
+	}
 	u.Onboarded = dbUser.Onboarded
 	if dbUser.Role.Valid {
 		u.Role = dbUser.Role.String
@@ -37,31 +43,43 @@ func (u *User) MapDbToGql(dbUser dbmodel.User) {
 	if dbUser.Department.Valid {
 		u.Department = dbUser.Department.String
 	}
-	u.Bio = &dbUser.Bio
+	if dbUser.Bio.Valid {
+		u.Bio = &dbUser.Bio.String
+	}
 	if dbUser.Contact.Valid {
 		u.Contact = &dbUser.Contact.String
 	}
-	u.GithubURL = dbUser.GithubUrl
-	u.PhotoURL = dbUser.PhotoUrl
+	if dbUser.GithubUrl.Valid {
+		u.GithubURL = dbUser.GithubUrl.String
+	}
+	if dbUser.PhotoUrl.Valid {
+		u.PhotoURL = dbUser.PhotoUrl.String
+	}
+	if dbUser.GithubId.Valid {
+		u.GithubId = dbUser.GithubId.String
+	}
+	if dbUser.GithubName.Valid {
+		u.GithubName = dbUser.GithubName.String
+	}
 	u.TimeCreated = dbUser.TimeCreated
 	u.TimeUpdated = dbUser.TimeUpdated
+
 }
 
-func (u *User) GenerateAccessToken() (*string, error){
+func (u *User) GenerateAccessToken() (*string, error) {
 	if u.ID == "" {
 		return nil, errors.New("user.ID is empty or invalid")
 	}
 	expiresAt := time.Now().Add(time.Hour * 24 * 7)
 	return u.generateToken(expiresAt)
 }
-func (u *User) GenerateRefreshToken() (*string, error){
+func (u *User) GenerateRefreshToken() (*string, error) {
 	if u.ID == "" {
 		return nil, errors.New("user.ID is empty or invalid")
 	}
 	expiresAt := time.Now().Add(time.Hour * 24 * 7)
 	return u.generateToken(expiresAt)
 }
-
 
 func (u *User) generateToken(expiresAt time.Time) (*string, error) {
 

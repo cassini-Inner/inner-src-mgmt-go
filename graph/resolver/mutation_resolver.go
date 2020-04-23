@@ -186,11 +186,36 @@ func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID strin
 }
 
 func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID string) ([]*gqlmodel.Application, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	jobMilestones, err := r.MilestonesRepo.GetByJobId(jobID)
+	if err != nil{
+		return nil, err
+	}
+
+
+	applications, err := r.ApplicationsRepo.SetApplicationStatusForUserAndJob(user.Id, jobID, jobMilestones)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*gqlmodel.Application
+
+	for _, application := range applications {
+		var temp gqlmodel.Application
+		temp.MapDbToGql(application)
+		result = append(result, &temp)
+	}
+	return result, nil
 }
 
 func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *gqlmodel.ApplicationStatus) ([]*gqlmodel.Application, error) {
-	panic(fmt.Errorf("not implemented"))
+	// since this end point can only be user by job owner,
+	// they can only modify job status from pending to accepted or pending
+	panic("")
 }
 
 func (r *mutationResolver) Authenticate(ctx context.Context, githubCode string) (*gqlmodel.UserAuthenticationPayload, error) {
