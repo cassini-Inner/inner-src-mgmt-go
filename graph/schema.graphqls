@@ -13,6 +13,7 @@ type Query {
         id: ID!
         jobsStatusFilter: JobStatus
     ): User
+
 }
 type Mutation {
     # To update the user information like name, email ...
@@ -32,12 +33,20 @@ type Mutation {
     # To delete a comment based on comment id
     deleteCommment(id: ID!) : Comment
     # Create an application to a job, user id obtained through auth
-    createJobApplication(jobID: ID!): Application
+    createJobApplication(jobID: ID!): [Application]
     # To withdraw application from a job
-    deleteJobApplication(jobID: ID!): Application
+    deleteJobApplication(jobID: ID!): [Application]
     # create, accept or reject applicants
-    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): Application
+    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): [Application]
+    authenticate(githubCode: String!): UserAuthenticationPayload
+    refreshToken(token: String!): UserAuthenticationPayload
 }
+
+type UserAuthenticationPayload {
+    profile: User!
+    token: String!
+}
+
 # For updating a job
 input UpdateJobInput {
     id: ID!
@@ -128,11 +137,13 @@ type Application {
 
 type User {
     id: ID!
+    onboarded: Boolean!
     email: String!
     name: String!
     role: String!
     department: String!
     photoUrl: String!
+    githubUrl: String!
     bio: String
     contact: String
     skills: [Skill]

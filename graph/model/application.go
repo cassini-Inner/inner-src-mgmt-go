@@ -14,11 +14,13 @@ type Application struct {
 	CreatedOn   string            `json:"createdOn"`
 }
 
-func (a *Application) MapDbToGql(dbApplication dbmodel.Application) {
+func (a *Application) MapDbToGql(dbApplication *dbmodel.Application) {
 	a.ID = dbApplication.Id
 	a.ApplicantID = dbApplication.ApplicantId
 	a.Status = ApplicationStatus(strings.ToUpper(dbApplication.Status))
-	a.Note = &dbApplication.Note
+	if dbApplication.Note.Valid {
+		a.Note = &dbApplication.Note.String
+	}
 	a.MilestoneID = dbApplication.MilestoneId
 	a.CreatedOn = dbApplication.TimeCreated
 }

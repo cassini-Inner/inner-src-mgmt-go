@@ -77,7 +77,7 @@ const (
 			globalskills.created_by,
 			globalskills.value,
 			globalskills.time_created
-		from users
+		from users 
 		join userskills on userskills.user_id = users.id and userskills.is_deleted = false
 		join globalskills on globalskills.id = userskills.id
 		where users.id = $1 and users.is_deleted = false`

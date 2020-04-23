@@ -1,10 +1,10 @@
-insert into users(email, name, role, department, bio, photo_url, contact, is_deleted)
+insert into users(email, name, role, department, bio, photo_url, contact, is_deleted, onboarded, github_url)
 VALUES ('tushar@email.com', 'Tushar Paliwal', 'Intern', 'Risk', 'Tech Enthusiast',
-        'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@tushar', false),
+        'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@tushar', false, true, 'https://github.com/tushar'),
        ('arjun@email.com', 'Arjun Ramachandran', 'Intern', 'Risk', 'Tech Enthusiast',
-        'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@arjun', false),
+        'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@arjun', false, true, 'https://github.com/tushar'),
        ('prashant@email.com', 'Prashant Agarwal', 'Intern', 'Risk', 'Data science Enthusiast',
-        'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@prashant', false);
+        'https://avatars3.githubusercontent.com/u/55799457?s=460&v=4', '@prashant', false, true, 'https://github.com/tushar');
 
 insert into globalskills(created_by, value, time_created)
 VALUES (1, 'nodejs', '2019-06-22 19:10:25-07'),
@@ -164,17 +164,16 @@ values (1, 1, 'rejected', 'Sorry, you don''t seem to have sufficient experience'
         '2020-06-23 19:10:25-07'),
        (5, 2, 'accepted', 'Contact me @ lmao@email.com', '2020-06-22 19:10:25-07',
         '2020-06-23 19:10:25-07'),
-       (6, 3, 'pending', 'Contact me @ lmao@email.com', '2020-06-22 19:10:25-07',
+       (6, 3, 'pending', '', '2020-06-22 19:10:25-07',
         '2020-06-23 19:10:25-07'),
-       (7, 3, 'pending', 'Contact me @ lmao@email.com', '2020-06-22 19:10:25-07',
+       (7, 3, 'pending', '', '2020-06-22 19:10:25-07',
         '2020-06-23 19:10:25-07'),
-       (8, 3, 'pending', 'Contact me @ lmao@email.com', '2020-06-22 19:10:25-07',
+       (8, 3, 'pending', '', '2020-06-22 19:10:25-07',
         '2020-06-23 19:10:25-07'),
-       (6, 1, 'withdrawn', 'Contact me @ lmao@email.com', '2020-06-22 19:10:25-07',
+       (6, 1, 'withdrawn', '', '2020-06-22 19:10:25-07',
         '2020-06-23 19:10:25-07'),
-       (7, 1, 'withdrawn', 'Contact me @ lmao@email.com', '2020-06-22 19:10:25-07',
+       (7, 1, 'withdrawn', '', '2020-06-22 19:10:25-07',
         '2020-06-23 19:10:25-07'),
-       (8, 1, 'withdrawn', 'Contact me @ lmao@email.com', '2020-06-22 19:10:25-07',
+       (8, 1, 'withdrawn', '', '2020-06-22 19:10:25-07',
         '2020-06-23 19:10:25-07');
-
 
