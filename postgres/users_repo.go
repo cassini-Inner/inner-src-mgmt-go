@@ -26,23 +26,7 @@ func NewUsersRepo(db *sqlx.DB) *UsersRepo {
 
 //TODO: Deprecate this function
 func (u *UsersRepo) CreateUser(input *gqlmodel.CreateUserInput) (*dbmodel.User, error) {
-	var user dbmodel.User
-	query := "SELECT * FROM users WHERE email = $1 AND is_deleted = FALSE"
-	err := u.db.QueryRowx(query, input.Email).StructScan(&user)
-
-	if err != nil {
-		var lastInsertId string
-		query = "INSERT INTO users (name, email, photo_url) VALUES($1, $2, $3) RETURNING id"
-		err = u.db.QueryRowx(query, input.Name, input.Email, input.PhotoURL).Scan(&lastInsertId)
-		if err != nil {
-			return nil, err
-		}
-		user.Id = lastInsertId
-		user.Email = input.Email
-		user.Name = input.Name
-		user.PhotoUrl = input.PhotoURL
-	}
-	return &user, err
+	panic("not implemented")
 }
 
 //TODO: Deprecate
@@ -68,6 +52,15 @@ func (u *UsersRepo) GetByEmailId(emailId string) (*dbmodel.User, error) {
 	return &user, nil
 }
 
+func (u *UsersRepo) GetByGithubId(githubId string) (*dbmodel.User, error) {
+	var user dbmodel.User
+	err := u.db.QueryRowx(selectUsersByGithubIdQuery, githubId).StructScan(&user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (u *UsersRepo) AuthenticateAndGetUser(githubCode string) (*dbmodel.User, error) {
 	accessToken, err := u.getAccessTokenFromCode(githubCode)
 	if err != nil {
@@ -78,9 +71,9 @@ func (u *UsersRepo) AuthenticateAndGetUser(githubCode string) (*dbmodel.User, er
 	if err != nil {
 		return nil, err
 	}
+	// check if the user is signing up for the first time
 	usersCount := 0
-	err = u.db.QueryRowx(countUsersByEmailIdQuery, fetchedUser.Email).Scan(&usersCount)
-	// in this case
+	err = u.db.QueryRowx(countUsersByGithubIdQuery, fetchedUser.GithubId).Scan(&usersCount)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +82,7 @@ func (u *UsersRepo) AuthenticateAndGetUser(githubCode string) (*dbmodel.User, er
 	case 0:
 		return u.createNewUser(fetchedUser)
 	case 1:
-		user, err := u.GetByEmailId(fetchedUser.Email)
+		user, err := u.GetByGithubId(fetchedUser.GithubId.String)
 		if err != nil {
 			return nil, err
 		}
@@ -100,10 +93,10 @@ func (u *UsersRepo) AuthenticateAndGetUser(githubCode string) (*dbmodel.User, er
 
 }
 
-func (u *UsersRepo) createNewUser(userInformation *dbmodel.User) (*dbmodel.User, error) {
+func (u *UsersRepo) createNewUser(user *dbmodel.User) (*dbmodel.User, error) {
 	newUserId := 0
 	// we are setting up a users bio on sign-up since it's not included as part of on-boarding
-	err := u.db.QueryRowx(createNewUserQuery, userInformation.Name, userInformation.Email, userInformation.Bio, userInformation.PhotoUrl, userInformation.GithubUrl).Scan(&newUserId)
+	err := u.db.QueryRowx(createNewUserQuery, user.Email, user.Name, user.Role, user.Department, user.Bio, user.PhotoUrl, user.Contact, user.GithubUrl, user.GithubId, user.GithubName).Scan(&newUserId)
 	if err != nil {
 		return nil, err
 	}
@@ -160,14 +153,16 @@ func (u *UsersRepo) getUserInformationFromToken(accessToken string) (*dbmodel.Us
 		return nil, err
 	}
 
-	user := dbmodel.User{
-		Email:     result["email"].(string),
-		Name:      result["name"].(string),
-		Bio:       result["bio"].(string),
-		PhotoUrl:  result["avatar_url"].(string),
-		GithubUrl: result["html_url"].(string),
+	user := &dbmodel.User{
+		Email:      dbmodel.ToNullString(result["email"]),
+		Name:       dbmodel.ToNullString(result["name"]),
+		Bio:        dbmodel.ToNullString(result["bio"]),
+		PhotoUrl:   dbmodel.ToNullString(result["avatar_url"]),
+		GithubUrl:  dbmodel.ToNullString(result["html_url"]),
+		GithubId:   dbmodel.ToNullString(result["id"]),
+		GithubName: dbmodel.ToNullString(result["login"]),
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (u *UsersRepo) parseJsonFromResponse(responseBody io.Reader) (map[string]interface{}, error) {
@@ -183,6 +178,7 @@ func (u *UsersRepo) parseJsonFromResponse(responseBody io.Reader) (map[string]in
 const (
 	selectUserByIdQuery       = `select * from users where users.id = $1 and users.is_deleted = false`
 	selectUsersByEmailIdQuery = `select * from users where email = $1 and users.is_deleted = false`
-	countUsersByEmailIdQuery  = `select count(*) from users where email = $1`
-	createNewUserQuery        = `insert into users(name, email, bio, photo_url, github_url) values ($1, $2, $3, $4, $5) returning id`
+	selectUsersByGithubIdQuery = `select * from users where github_id = $1 and users.is_deleted = false`
+	countUsersByGithubIdQuery = `select count(*) from users where github_id = $1`
+	createNewUserQuery        = `insert into users(email, name, role, department, bio, photo_url, contact, github_url, github_id, github_name) VALUES ($1, $2, $3, $4,$5, $6, $7, $8, $9, $10) returning id`
 )

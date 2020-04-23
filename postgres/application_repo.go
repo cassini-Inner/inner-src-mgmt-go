@@ -45,7 +45,6 @@ func (a *ApplicationsRepo) CreateApplication(milestones []*dbmodel.Milestone, us
 		existingApplications = append(existingApplications, &application)
 	}
 
-
 	if len(existingApplications) == len(milestones) {
 		return existingApplications, nil
 	}
@@ -135,17 +134,24 @@ func (a *ApplicationsRepo) GetByJobId(jobId string) ([]*dbmodel.Application, err
 		return nil, err
 	}
 
+	return scanApplicationRows(rows)
+}
+
+func scanApplicationRows(rows *sqlx.Rows) ([]*dbmodel.Application, error) {
 	var result []*dbmodel.Application
 	for rows != nil && rows.Next() {
 		var application dbmodel.Application
-		rows.StructScan(&application)
+		err := rows.StructScan(&application)
+		if err != nil {
+			return nil, err
+		}
 		result = append(result, &application)
 	}
+
 	return result, nil
 }
 
 func (a *ApplicationsRepo) GetUserJobApplications(userId string) ([]*dbmodel.Job, error) {
-
 	rows, err := a.db.Queryx(selectAppliedJobsByUserIdQuery, userId)
 	if err != nil {
 		return nil, err
@@ -158,6 +164,49 @@ func (a *ApplicationsRepo) GetUserJobApplications(userId string) ([]*dbmodel.Job
 		result = append(result, &job)
 	}
 	return result, nil
+}
+
+func (a *ApplicationsRepo) GetApplicationStatusForUserAndJob(userId, jobId string) (string, error) {
+	// TODO: Will need to refactor this when we allow users to apply to milestones
+	result := ""
+	err := a.db.QueryRowx(selectApplicationStatusByUserIdJobId, jobId, userId).Scan(&result)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.ToLower(result), nil
+}
+
+func (a *ApplicationsRepo) SetApplicationStatusForUserAndJob(userId, jobId string, milestones []*dbmodel.Milestone) ([]*dbmodel.Application, error) {
+	// when the user is withdrawing we need to set the status of milestones
+	// and job appropriately
+	//tx, err := a.db.Begin()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var milestoneIds []string
+	//for _, milestone := range milestones {
+	//	milestoneIds = append(milestoneIds, milestone.Id)
+	//}
+	//
+	//updateApplicationsQuery,updateApplicationArgs,  err := sqlx.In(updateApplicationsForMilestonesUser, milestoneIds, userId)
+	//
+	//
+
+
+
+	// if there are no accepted applications in a job after user withdrawal
+	// the the job and milestones goes back into OPEN status
+	panic("")
+}
+
+func (a *ApplicationsRepo) GetAcceptedApplicationsByJobId(jobId string) ([]*dbmodel.Application, error) {
+	rows, err := a.db.Queryx(selectAcceptedApplicationsForJobIDQuery, &jobId)
+	if err != nil {
+		return nil, err
+	}
+	return scanApplicationRows(rows)
 }
 
 const (
@@ -185,4 +234,20 @@ const (
 		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
 		join jobs on milestones.job_id = jobs.id and jobs.is_deleted = false
 		where applicant_id = $1 and applications.status in ('pending', 'accepted', 'rejected')`
+
+	selectApplicationStatusByUserIdJobId = `select applications.status from milestones join applications on milestones.id = applications.milestone_id
+where milestones.job_id = $1 and applications.applicant_id = $2 limit 1`
+
+	selectAcceptedApplicationsForJobIDQuery = `select applications.id, 
+		applications.milestone_id, 
+		applications.applicant_id, 
+		applications.status, 
+		applications.note,
+		applications.time_created, 
+		applications.time_updated
+		from applications
+		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
+		where milestones.job_id = $1 and applications.status in ('pending', 'accepted' )`
+
+	updateApplicationsForMilestonesUser = `update applications set status = 'withdrawn' where applications.milestone_id in (?) and applications.user_id = ?`
 )

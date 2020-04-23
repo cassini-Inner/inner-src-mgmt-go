@@ -35,7 +35,10 @@ func (r *userResolver) CreatedJobs(ctx context.Context, obj *gqlmodel.User) ([]*
 	return result, nil
 }
 
-//TODO: Fix this
+func (r *userResolver) JobStats(ctx context.Context, obj *gqlmodel.User) (*gqlmodel.UserStats, error) {
+	return r.JobsRepo.GetStatsByUserId(obj.ID)
+}
+
 func (r *userResolver) AppliedJobs(ctx context.Context, obj *gqlmodel.User) ([]*gqlmodel.UserJobApplication, error) {
 	applications, err := r.ApplicationsRepo.GetUserJobApplications(obj.ID)
 	if err != nil {
@@ -43,15 +46,16 @@ func (r *userResolver) AppliedJobs(ctx context.Context, obj *gqlmodel.User) ([]*
 	}
 	var result []*gqlmodel.UserJobApplication
 
-	for _, application := range applications {
+	for _, job := range applications {
 		var gqlJob gqlmodel.Job
-		gqlJob.MapDbToGql(*application)
-		result = append(result, &gqlmodel.UserJobApplication{Job: &gqlJob})
+		gqlJob.MapDbToGql(*job)
+		jobApplicationStatus, err := r.ApplicationsRepo.GetApplicationStatusForUserAndJob(obj.ID, job.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, &gqlmodel.UserJobApplication{Job: &gqlJob, ApplicationStatus: gqlmodel.ApplicationStatus(jobApplicationStatus), UserJobStatus: gqlmodel.JobStatus(job.Status)})
 	}
 
 	return result, nil
-}
-
-func (r *userResolver) JobStats(ctx context.Context, obj *gqlmodel.User) (*gqlmodel.UserStats, error) {
-	return r.JobsRepo.GetStatsByUserId(obj.ID)
 }

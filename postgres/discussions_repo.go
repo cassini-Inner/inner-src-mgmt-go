@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"fmt"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 )
@@ -26,7 +26,7 @@ func (d *DiscussionsRepo) CreateComment(jobId, comment, userId string) (*dbmodel
 		_ = tx.Rollback()
 		return nil, err
 	}
-	var id,job, createdBy, content, timeCreated, timeUpdated string
+	var id, job, createdBy, content, timeCreated, timeUpdated string
 	err = tx.QueryRow(`select id, job_id, created_by,content, time_created, time_updated from discussions where id = $1`, insertedCommentId).Scan(&id, &job, &createdBy, &content, &timeCreated, &timeUpdated)
 	if err != nil {
 		_ = tx.Rollback()
@@ -46,15 +46,57 @@ func (d *DiscussionsRepo) CreateComment(jobId, comment, userId string) (*dbmodel
 		TimeUpdated: timeUpdated,
 	}, nil
 }
-func (d *DiscussionsRepo) UpdateComment(commentId string, comment string) (*gqlmodel.Comment, error) {
-	panic("not implemented")
+
+func (d *DiscussionsRepo) UpdateComment(discussionId, content string) (*dbmodel.Discussion, error) {
+	var id, jobId, createdBy, discContent, timeCreated, timeUpdated string
+	var isDeleted bool
+	tx, err := d.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.QueryRow(updateDiscussionById, content, discussionId).Scan(&id, &jobId, &createdBy, &discContent, &timeCreated, &timeUpdated, &isDeleted)
+
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return &dbmodel.Discussion{
+		Id:          id,
+		JobId:       jobId,
+		CreatedBy:   createdBy,
+		Content:     discContent,
+		TimeCreated: timeCreated,
+		TimeUpdated: timeUpdated,
+		IsDeleted:   false,
+	}, nil
 }
-func (d *DiscussionsRepo) DeleteComment(commentId string) (*gqlmodel.Comment, error) {
-	panic("not implemented")
+
+func (d *DiscussionsRepo) DeleteComment(discussionId string) error {
+	tx, err:= d.db.Begin()
+	if err != nil {
+		return err
+	}
+	result, err := tx.Exec(deleteDiscussionById, discussionId)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	fmt.Printf("%+v", result)
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *DiscussionsRepo) GetByJobId(jobId string) ([]*dbmodel.Discussion, error) {
-	rows, err := d.db.Queryx(getDiscussionByJobId, jobId)
+	rows, err := d.db.Queryx(getDiscussionsByJobId, jobId)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +111,19 @@ func (d *DiscussionsRepo) GetByJobId(jobId string) ([]*dbmodel.Discussion, error
 	return result, nil
 }
 
+func (d *DiscussionsRepo) GetById(discussionId string) (*dbmodel.Discussion, error) {
+	var discussion dbmodel.Discussion
+	err := d.db.QueryRowx(getDiscussionById, discussionId).StructScan(&discussion)
+	if err != nil {
+		return nil, err
+	}
+
+	return &discussion, nil
+}
+
 const (
-	getDiscussionByJobId = `select * from discussions where job_id = $1 and is_deleted=false order by time_created`
+	getDiscussionsByJobId = `select * from discussions where job_id = $1 and is_deleted=false order by time_created`
+	getDiscussionById     = `select * from discussions where id = $1 and is_deleted = false`
+	updateDiscussionById  = `update discussions set content = $1 where id = $2 and is_deleted = false returning *`
+	deleteDiscussionById = `update discussions set is_deleted = true where id = $1`
 )

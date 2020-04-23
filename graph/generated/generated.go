@@ -150,6 +150,8 @@ type ComplexityRoot struct {
 		CreatedJobs func(childComplexity int) int
 		Department  func(childComplexity int) int
 		Email       func(childComplexity int) int
+		GithubId    func(childComplexity int) int
+		GithubName  func(childComplexity int) int
 		GithubURL   func(childComplexity int) int
 		ID          func(childComplexity int) int
 		JobStats    func(childComplexity int) int
@@ -163,13 +165,15 @@ type ComplexityRoot struct {
 	}
 
 	UserAuthenticationPayload struct {
-		Profile func(childComplexity int) int
-		Token   func(childComplexity int) int
+		Profile      func(childComplexity int) int
+		RefreshToken func(childComplexity int) int
+		Token        func(childComplexity int) int
 	}
 
 	UserJobApplication struct {
 		ApplicationStatus func(childComplexity int) int
 		Job               func(childComplexity int) int
+		UserJobStatus     func(childComplexity int) int
 	}
 
 	UserStats struct {
@@ -818,6 +822,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Email(childComplexity), true
 
+	case "User.githubId":
+		if e.complexity.User.GithubId == nil {
+			break
+		}
+
+		return e.complexity.User.GithubId(childComplexity), true
+
+	case "User.githubName":
+		if e.complexity.User.GithubName == nil {
+			break
+		}
+
+		return e.complexity.User.GithubName(childComplexity), true
+
 	case "User.githubUrl":
 		if e.complexity.User.GithubURL == nil {
 			break
@@ -895,6 +913,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserAuthenticationPayload.Profile(childComplexity), true
 
+	case "UserAuthenticationPayload.refreshToken":
+		if e.complexity.UserAuthenticationPayload.RefreshToken == nil {
+			break
+		}
+
+		return e.complexity.UserAuthenticationPayload.RefreshToken(childComplexity), true
+
 	case "UserAuthenticationPayload.token":
 		if e.complexity.UserAuthenticationPayload.Token == nil {
 			break
@@ -915,6 +940,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UserJobApplication.Job(childComplexity), true
+
+	case "UserJobApplication.userJobStatus":
+		if e.complexity.UserJobApplication.UserJobStatus == nil {
+			break
+		}
+
+		return e.complexity.UserJobApplication.UserJobStatus(childComplexity), true
 
 	case "UserStats.completed":
 		if e.complexity.UserStats.Completed == nil {
@@ -1048,6 +1080,7 @@ type Mutation {
 type UserAuthenticationPayload {
     profile: User!
     token: String!
+    refreshToken: String!
 }
 
 # For updating a job
@@ -1147,6 +1180,8 @@ type User {
     department: String!
     photoUrl: String!
     githubUrl: String!
+    githubId: ID!
+    githubName: String!
     bio: String
     contact: String
     skills: [Skill]
@@ -1162,6 +1197,7 @@ type User {
 
 type UserJobApplication {
     applicationStatus: ApplicationStatus!
+    userJobStatus: JobStatus!
     job: Job!
 }
 
@@ -4090,6 +4126,74 @@ func (ec *executionContext) _User_githubUrl(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _User_githubId(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GithubId, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_githubName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GithubName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _User_bio(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4415,6 +4519,40 @@ func (ec *executionContext) _UserAuthenticationPayload_token(ctx context.Context
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _UserAuthenticationPayload_refreshToken(ctx context.Context, field graphql.CollectedField, obj *model.UserAuthenticationPayload) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "UserAuthenticationPayload",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RefreshToken, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _UserJobApplication_applicationStatus(ctx context.Context, field graphql.CollectedField, obj *model.UserJobApplication) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4447,6 +4585,40 @@ func (ec *executionContext) _UserJobApplication_applicationStatus(ctx context.Co
 	res := resTmp.(model.ApplicationStatus)
 	fc.Result = res
 	return ec.marshalNApplicationStatus2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplicationStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserJobApplication_userJobStatus(ctx context.Context, field graphql.CollectedField, obj *model.UserJobApplication) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "UserJobApplication",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserJobStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.JobStatus)
+	fc.Result = res
+	return ec.marshalNJobStatus2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserJobApplication_job(ctx context.Context, field graphql.CollectedField, obj *model.UserJobApplication) (ret graphql.Marshaler) {
@@ -6548,6 +6720,16 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "githubId":
+			out.Values[i] = ec._User_githubId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "githubName":
+			out.Values[i] = ec._User_githubName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "bio":
 			out.Values[i] = ec._User_bio(ctx, field, obj)
 		case "contact":
@@ -6641,6 +6823,11 @@ func (ec *executionContext) _UserAuthenticationPayload(ctx context.Context, sel 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "refreshToken":
+			out.Values[i] = ec._UserAuthenticationPayload_refreshToken(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6665,6 +6852,11 @@ func (ec *executionContext) _UserJobApplication(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("UserJobApplication")
 		case "applicationStatus":
 			out.Values[i] = ec._UserJobApplication_applicationStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "userJobStatus":
+			out.Values[i] = ec._UserJobApplication_userJobStatus(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

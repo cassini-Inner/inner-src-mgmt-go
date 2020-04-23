@@ -45,6 +45,7 @@ type Mutation {
 type UserAuthenticationPayload {
     profile: User!
     token: String!
+    refreshToken: String!
 }
 
 # For updating a job
@@ -144,6 +145,8 @@ type User {
     department: String!
     photoUrl: String!
     githubUrl: String!
+    githubId: ID!
+    githubName: String!
     bio: String
     contact: String
     skills: [Skill]
@@ -159,6 +162,7 @@ type User {
 
 type UserJobApplication {
     applicationStatus: ApplicationStatus!
+    userJobStatus: JobStatus!
     job: Job!
 }
 

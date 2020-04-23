@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
@@ -11,6 +12,13 @@ import (
 	"log"
 	"os"
 	"time"
+)
+
+var (
+	ErrUserNotAuthenticated = errors.New("unauthorized request")
+	ErrUserNotOwner = errors.New("current user is not owner of this entity, and hence cannot modify it")
+	ErrNoEntityMatchingId = errors.New("no entity found that matches given id")
+	ErrOwnerApplyToOwnJob = errors.New("owner cannot apply to their job")
 )
 
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -73,7 +81,7 @@ func (r *mutationResolver) AddCommentToJob(ctx context.Context, comment string, 
 		return nil, err
 	}
 
-	newComment, err := r.DiscussionsRepo.CreateComment(jobID,comment, user.Id)
+	newComment, err := r.DiscussionsRepo.CreateComment(jobID, comment, user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +92,59 @@ func (r *mutationResolver) AddCommentToJob(ctx context.Context, comment string, 
 }
 
 func (r *mutationResolver) UpdateComment(ctx context.Context, id string, comment string) (*gqlmodel.Comment, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil,ErrUserNotAuthenticated
+	}
+
+	existingDiscussion, err := r.DiscussionsRepo.GetById(id)
+	if err != nil {
+		if err == sql.ErrNoRows{
+			return  nil, ErrNoEntityMatchingId
+		}
+		return nil, err
+	}
+	if existingDiscussion.CreatedBy != user.Id {
+		return nil, ErrUserNotOwner
+	}
+
+	updatedDiscussion, err := r.DiscussionsRepo.UpdateComment(id, comment)
+	if err != nil {
+		return nil, err
+	}
+	var gqlUpdatedDiscussion gqlmodel.Comment
+	gqlUpdatedDiscussion.MapDbToGql(*updatedDiscussion)
+	return &gqlUpdatedDiscussion, nil
 }
 
 func (r *mutationResolver) DeleteCommment(ctx context.Context, id string) (*gqlmodel.Comment, error) {
-	panic(fmt.Errorf("not implemented"))
+	if id == "" {
+		return nil, errors.New("invalid comment id")
+	}
+
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	existingDiscussion, err := r.DiscussionsRepo.GetById(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoEntityMatchingId
+		}
+		return nil, err
+	}
+	if existingDiscussion.CreatedBy != user.Id {
+		return nil, ErrUserNotOwner
+	}
+	err = r.DiscussionsRepo.DeleteComment(id)
+	if err != nil {
+		return nil, err
+	}
+	existingDiscussion.IsDeleted = true
+	var gqlComment gqlmodel.Comment
+	gqlComment.MapDbToGql(*existingDiscussion)
+	return &gqlComment, nil
 }
 
 func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID string) ([]*gqlmodel.Application, error) {
@@ -96,16 +152,19 @@ func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID strin
 
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, ErrUserNotAuthenticated
 	}
 
 	job, err := r.JobsRepo.GetById(jobID)
 	if err != nil {
+		if err == sql.ErrNoRows{
+			return nil, ErrNoEntityMatchingId
+		}
 		return nil, err
 	}
 
 	if job.CreatedBy == user.Id {
-		return nil, errors.New("user cannot apply to their own job")
+		return nil, ErrOwnerApplyToOwnJob
 	}
 
 	milestones, err := r.MilestonesRepo.GetByJobId(jobID)
@@ -127,11 +186,36 @@ func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID strin
 }
 
 func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID string) ([]*gqlmodel.Application, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	jobMilestones, err := r.MilestonesRepo.GetByJobId(jobID)
+	if err != nil{
+		return nil, err
+	}
+
+
+	applications, err := r.ApplicationsRepo.SetApplicationStatusForUserAndJob(user.Id, jobID, jobMilestones)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*gqlmodel.Application
+
+	for _, application := range applications {
+		var temp gqlmodel.Application
+		temp.MapDbToGql(application)
+		result = append(result, &temp)
+	}
+	return result, nil
 }
 
 func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *gqlmodel.ApplicationStatus) ([]*gqlmodel.Application, error) {
-	panic(fmt.Errorf("not implemented"))
+	// since this end point can only be user by job owner,
+	// they can only modify job status from pending to accepted or pending
+	panic("")
 }
 
 func (r *mutationResolver) Authenticate(ctx context.Context, githubCode string) (*gqlmodel.UserAuthenticationPayload, error) {
