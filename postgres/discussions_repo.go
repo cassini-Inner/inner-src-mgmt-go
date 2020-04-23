@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"fmt"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 )
@@ -77,8 +77,22 @@ func (d *DiscussionsRepo) UpdateComment(discussionId, content string) (*dbmodel.
 	}, nil
 }
 
-func (d *DiscussionsRepo) DeleteComment(commentId string) (*gqlmodel.Comment, error) {
-	panic("not implemented")
+func (d *DiscussionsRepo) DeleteComment(discussionId string) error {
+	tx, err:= d.db.Begin()
+	if err != nil {
+		return err
+	}
+	result, err := tx.Exec(deleteDiscussionById, discussionId)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	fmt.Printf("%+v", result)
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *DiscussionsRepo) GetByJobId(jobId string) ([]*dbmodel.Discussion, error) {
@@ -110,5 +124,6 @@ func (d *DiscussionsRepo) GetById(discussionId string) (*dbmodel.Discussion, err
 const (
 	getDiscussionsByJobId = `select * from discussions where job_id = $1 and is_deleted=false order by time_created`
 	getDiscussionById     = `select * from discussions where id = $1 and is_deleted = false`
-	updateDiscussionById  = `update discussions set content = $1 where id = $2 returning *`
+	updateDiscussionById  = `update discussions set content = $1 where id = $2 and is_deleted = false returning *`
+	deleteDiscussionById = `update discussions set is_deleted = true where id = $1`
 )

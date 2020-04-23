@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
@@ -13,8 +14,11 @@ import (
 	"time"
 )
 
-const (
-	ErrUserNotAuthenticated = "unauthorized request, invalid accessToken"
+var (
+	ErrUserNotAuthenticated = errors.New("unauthorized request")
+	ErrUserNotOwner = errors.New("current user is not owner of this entity, and hence cannot modify it")
+	ErrNoEntityMatchingId = errors.New("no entity found that matches given id")
+	ErrOwnerApplyToOwnJob = errors.New("owner cannot apply to their job")
 )
 
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -90,15 +94,18 @@ func (r *mutationResolver) AddCommentToJob(ctx context.Context, comment string, 
 func (r *mutationResolver) UpdateComment(ctx context.Context, id string, comment string) (*gqlmodel.Comment, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, errors.New(ErrUserNotAuthenticated)
+		return nil,ErrUserNotAuthenticated
 	}
 
 	existingDiscussion, err := r.DiscussionsRepo.GetById(id)
 	if err != nil {
+		if err == sql.ErrNoRows{
+			return  nil, ErrNoEntityMatchingId
+		}
 		return nil, err
 	}
 	if existingDiscussion.CreatedBy != user.Id {
-		return nil, errors.New("unauthorized: current user is not the author of this discussion")
+		return nil, ErrUserNotOwner
 	}
 
 	updatedDiscussion, err := r.DiscussionsRepo.UpdateComment(id, comment)
@@ -111,7 +118,33 @@ func (r *mutationResolver) UpdateComment(ctx context.Context, id string, comment
 }
 
 func (r *mutationResolver) DeleteCommment(ctx context.Context, id string) (*gqlmodel.Comment, error) {
-	panic(fmt.Errorf("not implemented"))
+	if id == "" {
+		return nil, errors.New("invalid comment id")
+	}
+
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	existingDiscussion, err := r.DiscussionsRepo.GetById(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoEntityMatchingId
+		}
+		return nil, err
+	}
+	if existingDiscussion.CreatedBy != user.Id {
+		return nil, ErrUserNotOwner
+	}
+	err = r.DiscussionsRepo.DeleteComment(id)
+	if err != nil {
+		return nil, err
+	}
+	existingDiscussion.IsDeleted = true
+	var gqlComment gqlmodel.Comment
+	gqlComment.MapDbToGql(*existingDiscussion)
+	return &gqlComment, nil
 }
 
 func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID string) ([]*gqlmodel.Application, error) {
@@ -119,16 +152,19 @@ func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID strin
 
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, ErrUserNotAuthenticated
 	}
 
 	job, err := r.JobsRepo.GetById(jobID)
 	if err != nil {
+		if err == sql.ErrNoRows{
+			return nil, ErrNoEntityMatchingId
+		}
 		return nil, err
 	}
 
 	if job.CreatedBy == user.Id {
-		return nil, errors.New("user cannot apply to their own job")
+		return nil, ErrOwnerApplyToOwnJob
 	}
 
 	milestones, err := r.MilestonesRepo.GetByJobId(jobID)
