@@ -8,6 +8,7 @@ import (
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 	"strings"
+	"time"
 )
 
 type ApplicationsRepo struct {
@@ -20,18 +21,20 @@ func NewApplicationsRepo(db *sqlx.DB) *ApplicationsRepo {
 
 func (a *ApplicationsRepo) CreateApplication(milestones []*dbmodel.Milestone, userId string, ctx context.Context) ([]*dbmodel.Application, error) {
 
-	// check if the user already has applied to a given job
-	// if they have, then just return their current applications
+	// get the list of milestoneIds from the job milestones
 	var milestoneIds []string
 	for _, milestone := range milestones {
 		milestoneIds = append(milestoneIds, milestone.Id)
 	}
-	stmt, args, err := sqlx.In(`select * from applications where applicant_id = ? and milestone_id in (?) and status='pending'`, userId, milestoneIds)
+
+	// check if the user already has applied to a given job and the application is in pending state
+	// if they have, then just return their current applications
+	stmt, args, err := sqlx.In(`select * from applications where applicant_id = ? and milestone_id in (?) and (status='pending' or status='accepted')`, userId, milestoneIds)
 	if err != nil {
 		return nil, err
 	}
 	stmt = a.db.Rebind(stmt)
-	var existingApplications []*dbmodel.Application
+	var existingPendingApplications []*dbmodel.Application
 	rows, err := a.db.Queryx(stmt, args...)
 	if err != nil {
 		return nil, err
@@ -42,15 +45,54 @@ func (a *ApplicationsRepo) CreateApplication(milestones []*dbmodel.Milestone, us
 		if err != nil {
 			return nil, err
 		}
+		existingPendingApplications = append(existingPendingApplications, &application)
+	}
+
+	if len(existingPendingApplications) == len(milestones) {
+		return existingPendingApplications, nil
+	}
+
+	// if the user previously applied to a job but got rejected or the application was withdrawn
+	// set the status of those applications as 'pending' so they will act as new application
+	stmt, args, err = sqlx.In(`select * from applications where applicant_id = ? and milestone_id in (?) and (status='rejected' or status = 'withdrawn')`, userId, milestoneIds)
+	if err != nil {
+		return nil, err
+	}
+	stmt = a.db.Rebind(stmt)
+	var existingApplications []*dbmodel.Application
+	existingApplicationRows, err := a.db.Queryx(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	for existingApplicationRows.Next() {
+		var application dbmodel.Application
+		err := existingApplicationRows.StructScan(&application)
+		if err != nil {
+			return nil, err
+		}
 		existingApplications = append(existingApplications, &application)
 	}
 
+	// the number of existing applications of that user is same as number of milestones then
+	// update the exsting applications of users and return that
 	if len(existingApplications) == len(milestones) {
-		return existingApplications, nil
+		updateExistingStatement, updateExistingArgs, err := sqlx.In(updateApplicationsForMilestonesUser, dbmodel.ApplicationStatusPending, "", time.Now(), milestoneIds, userId)
+		if err != nil {
+			return nil, err
+		}
+		updateExistingStatement = a.db.Rebind(updateExistingStatement)
+		rows, err := a.db.Queryx(updateExistingStatement, updateExistingArgs...)
+		if err != nil {
+			return nil, err
+		}
+		result, err := scanApplicationRowsx(rows)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
 	}
 
-	// if the user has not applied to a job already then
-	// create new applications for the user
+	// if the user has not applied to a job already then begin a new transaction to create new applications
 	var result []*dbmodel.Application
 
 	tx, err := a.db.Begin()
@@ -75,15 +117,10 @@ func (a *ApplicationsRepo) CreateApplication(milestones []*dbmodel.Milestone, us
 		return nil, err
 	}
 
-	var insertedApplications []string
-	for insertRows.Next() {
-		id := ""
-		err = insertRows.Scan(&id)
-		if err != nil {
-			_ = tx.Rollback()
-			return nil, err
-		}
-		insertedApplications = append(insertedApplications, id)
+	insertedApplications, err := scanApplicationRowsById(insertRows)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
 	}
 	insertRows.Close()
 
@@ -113,9 +150,28 @@ func (a *ApplicationsRepo) CreateApplication(milestones []*dbmodel.Milestone, us
 		})
 	}
 	getApplicationsRows.Close()
+
+	// once the applications have been modified, update the status of the job
+	// and milestones automatically
+	// if active applicants = 0 -> job is open
+	// if active applicants > 0 -> job is ongoing
+	// job can only by marked completed once all the milestones are resolved
+
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
+	}
+	return result, nil
+}
+
+func scanApplicationRowsById(rows *sql.Rows) (result []string, err error) {
+	for rows.Next() {
+		id := ""
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, id)
 	}
 	return result, nil
 }
@@ -134,14 +190,28 @@ func (a *ApplicationsRepo) GetByJobId(jobId string) ([]*dbmodel.Application, err
 		return nil, err
 	}
 
-	return scanApplicationRows(rows)
+	return scanApplicationRowsx(rows)
 }
 
-func scanApplicationRows(rows *sqlx.Rows) ([]*dbmodel.Application, error) {
+func scanApplicationRowsx(rows *sqlx.Rows) ([]*dbmodel.Application, error) {
 	var result []*dbmodel.Application
 	for rows != nil && rows.Next() {
 		var application dbmodel.Application
 		err := rows.StructScan(&application)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &application)
+	}
+
+	return result, nil
+}
+
+func scanApplicationRows(rows *sql.Rows) ([]*dbmodel.Application, error) {
+	var result []*dbmodel.Application
+	for rows != nil && rows.Next() {
+		var application dbmodel.Application
+		err := rows.Scan(&application.Id, &application.MilestoneId, &application.ApplicantId, &application.Status, &application.Note, &application.TimeCreated, &application.TimeUpdated)
 		if err != nil {
 			return nil, err
 		}
@@ -177,8 +247,7 @@ func (a *ApplicationsRepo) GetApplicationStatusForUserAndJob(userId, jobId strin
 	return strings.ToLower(result), nil
 }
 
-func (a *ApplicationsRepo) SetApplicationStatusForUserAndJob(userId, jobId string, milestones []*dbmodel.Milestone) ([]*dbmodel.Application, error) {
-
+func (a *ApplicationsRepo) SetApplicationStatusForUserAndJob(userId, jobId string, milestones []*dbmodel.Milestone, applicationStatus string, note *string) ([]*dbmodel.Application, error) {
 	tx, err := a.db.Begin()
 	if err != nil {
 		return nil, err
@@ -189,32 +258,50 @@ func (a *ApplicationsRepo) SetApplicationStatusForUserAndJob(userId, jobId strin
 		milestoneIds = append(milestoneIds, milestone.Id)
 	}
 
-	updateApplicationsQuery, updateApplicationArgs, err := sqlx.In(updateApplicationsForMilestonesUser, milestoneIds, userId)
+	updateApplicationsQuery, updateApplicationArgs, err := sqlx.In(updateApplicationsForMilestonesUser, applicationStatus, note, time.Now(), milestoneIds, userId)
 
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
-
+	updateApplicationsQuery = a.db.Rebind(updateApplicationsQuery)
 	rows, err := tx.Query(updateApplicationsQuery, updateApplicationArgs...)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
 
-	for rows.Next() {
-		id := 0
-		err := rows.Scan(&id)
-		if err != nil {
-			return nil, err
-		}
+	updatedApplication, err := scanApplicationRows(rows)
+	if err != nil {
+		return nil, err
 	}
 
-	//when the user is withdrawing we need to set the status of milestones
-	//and job appropriately
-	// if there are no accepted applications in a job after user withdrawal
-	// the the job and milestones goes back into OPEN status
-	panic("")
+	// after updating the applications we need to update the job status too
+	// if the working count of users is 0 then job is open, other wise ongoing
+	workingUsersCount := 0
+	err = tx.QueryRow(selectNumberOfAcceptedApplicantsForJob, jobId).Scan(&workingUsersCount)
+	if err != nil && err != sql.ErrNoRows {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	_, err = tx.Exec(updateJobStatusById, jobId)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	_, err = tx.Exec(updateMilestoneStatusByJobId, jobId)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return updatedApplication, nil
 }
 
 func (a *ApplicationsRepo) GetAcceptedApplicationsByJobId(jobId string) ([]*dbmodel.Application, error) {
@@ -222,7 +309,7 @@ func (a *ApplicationsRepo) GetAcceptedApplicationsByJobId(jobId string) ([]*dbmo
 	if err != nil {
 		return nil, err
 	}
-	return scanApplicationRows(rows)
+	return scanApplicationRowsx(rows)
 }
 
 const (
@@ -235,7 +322,7 @@ const (
 		applications.time_updated
 		from applications
 		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
-		where milestones.job_id = $1 and applications.status in ('pending', 'accepted' )`
+		where milestones.job_id = $1 and applications.status in ('pending', 'accepted', 'rejected')`
 
 	selectAppliedJobsByUserIdQuery = `select distinct jobs.id,
 		jobs.created_by,
@@ -265,5 +352,42 @@ where milestones.job_id = $1 and applications.applicant_id = $2 limit 1`
 		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
 		where milestones.job_id = $1 and applications.status in ('pending', 'accepted' )`
 
-	updateApplicationsForMilestonesUser = `update applications set status = 'withdrawn' where applications.milestone_id in (?) and applications.applicant_id = ? returning applications.id`
+	updateApplicationsForMilestonesUser = `update applications set status = ?, note = ?, time_updated = ? where applications.milestone_id in (?) and applications.applicant_id = ? returning *`
+
+	selectNumberOfAcceptedApplicantsForJob = `select distinct (applicant_id)
+		from milestones
+	 	join applications a on milestones.id = a.milestone_id
+		where milestones.job_id = $1 and a.status = 'accepted'`
+
+	updateJobStatusById = `with acceptedCount as (select distinct count(distinct applicant_id) as count
+						   from milestones
+									join applications a on milestones.id = a.milestone_id
+						   where milestones.job_id = $1
+							 and a.status = 'accepted'
+						   group by applicant_id)
+	update jobs
+	set status = case
+					 when ((select count from acceptedCount) is not null and jobs.status != 'completed')
+						 then 'ongoing'
+					 when ((select count from acceptedCount) is null and jobs.status != 'completed')
+						 then 'open'
+					 else status
+		end
+	where jobs.id = $1`
+
+	updateMilestoneStatusByJobId = `with acceptedCount as (select distinct count(distinct applicant_id) as count
+							   from milestones
+										join applications a on milestones.id = a.milestone_id
+							   where milestones.job_id = $1
+								 and a.status = 'accepted'
+							   group by applicant_id)
+		update milestones
+		set status = case
+						 when ((select count from acceptedCount) is not null and milestones.status != 'completed')
+							 then 'ongoing'
+						 when ((select count from acceptedCount) is null and milestones.status != 'completed')
+							 then 'open'
+						 else status
+			end
+		where milestones.job_id = $1`
 )

@@ -11,14 +11,18 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
 var (
-	ErrUserNotAuthenticated = errors.New("unauthorized request")
-	ErrUserNotOwner         = errors.New("current user is not owner of this entity, and hence cannot modify it")
-	ErrNoEntityMatchingId   = errors.New("no entity found that matches given id")
-	ErrOwnerApplyToOwnJob   = errors.New("owner cannot apply to their job")
+	ErrUserNotAuthenticated           = errors.New("unauthorized request")
+	ErrUserNotOwner                   = errors.New("current user is not owner of this entity, and hence cannot modify it")
+	ErrNoEntityMatchingId             = errors.New("no entity found that matches given id")
+	ErrOwnerApplyToOwnJob             = errors.New("owner cannot apply to their job")
+	ErrApplicationWithdrawnOrRejected = errors.New("owner cannot modify applications with withdrawn status")
+	ErrInvalidNewApplicationState     = errors.New("owner cannot move application status to withdrawn or pending")
+	ErrJobAlreadyCompleted            = errors.New("job is already completed")
 )
 
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -163,6 +167,10 @@ func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID strin
 		return nil, err
 	}
 
+	if job.Status == "completed" {
+		return nil, ErrJobAlreadyCompleted
+	}
+
 	if job.CreatedBy == user.Id {
 		return nil, ErrOwnerApplyToOwnJob
 	}
@@ -196,7 +204,7 @@ func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID strin
 		return nil, err
 	}
 
-	applications, err := r.ApplicationsRepo.SetApplicationStatusForUserAndJob(user.Id, jobID, jobMilestones)
+	applications, err := r.ApplicationsRepo.SetApplicationStatusForUserAndJob(user.Id, jobID, jobMilestones, dbmodel.ApplicationStatusWithdrawn, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +219,7 @@ func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID strin
 	return result, nil
 }
 
-func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, newApplicationStatus *gqlmodel.ApplicationStatus) ([]*gqlmodel.Application, error) {
+func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *gqlmodel.ApplicationStatus, note *string) (result []*gqlmodel.Application, err error) {
 	// since this end point can only be user by job owner,
 	// they can only modify job status from pending to accepted or pending
 	currentStatus, err := r.ApplicationsRepo.GetApplicationStatusForUserAndJob(applicantID, jobID)
@@ -219,11 +227,48 @@ func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID
 		return nil, err
 	}
 
-	if currentStatus == "withdrawn" {
-
+	// check if the currently authenticate user is the owner of the job
+	currentUser, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	currentJob, err := r.JobsRepo.GetById(jobID)
+	if err != nil {
+		return nil, err
+	}
+	if currentJob.CreatedBy != currentUser.Id {
+		return nil, ErrUserNotOwner
 	}
 
-	panic("")
+	// owner cannot modify the status of application what was withdrawn by applicant
+	// owner can only move an application from p
+	// - pending->accepted, pending->rejected, accepted->rejected
+	if currentStatus == "withdrawn" {
+		return nil, ErrApplicationWithdrawnOrRejected
+	}
+	// owner cannot move the application from pending or withdrawn state to any new state
+	if status.String() == "PENDING" || status.String() == "WITHDRAWN" {
+		return nil, ErrInvalidNewApplicationState
+	}
+
+	milestones, err := r.MilestonesRepo.GetByJobId(jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	updateResult, err := r.ApplicationsRepo.SetApplicationStatusForUserAndJob(applicantID, jobID, milestones, strings.ToLower(status.String()), note)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, application := range updateResult {
+		var gqlApplication gqlmodel.Application
+		gqlApplication.MapDbToGql(application)
+		result = append(result, &gqlApplication)
+	}
+	return result, nil
+
 }
 
 func (r *mutationResolver) Authenticate(ctx context.Context, githubCode string) (*gqlmodel.UserAuthenticationPayload, error) {

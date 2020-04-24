@@ -126,7 +126,7 @@ type ComplexityRoot struct {
 		RefreshToken         func(childComplexity int, token string) int
 		UpdateComment        func(childComplexity int, id string, comment string) int
 		UpdateJob            func(childComplexity int, job *model.UpdateJobInput) int
-		UpdateJobApplication func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus) int
+		UpdateJobApplication func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus, note *string) int
 		UpdateUserProfile    func(childComplexity int, user *model.UpdateUserInput) int
 	}
 
@@ -217,7 +217,7 @@ type MutationResolver interface {
 	DeleteCommment(ctx context.Context, id string) (*model.Comment, error)
 	CreateJobApplication(ctx context.Context, jobID string) ([]*model.Application, error)
 	DeleteJobApplication(ctx context.Context, jobID string) ([]*model.Application, error)
-	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus) ([]*model.Application, error)
+	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus, note *string) ([]*model.Application, error)
 	Authenticate(ctx context.Context, githubCode string) (*model.UserAuthenticationPayload, error)
 	RefreshToken(ctx context.Context, token string) (*model.UserAuthenticationPayload, error)
 }
@@ -702,7 +702,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateJobApplication(childComplexity, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus)), true
+		return e.complexity.Mutation.UpdateJobApplication(childComplexity, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus), args["note"].(*string)), true
 
 	case "Mutation.updateUserProfile":
 		if e.complexity.Mutation.UpdateUserProfile == nil {
@@ -1072,7 +1072,7 @@ type Mutation {
     # To withdraw application from a job
     deleteJobApplication(jobID: ID!): [Application]
     # create, accept or reject applicants
-    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): [Application]
+    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus, note: String): [Application]
     authenticate(githubCode: String!): UserAuthenticationPayload
     refreshToken(token: String!): UserAuthenticationPayload
 }
@@ -1456,6 +1456,14 @@ func (ec *executionContext) field_Mutation_updateJobApplication_args(ctx context
 		}
 	}
 	args["status"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["note"]; ok {
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["note"] = arg3
 	return args, nil
 }
 
@@ -3445,7 +3453,7 @@ func (ec *executionContext) _Mutation_updateJobApplication(ctx context.Context, 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateJobApplication(rctx, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus))
+		return ec.resolvers.Mutation().UpdateJobApplication(rctx, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus), args["note"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
