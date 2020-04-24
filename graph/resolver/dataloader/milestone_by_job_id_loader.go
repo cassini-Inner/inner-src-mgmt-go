@@ -10,9 +10,10 @@ import (
 
 func NewMilestoneByJobIdLoader(db *sqlx.DB) *generated.MilestoneByJobIdLoader {
 	return generated.NewMilestoneByJobIdLoader(generated.MilestoneByJobIdLoaderConfig{
-		Fetch: func(keys []string) (i [][]*gqlmodel.Milestone, errors []error) {
-			var gqlMilestones []*gqlmodel.Milestone
+		Fetch: func(keys []string) ([]*gqlmodel.Milestones, []error) {
 			resultMap := make(map[string][]*gqlmodel.Milestone)
+
+			var milestones []*gqlmodel.Milestones
 
 			query, args, err := sqlx.In(`SELECT * FROM milestones WHERE job_id in (?) and is_deleted = false`, keys)
 			if err != nil {
@@ -31,23 +32,23 @@ func NewMilestoneByJobIdLoader(db *sqlx.DB) *generated.MilestoneByJobIdLoader {
 				}
 				var gqlMilestone gqlmodel.Milestone
 				gqlMilestone.MapDbToGql(tempMilestone)
-				gqlMilestones = append(gqlMilestones, &gqlMilestone)
-			}
 
-			for _, milestones := range gqlMilestones {
-				_, ok := resultMap[milestones.JobID]
+				_, ok := resultMap[tempMilestone.JobId]
 				if !ok {
-					resultMap[milestones.JobID] = make([]*gqlmodel.Milestone, 0)
+					resultMap[tempMilestone.JobId] = make([]*gqlmodel.Milestone, 0)
 				}
-				resultMap[milestones.JobID] = append(resultMap[milestones.JobID], milestones)
+				resultMap[tempMilestone.JobId] = append(resultMap[tempMilestone.JobId], &gqlMilestone)
 			}
-
 
 			for _, key := range keys {
 				tempJob := resultMap[key]
-				i = append(i,tempJob)
+				length := len(tempJob)
+				milestones = append(milestones, &gqlmodel.Milestones{
+					TotalCount: &length ,
+					Milestones: tempJob,
+				})
 			}
-			return i, nil
+			return milestones, nil
 		},
 		Wait:     1 * time.Millisecond,
 		MaxBatch: 100,

@@ -11,7 +11,8 @@ func NewSkillByJobIdLoader(db *sqlx.DB) *generated.SkillByJobIdLoader {
 	return generated.NewSkillByJobIdLoader(generated.SkillByJobIdLoaderConfig{
 		Fetch: func(keys []string) ([][]*gqlmodel.Skill, []error) {
 
-			jobIdSkillListMap := make(map[string]map[string]*gqlmodel.Skill)
+			jobIdSkillMap := make(map[string]map[string]*gqlmodel.Skill)
+			jobIdSkillListMap := make(map[string][]*gqlmodel.Skill)
 			var result [][]*gqlmodel.Skill
 
 			query, args, err := sqlx.In(`select job_id, g.id, g.created_by, g.value, g.time_created from milestones
@@ -35,25 +36,25 @@ func NewSkillByJobIdLoader(db *sqlx.DB) *generated.SkillByJobIdLoader {
 				if err != nil {
 					return nil, []error{err}
 				}
-				_, ok := jobIdSkillListMap[jobId]
+				_, ok := jobIdSkillMap[jobId]
 				if !ok {
-					jobIdSkillListMap[jobId] = make(map[string]*gqlmodel.Skill)
+					jobIdSkillMap[jobId] = make(map[string]*gqlmodel.Skill)
 				}
 
-				jobIdSkillListMap[jobId][skillId] = &gqlmodel.Skill{
-					ID:          skillId,
-					CreatedBy:   createdBy,
-					Value:       value,
-					CreatedTime: timeCreated,
+				_, ok = jobIdSkillMap[jobId][skillId]
+				if !ok {
+					jobIdSkillMap[jobId][skillId] = &gqlmodel.Skill{
+						ID:          skillId,
+						CreatedBy:   createdBy,
+						Value:       value,
+						CreatedTime: timeCreated,
+					}
+					jobIdSkillListMap[jobId] = append(jobIdSkillListMap[jobId], jobIdSkillMap[jobId][skillId])
 				}
 			}
 
 			for _, id := range keys {
-				var temp []*gqlmodel.Skill
-				for key := range jobIdSkillListMap[id] {
-					temp = append(temp, jobIdSkillListMap[id][key])
-				}
-				result = append(result, temp)
+				result = append(result, jobIdSkillListMap[id])
 			}
 
 			return result, nil

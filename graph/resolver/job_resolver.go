@@ -28,15 +28,8 @@ func (r *jobResolver) Discussion(ctx context.Context, obj *gqlmodel.Job) (*gqlmo
 
 //Get the list of milestones in dbmodel type, converts it to gqlmodel type and returns list of milestones
 func (r *jobResolver) Milestones(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Milestones, error) {
-	milestones, err := dataloader.GetMilestonesByJobIdLoader(ctx).Load(obj.ID)
-	if err != nil {
-		return nil, err
-	}
-	totalCount := len(milestones)
-	return &gqlmodel.Milestones{
-		TotalCount: &totalCount,
-		Milestones: milestones,
-	}, nil
+	return dataloader.GetMilestonesByJobIdLoader(ctx).Load(obj.ID)
+	
 }
 
 func (r *jobResolver) Skills(ctx context.Context, obj *gqlmodel.Job) ([]*gqlmodel.Skill, error) {

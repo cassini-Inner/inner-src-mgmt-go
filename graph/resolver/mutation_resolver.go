@@ -16,9 +16,9 @@ import (
 
 var (
 	ErrUserNotAuthenticated = errors.New("unauthorized request")
-	ErrUserNotOwner = errors.New("current user is not owner of this entity, and hence cannot modify it")
-	ErrNoEntityMatchingId = errors.New("no entity found that matches given id")
-	ErrOwnerApplyToOwnJob = errors.New("owner cannot apply to their job")
+	ErrUserNotOwner         = errors.New("current user is not owner of this entity, and hence cannot modify it")
+	ErrNoEntityMatchingId   = errors.New("no entity found that matches given id")
+	ErrOwnerApplyToOwnJob   = errors.New("owner cannot apply to their job")
 )
 
 func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -94,13 +94,13 @@ func (r *mutationResolver) AddCommentToJob(ctx context.Context, comment string, 
 func (r *mutationResolver) UpdateComment(ctx context.Context, id string, comment string) (*gqlmodel.Comment, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil,ErrUserNotAuthenticated
+		return nil, ErrUserNotAuthenticated
 	}
 
 	existingDiscussion, err := r.DiscussionsRepo.GetById(id)
 	if err != nil {
-		if err == sql.ErrNoRows{
-			return  nil, ErrNoEntityMatchingId
+		if err == sql.ErrNoRows {
+			return nil, ErrNoEntityMatchingId
 		}
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID strin
 
 	job, err := r.JobsRepo.GetById(jobID)
 	if err != nil {
-		if err == sql.ErrNoRows{
+		if err == sql.ErrNoRows {
 			return nil, ErrNoEntityMatchingId
 		}
 		return nil, err
@@ -192,10 +192,9 @@ func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID strin
 	}
 
 	jobMilestones, err := r.MilestonesRepo.GetByJobId(jobID)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
-
 
 	applications, err := r.ApplicationsRepo.SetApplicationStatusForUserAndJob(user.Id, jobID, jobMilestones)
 	if err != nil {
@@ -212,9 +211,18 @@ func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID strin
 	return result, nil
 }
 
-func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *gqlmodel.ApplicationStatus) ([]*gqlmodel.Application, error) {
+func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID string, jobID string, newApplicationStatus *gqlmodel.ApplicationStatus) ([]*gqlmodel.Application, error) {
 	// since this end point can only be user by job owner,
 	// they can only modify job status from pending to accepted or pending
+	currentStatus, err := r.ApplicationsRepo.GetApplicationStatusForUserAndJob(applicantID, jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	if currentStatus == "withdrawn" {
+
+	}
+
 	panic("")
 }
 

@@ -51,7 +51,28 @@ func (s *SkillsRepo) scanSkills(rows *sqlx.Rows) ([]*dbmodel.GlobalSkill, error)
 	return result, nil
 }
 
+func (s *SkillsRepo) GetAll() ([]*dbmodel.GlobalSkill, error) {
+	var result []*dbmodel.GlobalSkill
+
+	rows, err := s.db.Queryx(selectAllSkills)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var skill dbmodel.GlobalSkill
+		err := rows.StructScan(&skill)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &skill)
+	}
+
+	return result, nil
+}
+
 const (
+	selectAllSkills          = `select * from globalskills`
 	selectSkillsByJobIdQuery = `select distinct (globalskills.id), globalskills.created_by,
 		globalskills.value,
 		globalskills.time_created
