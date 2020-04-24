@@ -7,6 +7,14 @@ import (
 
 func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilterInput) ([]*gqlmodel.Job, error) {
 
+	if filter == nil {
+		filter =&gqlmodel.JobsFilterInput{
+			Status:    []*gqlmodel.JobStatus{},
+			Skills:    []*string{},
+			SortOrder: nil,
+		}
+	}
+
 	// if the list of skills is empty, return all jobs
 	var skills []*string
 	if len(filter.Skills) == 0 {

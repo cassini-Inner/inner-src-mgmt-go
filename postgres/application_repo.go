@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 	"strings"
@@ -164,25 +163,6 @@ func (a *ApplicationsRepo) CreateApplication(milestones []*dbmodel.Milestone, us
 	return result, nil
 }
 
-func scanApplicationRowsById(rows *sql.Rows) (result []string, err error) {
-	for rows.Next() {
-		id := ""
-		err = rows.Scan(&id)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, id)
-	}
-	return result, nil
-}
-
-func (a *ApplicationsRepo) UpdateApplication(applicantId, jobId string, newStatus model.ApplicationStatus) (*model.Application, error) {
-	panic("Not implemented")
-}
-
-func (a *ApplicationsRepo) DeleteApplication(jobId string, userId string) (*model.Application, error) {
-	panic("Not implemented")
-}
 
 func (a *ApplicationsRepo) GetByJobId(jobId string) ([]*dbmodel.Application, error) {
 	rows, err := a.db.Queryx(selectApplicationsForJobIDQuery, jobId)
@@ -193,48 +173,6 @@ func (a *ApplicationsRepo) GetByJobId(jobId string) ([]*dbmodel.Application, err
 	return scanApplicationRowsx(rows)
 }
 
-func scanApplicationRowsx(rows *sqlx.Rows) ([]*dbmodel.Application, error) {
-	var result []*dbmodel.Application
-	for rows != nil && rows.Next() {
-		var application dbmodel.Application
-		err := rows.StructScan(&application)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, &application)
-	}
-
-	return result, nil
-}
-
-func scanApplicationRows(rows *sql.Rows) ([]*dbmodel.Application, error) {
-	var result []*dbmodel.Application
-	for rows != nil && rows.Next() {
-		var application dbmodel.Application
-		err := rows.Scan(&application.Id, &application.MilestoneId, &application.ApplicantId, &application.Status, &application.Note, &application.TimeCreated, &application.TimeUpdated)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, &application)
-	}
-
-	return result, nil
-}
-
-func (a *ApplicationsRepo) GetUserJobApplications(userId string) ([]*dbmodel.Job, error) {
-	rows, err := a.db.Queryx(selectAppliedJobsByUserIdQuery, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []*dbmodel.Job
-	for rows != nil && rows.Next() {
-		var job dbmodel.Job
-		rows.StructScan(&job)
-		result = append(result, &job)
-	}
-	return result, nil
-}
 
 func (a *ApplicationsRepo) GetApplicationStatusForUserAndJob(userId, jobId string) (string, error) {
 	// TODO: Will need to refactor this when we allow users to apply to milestones
@@ -310,6 +248,63 @@ func (a *ApplicationsRepo) GetAcceptedApplicationsByJobId(jobId string) ([]*dbmo
 		return nil, err
 	}
 	return scanApplicationRowsx(rows)
+}
+
+
+func scanApplicationRowsById(rows *sql.Rows) (result []string, err error) {
+	for rows.Next() {
+		id := ""
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, id)
+	}
+	return result, nil
+}
+
+
+func scanApplicationRowsx(rows *sqlx.Rows) ([]*dbmodel.Application, error) {
+	var result []*dbmodel.Application
+	for rows != nil && rows.Next() {
+		var application dbmodel.Application
+		err := rows.StructScan(&application)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &application)
+	}
+
+	return result, nil
+}
+
+func scanApplicationRows(rows *sql.Rows) ([]*dbmodel.Application, error) {
+	var result []*dbmodel.Application
+	for rows != nil && rows.Next() {
+		var application dbmodel.Application
+		err := rows.Scan(&application.Id, &application.MilestoneId, &application.ApplicantId, &application.Status, &application.Note, &application.TimeCreated, &application.TimeUpdated)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &application)
+	}
+
+	return result, nil
+}
+
+func (a *ApplicationsRepo) GetUserJobApplications(userId string) ([]*dbmodel.Job, error) {
+	rows, err := a.db.Queryx(selectAppliedJobsByUserIdQuery, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*dbmodel.Job
+	for rows != nil && rows.Next() {
+		var job dbmodel.Job
+		rows.StructScan(&job)
+		result = append(result, &job)
+	}
+	return result, nil
 }
 
 const (
