@@ -12,7 +12,7 @@ import (
 // MilestoneByJobIdLoaderConfig captures the config to create a new MilestoneByJobIdLoader
 type MilestoneByJobIdLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []string) ([][]*model.Milestone, []error)
+	Fetch func(keys []string) ([]*model.Milestones, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -33,7 +33,7 @@ func NewMilestoneByJobIdLoader(config MilestoneByJobIdLoaderConfig) *MilestoneBy
 // MilestoneByJobIdLoader batches and caches requests
 type MilestoneByJobIdLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []string) ([][]*model.Milestone, []error)
+	fetch func(keys []string) ([]*model.Milestones, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -44,7 +44,7 @@ type MilestoneByJobIdLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[string][]*model.Milestone
+	cache map[string]*model.Milestones
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
@@ -56,25 +56,25 @@ type MilestoneByJobIdLoader struct {
 
 type milestoneByJobIdLoaderBatch struct {
 	keys    []string
-	data    [][]*model.Milestone
+	data    []*model.Milestones
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
-// Load a Milestone by key, batching and caching will be applied automatically
-func (l *MilestoneByJobIdLoader) Load(key string) ([]*model.Milestone, error) {
+// Load a Milestones by key, batching and caching will be applied automatically
+func (l *MilestoneByJobIdLoader) Load(key string) (*model.Milestones, error) {
 	return l.LoadThunk(key)()
 }
 
-// LoadThunk returns a function that when called will block waiting for a Milestone.
+// LoadThunk returns a function that when called will block waiting for a Milestones.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *MilestoneByJobIdLoader) LoadThunk(key string) func() ([]*model.Milestone, error) {
+func (l *MilestoneByJobIdLoader) LoadThunk(key string) func() (*model.Milestones, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
-		return func() ([]*model.Milestone, error) {
+		return func() (*model.Milestones, error) {
 			return it, nil
 		}
 	}
@@ -85,10 +85,10 @@ func (l *MilestoneByJobIdLoader) LoadThunk(key string) func() ([]*model.Mileston
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() ([]*model.Milestone, error) {
+	return func() (*model.Milestones, error) {
 		<-batch.done
 
-		var data []*model.Milestone
+		var data *model.Milestones
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -113,51 +113,50 @@ func (l *MilestoneByJobIdLoader) LoadThunk(key string) func() ([]*model.Mileston
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *MilestoneByJobIdLoader) LoadAll(keys []string) ([][]*model.Milestone, []error) {
-	results := make([]func() ([]*model.Milestone, error), len(keys))
+func (l *MilestoneByJobIdLoader) LoadAll(keys []string) ([]*model.Milestones, []error) {
+	results := make([]func() (*model.Milestones, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	milestones := make([][]*model.Milestone, len(keys))
+	milestoness := make([]*model.Milestones, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
-		milestones[i], errors[i] = thunk()
+		milestoness[i], errors[i] = thunk()
 	}
-	return milestones, errors
+	return milestoness, errors
 }
 
-// LoadAllThunk returns a function that when called will block waiting for a Milestones.
+// LoadAllThunk returns a function that when called will block waiting for a Milestoness.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *MilestoneByJobIdLoader) LoadAllThunk(keys []string) func() ([][]*model.Milestone, []error) {
-	results := make([]func() ([]*model.Milestone, error), len(keys))
+func (l *MilestoneByJobIdLoader) LoadAllThunk(keys []string) func() ([]*model.Milestones, []error) {
+	results := make([]func() (*model.Milestones, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([][]*model.Milestone, []error) {
-		milestones := make([][]*model.Milestone, len(keys))
+	return func() ([]*model.Milestones, []error) {
+		milestoness := make([]*model.Milestones, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
-			milestones[i], errors[i] = thunk()
+			milestoness[i], errors[i] = thunk()
 		}
-		return milestones, errors
+		return milestoness, errors
 	}
 }
 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *MilestoneByJobIdLoader) Prime(key string, value []*model.Milestone) bool {
+func (l *MilestoneByJobIdLoader) Prime(key string, value *model.Milestones) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := make([]*model.Milestone, len(value))
-		copy(cpy, value)
-		l.unsafeSet(key, cpy)
+		cpy := *value
+		l.unsafeSet(key, &cpy)
 	}
 	l.mu.Unlock()
 	return !found
@@ -170,9 +169,9 @@ func (l *MilestoneByJobIdLoader) Clear(key string) {
 	l.mu.Unlock()
 }
 
-func (l *MilestoneByJobIdLoader) unsafeSet(key string, value []*model.Milestone) {
+func (l *MilestoneByJobIdLoader) unsafeSet(key string, value *model.Milestones) {
 	if l.cache == nil {
-		l.cache = map[string][]*model.Milestone{}
+		l.cache = map[string]*model.Milestones{}
 	}
 	l.cache[key] = value
 }
