@@ -1,0 +1,12 @@
+drop index if exists idx_applications_milestone_id;
+drop index if exists idx_applications_applicant_id;
+drop index if exists idx_discussions_job_id;
+drop index if exists idx_discussions_created_by_id;
+drop index if exists idx_globalskills_created_by_id;
+drop index if exists idx_jobs_created_by_id;
+drop index if exists idx_milestones_assigned_to_id;
+drop index if exists idx_milestones_job_id;
+drop index if exists idx_milestoneskills_milestone_id;
+drop index if exists idx_milestoneskills_skill_id;
+drop index if exists idx_userskills_user_id;
+drop index if exists idx_userskills_skill_id;
