@@ -6,6 +6,32 @@ import (
 )
 
 func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilterInput) ([]*gqlmodel.Job, error) {
+
+	// if the list of skills is empty, return all jobs
+	var skills []*string
+	if len(filter.Skills) == 0 {
+		dbSkills, err := r.SkillsRepo.GetAll()
+		if err != nil {
+			return nil, err
+		}
+		for _, skill := range dbSkills {
+			skillValue := skill.Value
+			skills = append(skills, &skillValue)
+		}
+
+		filter.Skills = skills
+	}
+
+	var status []*gqlmodel.JobStatus
+	if len(filter.Status) == 0 {
+		open := gqlmodel.JobStatus("open")
+		ongoing := gqlmodel.JobStatus("ongoing")
+		completed := gqlmodel.JobStatus("completed")
+		status = append(status, &open, &ongoing, &completed)
+
+		filter.Status = status
+	}
+
 	jobsFromDb, err := r.JobsRepo.GetAll(filter)
 	if err != nil {
 		return nil, err

@@ -178,24 +178,40 @@ func (a *ApplicationsRepo) GetApplicationStatusForUserAndJob(userId, jobId strin
 }
 
 func (a *ApplicationsRepo) SetApplicationStatusForUserAndJob(userId, jobId string, milestones []*dbmodel.Milestone) ([]*dbmodel.Application, error) {
-	// when the user is withdrawing we need to set the status of milestones
-	// and job appropriately
-	//tx, err := a.db.Begin()
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//var milestoneIds []string
-	//for _, milestone := range milestones {
-	//	milestoneIds = append(milestoneIds, milestone.Id)
-	//}
-	//
-	//updateApplicationsQuery,updateApplicationArgs,  err := sqlx.In(updateApplicationsForMilestonesUser, milestoneIds, userId)
-	//
-	//
 
+	tx, err := a.db.Begin()
+	if err != nil {
+		return nil, err
+	}
 
+	var milestoneIds []string
+	for _, milestone := range milestones {
+		milestoneIds = append(milestoneIds, milestone.Id)
+	}
 
+	updateApplicationsQuery, updateApplicationArgs, err := sqlx.In(updateApplicationsForMilestonesUser, milestoneIds, userId)
+
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	rows, err := tx.Query(updateApplicationsQuery, updateApplicationArgs...)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	for rows.Next() {
+		id := 0
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	//when the user is withdrawing we need to set the status of milestones
+	//and job appropriately
 	// if there are no accepted applications in a job after user withdrawal
 	// the the job and milestones goes back into OPEN status
 	panic("")
@@ -249,5 +265,5 @@ where milestones.job_id = $1 and applications.applicant_id = $2 limit 1`
 		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
 		where milestones.job_id = $1 and applications.status in ('pending', 'accepted' )`
 
-	updateApplicationsForMilestonesUser = `update applications set status = 'withdrawn' where applications.milestone_id in (?) and applications.user_id = ?`
+	updateApplicationsForMilestonesUser = `update applications set status = 'withdrawn' where applications.milestone_id in (?) and applications.applicant_id = ? returning applications.id`
 )

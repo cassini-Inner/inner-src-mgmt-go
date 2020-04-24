@@ -5,6 +5,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 	CustomMiddlewares "github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
 	"github.com/go-chi/chi"
@@ -63,7 +64,7 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(CustomMiddlewares.AuthMiddleware(*usersRepo))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query",resolver.DataloaderMiddleware(DB, srv) )
+	router.Handle("/query", dataloader.DataloaderMiddleware(DB, srv))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 

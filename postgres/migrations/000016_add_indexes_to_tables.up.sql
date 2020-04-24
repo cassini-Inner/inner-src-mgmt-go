@@ -1,0 +1,12 @@
+create index idx_applications_milestone_id on applications(milestone_id);
+create index idx_applications_applicant_id on applications(applicant_id);
+create index idx_discussions_job_id on discussions(job_id);
+create index idx_discussions_created_by_id on discussions(created_by);
+create index idx_globalskills_created_by_id on globalskills(created_by);
+create index idx_jobs_created_by_id on jobs(created_by);
+create index idx_milestones_assigned_to_id on milestones(assigned_to);
+create index idx_milestones_job_id on milestones(job_id);
+create index idx_milestoneskills_milestone_id on milestoneskills(milestone_id);
+create index idx_milestoneskills_skill_id on milestoneskills(skill_id);
+create index idx_userskills_user_id on userskills(user_id);
+create index idx_userskills_skill_id on userskills(skill_id);

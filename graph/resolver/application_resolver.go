@@ -3,10 +3,11 @@ package resolver
 import (
 	"context"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
 
 func (r *applicationResolver) Applicant(ctx context.Context, obj *gqlmodel.Application) (*gqlmodel.User, error) {
-	return getUserLoader(ctx).Load(obj.ApplicantID)
+	return dataloader.GetUserByUserIdLoader(ctx).Load(obj.ApplicantID)
 }
 
 func (r *applicationResolver) Milestone(ctx context.Context, obj *gqlmodel.Application) (*gqlmodel.Milestone, error) {
