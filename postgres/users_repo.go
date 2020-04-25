@@ -30,8 +30,12 @@ func (u *UsersRepo) CreateUser(input *gqlmodel.CreateUserInput) (*dbmodel.User, 
 }
 
 //TODO: Deprecate
-func (u *UsersRepo) UpdateUser(input *gqlmodel.CreateUserInput) (*gqlmodel.User, error) {
-	panic("not implemented")
+func (u *UsersRepo) UpdateUser(currentUserInfo *dbmodel.User, input *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
+	// setup a new transaction
+	//tx, err := u.db.Beginx()
+	//if err != nil {return nil, err}
+
+	return nil, nil
 }
 
 func (u *UsersRepo) GetById(userId string) (*dbmodel.User, error) {
@@ -176,9 +180,9 @@ func (u *UsersRepo) parseJsonFromResponse(responseBody io.Reader) (map[string]in
 }
 
 const (
-	selectUserByIdQuery       = `select * from users where users.id = $1 and users.is_deleted = false`
-	selectUsersByEmailIdQuery = `select * from users where email = $1 and users.is_deleted = false`
+	selectUserByIdQuery        = `select * from users where users.id = $1 and users.is_deleted = false`
+	selectUsersByEmailIdQuery  = `select * from users where email = $1 and users.is_deleted = false`
 	selectUsersByGithubIdQuery = `select * from users where github_id = $1 and users.is_deleted = false`
-	countUsersByGithubIdQuery = `select count(*) from users where github_id = $1`
-	createNewUserQuery        = `insert into users(email, name, role, department, bio, photo_url, contact, github_url, github_id, github_name) VALUES ($1, $2, $3, $4,$5, $6, $7, $8, $9, $10) returning id`
+	countUsersByGithubIdQuery  = `select count(*) from users where github_id = $1`
+	createNewUserQuery         = `insert into users(email, name, role, department, bio, photo_url, contact, github_url, github_id, github_name) VALUES ($1, $2, $3, $4,$5, $6, $7, $8, $9, $10) returning id`
 )

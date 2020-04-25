@@ -1,8 +1,12 @@
 package postgres
 
 import (
+	"database/sql"
+	"fmt"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
+	"log"
+	"strings"
 )
 
 type SkillsRepo struct {
@@ -19,6 +23,101 @@ func (s *SkillsRepo) GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error) {
 		return nil, err
 	}
 	return s.scanSkills(rows)
+}
+
+// createOrUpdateSkills checks the input skills against those present in the database
+// and maps existing skills to those in db and creates the one that do not exist
+// then it returns a map of skills by the given skill value
+func findOrCreateSkills(skills []string, userId string, tx *sqlx.Tx) (map[string]*dbmodel.GlobalSkill, error) {
+	skillsMap := make(map[string]string)
+	resultMap := make(map[string]*dbmodel.GlobalSkill)
+	// put all skills in a map so that we only have unique ones
+	for i, skill := range skills {
+		skills[i] = strings.ToLower(skill)
+		skillsMap[skill] = ""
+	}
+
+	// convert the map to string to use that as uniqueSkillsQueryArgs
+	var skillsList []string
+	for key := range skillsMap {
+		skillsList = append(skillsList, key)
+	}
+
+	uniqueSkillsQuery, uniqueSkillsQueryArgs, err := sqlx.In(`select * from globalskills where value in (?)`, skillsList)
+	if err != nil {
+		log.Println("error while creating query for skills in db")
+		return nil, err
+	}
+	uniqueSkillsQuery = tx.Rebind(uniqueSkillsQuery)
+
+	// query the database to see if there are any skills that already exist
+	uniqueSkillsRows, err := tx.Queryx(uniqueSkillsQuery, uniqueSkillsQueryArgs...)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Println("error while querying skill values")
+			return nil, err
+		}
+	}
+
+	// assign the database id to each skill in map
+	// if a skill is not present in the database then id = 0
+	for uniqueSkillsRows != nil && uniqueSkillsRows.Next() {
+		var tempSkill dbmodel.GlobalSkill
+		err := uniqueSkillsRows.StructScan(&tempSkill)
+		if err != nil {
+			return nil, err
+		}
+		skillsMap[strings.ToLower(tempSkill.Value)] = tempSkill.Id
+		resultMap[strings.ToLower(tempSkill.Value)] = &tempSkill
+	}
+	uniqueSkillsRows.Close()
+
+	// check if there are any skills in skillMap that are not present in db
+	// if there are skills that do not exist, set nonExistingSkills flag to true
+
+	nonExistingSkills := false
+	for k := range skillsMap {
+		if skillsMap[k] == "" {
+			nonExistingSkills = true
+		}
+	}
+
+	// if there are skills that are not already present in the database
+	// then create them
+	if nonExistingSkills {
+		var newSkillsQueryArgs []interface{}
+		var newSkillsQueryValues []string
+
+		// if a skill is not there in the database, ie. has id == 0 from our last fetch operation, then
+		// add that to args
+		for k := range skillsMap {
+			if skillsMap[k] == "" {
+				// this is done to prepare a query that inserts all the skill in a single statement
+				newSkillsQueryValues = append(newSkillsQueryValues, "(?,?)")
+				newSkillsQueryArgs = append(newSkillsQueryArgs, strings.ToLower(k), userId)
+			}
+		}
+
+		newSkillsQueryStatement := fmt.Sprintf(`insert into globalskills(value, created_by) values %s returning *`, strings.Join(newSkillsQueryValues, ","))
+		newSkillsQueryStatement = tx.Rebind(newSkillsQueryStatement)
+		newSkillRows, err := tx.Queryx(newSkillsQueryStatement, newSkillsQueryArgs...)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		// build a list of all skill ids
+		for newSkillRows.Next() {
+			var insertedSkill dbmodel.GlobalSkill
+			err := newSkillRows.StructScan(&insertedSkill)
+			if err != nil {
+				return nil, err
+			}
+			resultMap[strings.ToLower(insertedSkill.Value)] = &insertedSkill
+		}
+		newSkillRows.Close()
+	}
+
+	return resultMap, nil
 }
 
 func (s *SkillsRepo) GetByUserId(userId string) ([]*dbmodel.GlobalSkill, error) {

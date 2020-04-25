@@ -33,8 +33,18 @@ func (r *mutationResolver) MarkJobCompleted(ctx context.Context, jobID string) (
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) UpdateProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) UpdateProfile(ctx context.Context, updatedUserDetails *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
+	currentRequestUser, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	updatedUser, err := r.UsersRepo.UpdateUser(currentRequestUser, updatedUserDetails)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedUser, nil
 }
 
 func (r *mutationResolver) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (*gqlmodel.Job, error) {
