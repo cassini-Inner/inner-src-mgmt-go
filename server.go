@@ -34,7 +34,6 @@ func main() {
 
 	skillsRepo := postgres.NewSkillsRepo(DB)
 	usersRepo := postgres.NewUsersRepo(DB)
-	milestonesRepo := postgres.NewMilestonesRepo(DB)
 	jobsRepo := postgres.NewJobsRepo(DB)
 	discussionsRepo := postgres.NewDiscussionsRepo(DB)
 	applicationsRepo := postgres.NewApplicationsRepo(DB)
@@ -48,7 +47,6 @@ func main() {
 		ApplicationsRepo: applicationsRepo,
 		DiscussionsRepo:  discussionsRepo,
 		JobsRepo:         jobsRepo,
-		MilestonesRepo:   milestonesRepo,
 		SkillsRepo:       skillsRepo,
 		UsersRepo:        usersRepo,
 	}}))

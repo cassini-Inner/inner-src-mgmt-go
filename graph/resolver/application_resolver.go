@@ -11,7 +11,7 @@ func (r *applicationResolver) Applicant(ctx context.Context, obj *gqlmodel.Appli
 }
 
 func (r *applicationResolver) Milestone(ctx context.Context, obj *gqlmodel.Application) (*gqlmodel.Milestone, error) {
-	dbMilestone, err := r.MilestonesRepo.GetById(obj.MilestoneID)
+	dbMilestone, err := r.JobsRepo.GetMilesoneById(obj.MilestoneID)
 	if err != nil {
 		return nil, err
 	}

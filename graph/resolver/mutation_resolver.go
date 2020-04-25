@@ -30,7 +30,26 @@ func (r *mutationResolver) MarkMilestoneCompleted(ctx context.Context, milestone
 }
 
 func (r *mutationResolver) MarkJobCompleted(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	// check if the job exists in the repo
+	job, err := r.JobsRepo.GetById(jobID)
+	if err != nil {
+		return nil, ErrNoEntityMatchingId
+	}
+
+	// check if the job is being modified by the person who created it
+	if job.CreatedBy != user.Id {
+		return nil, ErrUserNotOwner
+	}
+	updatedJob, err := r.JobsRepo.MarkJobCompleted(ctx, jobID)
+	var gqlJob gqlmodel.Job
+	gqlJob.MapDbToGql(*updatedJob)
+
+	return &gqlJob, nil
 }
 
 func (r *mutationResolver) UpdateProfile(ctx context.Context, updatedUserDetails *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -185,7 +204,7 @@ func (r *mutationResolver) CreateJobApplication(ctx context.Context, jobID strin
 		return nil, ErrOwnerApplyToOwnJob
 	}
 
-	milestones, err := r.MilestonesRepo.GetByJobId(jobID)
+	milestones, err := r.JobsRepo.GetMilestonesByJobId(jobID)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +228,7 @@ func (r *mutationResolver) DeleteJobApplication(ctx context.Context, jobID strin
 		return nil, ErrUserNotAuthenticated
 	}
 
-	jobMilestones, err := r.MilestonesRepo.GetByJobId(jobID)
+	jobMilestones, err := r.JobsRepo.GetMilestonesByJobId(jobID)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +280,7 @@ func (r *mutationResolver) UpdateJobApplication(ctx context.Context, applicantID
 		return nil, ErrInvalidNewApplicationState
 	}
 
-	milestones, err := r.MilestonesRepo.GetByJobId(jobID)
+	milestones, err := r.JobsRepo.GetMilestonesByJobId(jobID)
 	if err != nil {
 		return nil, err
 	}

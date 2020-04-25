@@ -12,7 +12,6 @@ type Resolver struct {
 	ApplicationsRepo *postgres.ApplicationsRepo
 	DiscussionsRepo  *postgres.DiscussionsRepo
 	JobsRepo         *postgres.JobsRepo
-	MilestonesRepo   *postgres.MilestonesRepo
 	SkillsRepo       *postgres.SkillsRepo
 	UsersRepo        *postgres.UsersRepo
 }
