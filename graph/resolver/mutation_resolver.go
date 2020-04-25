@@ -25,19 +25,16 @@ var (
 	ErrJobAlreadyCompleted            = errors.New("job is already completed")
 )
 
-func (r *mutationResolver) UpdateUserProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
+func (r *mutationResolver) MarkMilestoneCompleted(ctx context.Context, milestoneID string) (*gqlmodel.Milestone, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreateUserProfile(ctx context.Context, user *gqlmodel.CreateUserInput) (*gqlmodel.User, error) {
-	var dbuser *dbmodel.User
-	var gqluser gqlmodel.User
-	dbuser, err := r.UsersRepo.CreateUser(user)
-	if err != nil {
-		return nil, err
-	}
-	gqluser.MapDbToGql(*dbuser)
-	return &gqluser, err
+func (r *mutationResolver) MarkJobCompleted(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) UpdateProfile(ctx context.Context, user *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *mutationResolver) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (*gqlmodel.Job, error) {

@@ -115,19 +115,20 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddCommentToJob      func(childComplexity int, comment string, jobID string) int
-		Authenticate         func(childComplexity int, githubCode string) int
-		CreateJob            func(childComplexity int, job *model.CreateJobInput) int
-		CreateJobApplication func(childComplexity int, jobID string) int
-		CreateUserProfile    func(childComplexity int, user *model.CreateUserInput) int
-		DeleteCommment       func(childComplexity int, id string) int
-		DeleteJob            func(childComplexity int, jobID string) int
-		DeleteJobApplication func(childComplexity int, jobID string) int
-		RefreshToken         func(childComplexity int, token string) int
-		UpdateComment        func(childComplexity int, id string, comment string) int
-		UpdateJob            func(childComplexity int, job *model.UpdateJobInput) int
-		UpdateJobApplication func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus, note *string) int
-		UpdateUserProfile    func(childComplexity int, user *model.UpdateUserInput) int
+		AddCommentToJob        func(childComplexity int, comment string, jobID string) int
+		Authenticate           func(childComplexity int, githubCode string) int
+		CreateJob              func(childComplexity int, job *model.CreateJobInput) int
+		CreateJobApplication   func(childComplexity int, jobID string) int
+		DeleteCommment         func(childComplexity int, id string) int
+		DeleteJob              func(childComplexity int, jobID string) int
+		DeleteJobApplication   func(childComplexity int, jobID string) int
+		MarkJobCompleted       func(childComplexity int, jobID string) int
+		MarkMilestoneCompleted func(childComplexity int, milestoneID string) int
+		RefreshToken           func(childComplexity int, token string) int
+		UpdateComment          func(childComplexity int, id string, comment string) int
+		UpdateJob              func(childComplexity int, job *model.UpdateJobInput) int
+		UpdateJobApplication   func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus, note *string) int
+		UpdateProfile          func(childComplexity int, user *model.UpdateUserInput) int
 	}
 
 	Query struct {
@@ -207,8 +208,7 @@ type MilestoneResolver interface {
 	Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error)
 }
 type MutationResolver interface {
-	UpdateUserProfile(ctx context.Context, user *model.UpdateUserInput) (*model.User, error)
-	CreateUserProfile(ctx context.Context, user *model.CreateUserInput) (*model.User, error)
+	UpdateProfile(ctx context.Context, user *model.UpdateUserInput) (*model.User, error)
 	CreateJob(ctx context.Context, job *model.CreateJobInput) (*model.Job, error)
 	UpdateJob(ctx context.Context, job *model.UpdateJobInput) (*model.Job, error)
 	DeleteJob(ctx context.Context, jobID string) (*model.Job, error)
@@ -220,6 +220,8 @@ type MutationResolver interface {
 	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus, note *string) ([]*model.Application, error)
 	Authenticate(ctx context.Context, githubCode string) (*model.UserAuthenticationPayload, error)
 	RefreshToken(ctx context.Context, token string) (*model.UserAuthenticationPayload, error)
+	MarkMilestoneCompleted(ctx context.Context, milestoneID string) (*model.Milestone, error)
+	MarkJobCompleted(ctx context.Context, jobID string) (*model.Job, error)
 }
 type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
@@ -608,18 +610,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateJobApplication(childComplexity, args["jobID"].(string)), true
 
-	case "Mutation.createUserProfile":
-		if e.complexity.Mutation.CreateUserProfile == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createUserProfile_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateUserProfile(childComplexity, args["user"].(*model.CreateUserInput)), true
-
 	case "Mutation.deleteCommment":
 		if e.complexity.Mutation.DeleteCommment == nil {
 			break
@@ -655,6 +645,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteJobApplication(childComplexity, args["jobID"].(string)), true
+
+	case "Mutation.markJobCompleted":
+		if e.complexity.Mutation.MarkJobCompleted == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markJobCompleted_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.MarkJobCompleted(childComplexity, args["jobID"].(string)), true
+
+	case "Mutation.markMilestoneCompleted":
+		if e.complexity.Mutation.MarkMilestoneCompleted == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markMilestoneCompleted_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.MarkMilestoneCompleted(childComplexity, args["milestoneID"].(string)), true
 
 	case "Mutation.refreshToken":
 		if e.complexity.Mutation.RefreshToken == nil {
@@ -704,17 +718,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateJobApplication(childComplexity, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus), args["note"].(*string)), true
 
-	case "Mutation.updateUserProfile":
-		if e.complexity.Mutation.UpdateUserProfile == nil {
+	case "Mutation.updateProfile":
+		if e.complexity.Mutation.UpdateProfile == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateUserProfile_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateProfile_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateUserProfile(childComplexity, args["user"].(*model.UpdateUserInput)), true
+		return e.complexity.Mutation.UpdateProfile(childComplexity, args["user"].(*model.UpdateUserInput)), true
 
 	case "Query.allJobs":
 		if e.complexity.Query.AllJobs == nil {
@@ -1052,9 +1066,7 @@ var sources = []*ast.Source{
 }
 type Mutation {
     # To update the user information like name, email ...
-    updateUserProfile(user: UpdateUserInput): User
-    # To create a user after github auth with email, name and photo url
-    createUserProfile(user: CreateUserInput): User
+    updateProfile(user: UpdateUserInput): User
     # To create a new job
     createJob(job: CreateJobInput): Job
     # To update a job
@@ -1075,6 +1087,8 @@ type Mutation {
     updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus, note: String): [Application]
     authenticate(githubCode: String!): UserAuthenticationPayload
     refreshToken(token: String!): UserAuthenticationPayload
+    markMilestoneCompleted(milestoneID: String!) : Milestone
+    markJobCompleted(jobID: String!) : Job
 }
 
 type UserAuthenticationPayload {
@@ -1095,8 +1109,6 @@ input UpdateJobInput {
 # For creating a new job
 input CreateJobInput {
     title: String!
-    # assuming this is automatically handled by the resolver
-    # createdBy: User!
     desc: String!
     difficulty: Difficulty!
     milestones: [MilestoneInput]!
@@ -1119,7 +1131,6 @@ input CreateUserInput {
 }
 # For updating user information
 input UpdateUserInput {
-    id: ID!
     email: String
     name: String
     role: String
@@ -1337,20 +1348,6 @@ func (ec *executionContext) field_Mutation_createJob_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createUserProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.CreateUserInput
-	if tmp, ok := rawArgs["user"]; ok {
-		arg0, err = ec.unmarshalOCreateUserInput2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["user"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_deleteCommment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1390,6 +1387,34 @@ func (ec *executionContext) field_Mutation_deleteJob_args(ctx context.Context, r
 		}
 	}
 	args["jobID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_markJobCompleted_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["jobID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["jobID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_markMilestoneCompleted_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["milestoneID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["milestoneID"] = arg0
 	return args, nil
 }
 
@@ -1481,7 +1506,7 @@ func (ec *executionContext) field_Mutation_updateJob_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateUserProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updateProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.UpdateUserInput
@@ -3049,7 +3074,7 @@ func (ec *executionContext) _Milestones_milestones(ctx context.Context, field gr
 	return ec.marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3065,7 +3090,7 @@ func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, fie
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateUserProfile_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_updateProfile_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3073,45 +3098,7 @@ func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateUserProfile(rctx, args["user"].(*model.UpdateUserInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createUserProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createUserProfile_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateUserProfile(rctx, args["user"].(*model.CreateUserInput))
+		return ec.resolvers.Mutation().UpdateProfile(rctx, args["user"].(*model.UpdateUserInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3541,6 +3528,82 @@ func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field gr
 	res := resTmp.(*model.UserAuthenticationPayload)
 	fc.Result = res
 	return ec.marshalOUserAuthenticationPayload2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserAuthenticationPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_markMilestoneCompleted(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_markMilestoneCompleted_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MarkMilestoneCompleted(rctx, args["milestoneID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Milestone)
+	fc.Result = res
+	return ec.marshalOMilestone2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_markJobCompleted(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_markJobCompleted_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MarkJobCompleted(rctx, args["jobID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Job)
+	fc.Result = res
+	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_allJobs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6018,12 +6081,6 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 
 	for k, v := range asMap {
 		switch k {
-		case "id":
-			var err error
-			it.ID, err = ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "email":
 			var err error
 			it.Email, err = ec.unmarshalOString2ᚖstring(ctx, v)
@@ -6526,10 +6583,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "updateUserProfile":
-			out.Values[i] = ec._Mutation_updateUserProfile(ctx, field)
-		case "createUserProfile":
-			out.Values[i] = ec._Mutation_createUserProfile(ctx, field)
+		case "updateProfile":
+			out.Values[i] = ec._Mutation_updateProfile(ctx, field)
 		case "createJob":
 			out.Values[i] = ec._Mutation_createJob(ctx, field)
 		case "updateJob":
@@ -6552,6 +6607,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_authenticate(ctx, field)
 		case "refreshToken":
 			out.Values[i] = ec._Mutation_refreshToken(ctx, field)
+		case "markMilestoneCompleted":
+			out.Values[i] = ec._Mutation_markMilestoneCompleted(ctx, field)
+		case "markJobCompleted":
+			out.Values[i] = ec._Mutation_markJobCompleted(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7851,18 +7910,6 @@ func (ec *executionContext) unmarshalOCreateJobInput2ᚖgithubᚗcomᚋcassini�
 		return nil, nil
 	}
 	res, err := ec.unmarshalOCreateJobInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) unmarshalOCreateUserInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (model.CreateUserInput, error) {
-	return ec.unmarshalInputCreateUserInput(ctx, v)
-}
-
-func (ec *executionContext) unmarshalOCreateUserInput2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (*model.CreateUserInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOCreateUserInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx, v)
 	return &res, err
 }
 
