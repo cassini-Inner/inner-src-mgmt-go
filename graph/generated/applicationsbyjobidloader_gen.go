@@ -12,7 +12,7 @@ import (
 // ApplicationsByJobIdLoaderConfig captures the config to create a new ApplicationsByJobIdLoader
 type ApplicationsByJobIdLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []string) ([][]*model.Applications, []error)
+	Fetch func(keys []string) ([]*model.Applications, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -33,7 +33,7 @@ func NewApplicationsByJobIdLoader(config ApplicationsByJobIdLoaderConfig) *Appli
 // ApplicationsByJobIdLoader batches and caches requests
 type ApplicationsByJobIdLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []string) ([][]*model.Applications, []error)
+	fetch func(keys []string) ([]*model.Applications, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -44,7 +44,7 @@ type ApplicationsByJobIdLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[string][]*model.Applications
+	cache map[string]*model.Applications
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
@@ -56,25 +56,25 @@ type ApplicationsByJobIdLoader struct {
 
 type applicationsByJobIdLoaderBatch struct {
 	keys    []string
-	data    [][]*model.Applications
+	data    []*model.Applications
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a Applications by key, batching and caching will be applied automatically
-func (l *ApplicationsByJobIdLoader) Load(key string) ([]*model.Applications, error) {
+func (l *ApplicationsByJobIdLoader) Load(key string) (*model.Applications, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Applications.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ApplicationsByJobIdLoader) LoadThunk(key string) func() ([]*model.Applications, error) {
+func (l *ApplicationsByJobIdLoader) LoadThunk(key string) func() (*model.Applications, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
-		return func() ([]*model.Applications, error) {
+		return func() (*model.Applications, error) {
 			return it, nil
 		}
 	}
@@ -85,10 +85,10 @@ func (l *ApplicationsByJobIdLoader) LoadThunk(key string) func() ([]*model.Appli
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() ([]*model.Applications, error) {
+	return func() (*model.Applications, error) {
 		<-batch.done
 
-		var data []*model.Applications
+		var data *model.Applications
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -113,14 +113,14 @@ func (l *ApplicationsByJobIdLoader) LoadThunk(key string) func() ([]*model.Appli
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ApplicationsByJobIdLoader) LoadAll(keys []string) ([][]*model.Applications, []error) {
-	results := make([]func() ([]*model.Applications, error), len(keys))
+func (l *ApplicationsByJobIdLoader) LoadAll(keys []string) ([]*model.Applications, []error) {
+	results := make([]func() (*model.Applications, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	applicationss := make([][]*model.Applications, len(keys))
+	applicationss := make([]*model.Applications, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		applicationss[i], errors[i] = thunk()
@@ -131,13 +131,13 @@ func (l *ApplicationsByJobIdLoader) LoadAll(keys []string) ([][]*model.Applicati
 // LoadAllThunk returns a function that when called will block waiting for a Applicationss.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ApplicationsByJobIdLoader) LoadAllThunk(keys []string) func() ([][]*model.Applications, []error) {
-	results := make([]func() ([]*model.Applications, error), len(keys))
+func (l *ApplicationsByJobIdLoader) LoadAllThunk(keys []string) func() ([]*model.Applications, []error) {
+	results := make([]func() (*model.Applications, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([][]*model.Applications, []error) {
-		applicationss := make([][]*model.Applications, len(keys))
+	return func() ([]*model.Applications, []error) {
+		applicationss := make([]*model.Applications, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			applicationss[i], errors[i] = thunk()
@@ -149,15 +149,14 @@ func (l *ApplicationsByJobIdLoader) LoadAllThunk(keys []string) func() ([][]*mod
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ApplicationsByJobIdLoader) Prime(key string, value []*model.Applications) bool {
+func (l *ApplicationsByJobIdLoader) Prime(key string, value *model.Applications) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
 		// make a copy when writing to the cache, its easy to pass a pointer in from a loop var
 		// and end up with the whole cache pointing to the same value.
-		cpy := make([]*model.Applications, len(value))
-		copy(cpy, value)
-		l.unsafeSet(key, cpy)
+		cpy := *value
+		l.unsafeSet(key, &cpy)
 	}
 	l.mu.Unlock()
 	return !found
@@ -170,9 +169,9 @@ func (l *ApplicationsByJobIdLoader) Clear(key string) {
 	l.mu.Unlock()
 }
 
-func (l *ApplicationsByJobIdLoader) unsafeSet(key string, value []*model.Applications) {
+func (l *ApplicationsByJobIdLoader) unsafeSet(key string, value *model.Applications) {
 	if l.cache == nil {
-		l.cache = map[string][]*model.Applications{}
+		l.cache = map[string]*model.Applications{}
 	}
 	l.cache[key] = value
 }

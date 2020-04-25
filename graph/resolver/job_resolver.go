@@ -29,7 +29,7 @@ func (r *jobResolver) Discussion(ctx context.Context, obj *gqlmodel.Job) (*gqlmo
 //Get the list of milestones in dbmodel type, converts it to gqlmodel type and returns list of milestones
 func (r *jobResolver) Milestones(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Milestones, error) {
 	return dataloader.GetMilestonesByJobIdLoader(ctx).Load(obj.ID)
-	
+
 }
 
 func (r *jobResolver) Skills(ctx context.Context, obj *gqlmodel.Job) ([]*gqlmodel.Skill, error) {
@@ -37,18 +37,5 @@ func (r *jobResolver) Skills(ctx context.Context, obj *gqlmodel.Job) ([]*gqlmode
 }
 
 func (r *jobResolver) Applications(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Applications, error) {
-	applications, err := r.ApplicationsRepo.GetByJobId(obj.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	var gqlApplicationsList []*gqlmodel.Application
-	for _, application := range applications {
-		var gqlApplication gqlmodel.Application
-		gqlApplication.MapDbToGql(application)
-		gqlApplicationsList = append(gqlApplicationsList, &gqlApplication)
-	}
-
-	//TODO: Implement the counters
-	return &gqlmodel.Applications{Applications: gqlApplicationsList}, nil
+	return dataloader.GetApplicationsByJobIdLoader(ctx).Load(obj.ID)
 }
