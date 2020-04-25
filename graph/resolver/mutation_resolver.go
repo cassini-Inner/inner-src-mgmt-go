@@ -44,7 +44,10 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, updatedUserDetails
 		return nil, err
 	}
 
-	return updatedUser, nil
+	var gqlUpdatedUser gqlmodel.User
+	gqlUpdatedUser.MapDbToGql(*updatedUser)
+
+	return &gqlUpdatedUser, nil
 }
 
 func (r *mutationResolver) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (*gqlmodel.Job, error) {

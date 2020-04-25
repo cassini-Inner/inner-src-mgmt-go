@@ -9,10 +9,15 @@ import (
 	"github.com/jmoiron/sqlx"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+)
+
+var (
+	ErrRemovingCurrentUserSkills = errors.New("error occurred while deleting user's existing skills")
 )
 
 // TODO: Implement
@@ -30,12 +35,76 @@ func (u *UsersRepo) CreateUser(input *gqlmodel.CreateUserInput) (*dbmodel.User, 
 }
 
 //TODO: Deprecate
-func (u *UsersRepo) UpdateUser(currentUserInfo *dbmodel.User, input *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
-	// setup a new transaction
-	//tx, err := u.db.Beginx()
-	//if err != nil {return nil, err}
+func (u *UsersRepo) UpdateUser(currentUserInfo *dbmodel.User, input *gqlmodel.UpdateUserInput) (*dbmodel.User, error) {
 
-	return nil, nil
+	updatedUserInformation := *currentUserInfo
+	// setup a new transaction
+	tx, err := u.db.Beginx()
+	if err != nil {
+		return nil, err
+	}
+
+	// check which fields need to be updated
+	if input.Contact != nil {
+		updatedUserInformation.Contact = dbmodel.ToNullString(input.Contact)
+	}
+	if input.Bio != nil {
+		updatedUserInformation.Bio = dbmodel.ToNullString(input.Bio)
+	}
+	if input.Department != nil {
+		updatedUserInformation.Department = dbmodel.ToNullString(input.Department)
+	}
+	if input.Role != nil {
+		updatedUserInformation.Role = dbmodel.ToNullString(input.Role)
+	}
+	if input.Name != nil {
+		updatedUserInformation.Name = dbmodel.ToNullString(input.Name)
+	}
+	if input.Email != nil {
+		updatedUserInformation.Email = dbmodel.ToNullString(input.Email)
+	}
+
+	// update the users information in the database
+	_, err = tx.Exec(updateUserByUserIdQuery, updatedUserInformation.Email, updatedUserInformation.Name, updatedUserInformation.Role, updatedUserInformation.Department, updatedUserInformation.Bio, updatedUserInformation.Contact, updatedUserInformation.Id)
+	if err != nil {
+		log.Println(err)
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	// delete current entries from userskills table
+	if input.Skills != nil {
+		_, err = tx.Exec(deleteSkillsFromUserskillsByUserIdQuery, currentUserInfo.Id)
+		if err != nil {
+			_ = tx.Rollback()
+			log.Println(err)
+			return nil, ErrRemovingCurrentUserSkills
+		}
+		// create new skills for the users
+		var inputSkills []string
+		for _, skill := range input.Skills {
+			inputSkills = append(inputSkills, *skill)
+		}
+		newSkills, err := findOrCreateSkills(inputSkills, currentUserInfo.Id, tx)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+
+		err = addSkillsToUserSkills(newSkills, tx, currentUserInfo.Id)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Println("failed to commit update Users transaction")
+		return nil, err
+	}
+
+	return &updatedUserInformation, nil
 }
 
 func (u *UsersRepo) GetById(userId string) (*dbmodel.User, error) {
@@ -185,4 +254,5 @@ const (
 	selectUsersByGithubIdQuery = `select * from users where github_id = $1 and users.is_deleted = false`
 	countUsersByGithubIdQuery  = `select count(*) from users where github_id = $1`
 	createNewUserQuery         = `insert into users(email, name, role, department, bio, photo_url, contact, github_url, github_id, github_name) VALUES ($1, $2, $3, $4,$5, $6, $7, $8, $9, $10) returning id`
+	updateUserByUserIdQuery    = `update users set email = $1, name = $2, role = $3, department = $4, bio = $5, contact = $6 where id = $7`
 )

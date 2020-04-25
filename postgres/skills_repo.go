@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
@@ -17,6 +18,10 @@ func NewSkillsRepo(db *sqlx.DB) *SkillsRepo {
 	return &SkillsRepo{db: db}
 }
 
+var (
+	ErrInvalidListLength = errors.New("input list must have atleast one item")
+)
+
 func (s *SkillsRepo) GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error) {
 	rows, err := s.db.Queryx(selectSkillsByJobIdQuery, jobId)
 	if err != nil {
@@ -29,6 +34,10 @@ func (s *SkillsRepo) GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error) {
 // and maps existing skills to those in db and creates the one that do not exist
 // then it returns a map of skills by the given skill value
 func findOrCreateSkills(skills []string, userId string, tx *sqlx.Tx) (map[string]*dbmodel.GlobalSkill, error) {
+	if len(skills) == 0 {
+		return nil, ErrInvalidListLength
+	}
+
 	skillsMap := make(map[string]string)
 	resultMap := make(map[string]*dbmodel.GlobalSkill)
 	// put all skills in a map so that we only have unique ones
@@ -170,6 +179,27 @@ func (s *SkillsRepo) GetAll() ([]*dbmodel.GlobalSkill, error) {
 	return result, nil
 }
 
+func addSkillsToUserSkills(skills map[string]*dbmodel.GlobalSkill, tx *sqlx.Tx, userId string) error {
+
+	var newUserskillsValue []string
+	var newUserskillsArgs []interface{}
+
+	for key := range skills {
+		newUserskillsValue = append(newUserskillsValue, "(?, ?)")
+		newUserskillsArgs = append(newUserskillsArgs, userId, skills[key].Id)
+	}
+
+	stmt := tx.Rebind(fmt.Sprintf(insertIntoUserskillsquery, strings.Join(newUserskillsValue, ",")))
+
+	rows, err := tx.Queryx(stmt, newUserskillsArgs...)
+	rows.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 const (
 	selectAllSkills          = `select * from globalskills`
 	selectSkillsByJobIdQuery = `select distinct (globalskills.id), globalskills.created_by,
@@ -192,13 +222,9 @@ const (
 		where milestoneskills.milestone_id = $1
 		order by globalskills.value`
 
-	selectSkillsByUserIdQuery = `select
-		distinct (globalskills.id),
-			globalskills.created_by,
-			globalskills.value,
-			globalskills.time_created
-		from users 
-		join userskills on userskills.user_id = users.id and userskills.is_deleted = false
-		join globalskills on globalskills.id = userskills.id
-		where users.id = $1 and users.is_deleted = false`
+	selectSkillsByUserIdQuery = `select distinct(g.id), g.created_by, g.value, g.time_created from users join userskills u on users.id = u.user_id and users.id = $1 join globalskills g on u.skill_id = g.id and u.is_deleted = false`
+
+	deleteSkillsFromUserskillsByUserIdQuery = `update userskills set is_deleted = true where user_id = $1`
+
+	insertIntoUserskillsquery = `insert into userskills(user_id, skill_id) values %v returning id`
 )

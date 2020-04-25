@@ -5,16 +5,23 @@ import (
 	"strconv"
 )
 
-func ToNullString(value interface{}) sql.NullString{
+func ToNullString(value interface{}) sql.NullString {
 	if value == nil {
-		return sql.NullString{Valid:false}
+		return sql.NullString{Valid: false}
 	}
 	switch value.(type) {
-	case string: return sql.NullString{
-		String: value.(string),
-		Valid:  value != "",
-	}
-	 default:
+	case string:
+		return sql.NullString{
+			String: value.(string),
+			Valid:  value != "",
+		}
+	case *string:
+		val := value.(*string)
+		return sql.NullString{
+			String: *val,
+			Valid:  value != "",
+		}
+	default:
 		return sql.NullString{
 			String: strconv.Itoa(int(value.(float64))),
 			Valid:  value != "",
