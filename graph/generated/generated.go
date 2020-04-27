@@ -1135,6 +1135,7 @@ input UpdateUserInput {
     name: String
     role: String
     department: String
+    onboarded: Boolean
     bio: String
     contact: String
     skills: [String]
@@ -6102,6 +6103,12 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 		case "department":
 			var err error
 			it.Department, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "onboarded":
+			var err error
+			it.Onboarded, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}

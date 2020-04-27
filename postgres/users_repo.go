@@ -80,6 +80,7 @@ func (u *UsersRepo) GetByIdTx(userId string, tx *sqlx.Tx) (*dbmodel.User, error)
 	}
 	return &user, nil
 }
+
 func (u *UsersRepo) GetById(userId string) (*dbmodel.User, error) {
 	var user dbmodel.User
 	err := u.db.QueryRowx(selectUserByIdQuery, userId).StructScan(&user)
@@ -136,5 +137,5 @@ const (
 	selectUsersByGithubIdQuery = `select * from users where github_id = $1 and users.is_deleted = false`
 	countUsersByGithubIdQuery  = `select count(*) from users where github_id = $1`
 	createNewUserQuery         = `insert into users(email, name, role, department, bio, photo_url, contact, github_url, github_id, github_name) VALUES ($1, $2, $3, $4,$5, $6, $7, $8, $9, $10) returning id`
-	updateUserByUserIdQuery    = `update users set email = $1, name = $2, role = $3, department = $4, bio = $5, contact = $6 where id = $7`
+	updateUserByUserIdQuery    = `update users set email = $1, name = $2, role = $3, department = $4, bio = $5, contact = $6, onboarded=true where id = $7`
 )

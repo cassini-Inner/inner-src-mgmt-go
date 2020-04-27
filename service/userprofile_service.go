@@ -30,6 +30,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 		return nil, err
 	}
 
+
 	// if any of these fields are being updated
 	if userDetails.Contact != nil || userDetails.Bio != nil || userDetails.Department != nil || userDetails.Name != nil || userDetails.Email != nil {
 		_, err := s.userRepo.UpdateUser(currentRequestUser, userDetails, tx)
