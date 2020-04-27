@@ -179,7 +179,14 @@ func (j *JobsRepo) ForceAutoUpdateMilestoneStatusByJobID(ctx context.Context, tx
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
+func (j *JobsRepo) ForceAutoUpdateMilestoneStatusByMilestoneId(ctx context.Context, tx *sqlx.Tx, milestoneID string) error {
+	_, err := tx.ExecContext(ctx, updateMilestoneStatusByMilestoneIDForce, milestoneID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

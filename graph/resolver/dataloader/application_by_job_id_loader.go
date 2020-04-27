@@ -1,6 +1,7 @@
 package dataloader
 
 import (
+	"database/sql"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/jmoiron/sqlx"
@@ -109,7 +110,8 @@ func mapCountRowToValue(storageMap map[string]int, rows *sqlx.Rows, keys []strin
 
 func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap map[string][]*gqlmodel.Application) []error {
 	for applicationRows.Next() {
-		var jobId, id, milestoneId, applicantId, status, note, timeCreated, timeUpdated string
+		var jobId, id, milestoneId, applicantId, status, timeCreated, timeUpdated string
+		var note sql.NullString
 		err := applicationRows.Scan(&jobId, &id, &milestoneId, &applicantId, &status, &note, &timeCreated, &timeUpdated)
 		if err != nil {
 			return []error{err}
@@ -118,14 +120,17 @@ func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap ma
 		if !ok {
 			applicationsMap[jobId] = make([]*gqlmodel.Application, 0)
 		}
-		applicationsMap[jobId] = append(applicationsMap[jobId], &gqlmodel.Application{
+		application := &gqlmodel.Application{
 			ID:          id,
 			ApplicantID: applicantId,
 			MilestoneID: milestoneId,
 			Status:      gqlmodel.ApplicationStatus(status),
-			Note:        &note,
 			CreatedOn:   timeCreated,
-		})
+		}
+		if note.Valid {
+			application.Note = &note.String
+		}
+		applicationsMap[jobId] = append(applicationsMap[jobId], application)
 	}
 	return nil
 }

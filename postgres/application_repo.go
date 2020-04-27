@@ -340,4 +340,20 @@ where milestones.job_id = $1 and applications.applicant_id = $2 limit 1`
 						 else status
 			end
 		where milestones.job_id = $1 and milestones.is_deleted = false`
+
+	updateMilestoneStatusByMilestoneIDForce = `with acceptedCount as (select distinct count(distinct applicant_id) as count
+							   from milestones
+										join applications a on milestones.id = a.milestone_id and milestones.is_deleted = false
+							   where milestones.id = $1
+								 and a.status = 'accepted'
+							   group by applicant_id)
+		update milestones
+		set status = case
+						 when ((select count from acceptedCount) is not null)
+							 then 'ongoing'
+						 when ((select count from acceptedCount) is null)
+							 then 'open'
+						 else status
+			end
+		where milestones.id = $1 and milestones.is_deleted = false`
 )

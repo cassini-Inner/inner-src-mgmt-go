@@ -283,3 +283,78 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 
 	return &gqlJob, nil
 }
+
+// TODO: we're mixing tx and non tx queries here. refactor to only use tx queries
+func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID string) (*gqlmodel.Milestone, error) {
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	milestoneData, err := j.jobsRepo.GetMilestoneById(milestoneID)
+	if err != nil {
+		return nil, err
+	}
+	milestoneAuthor, err := j.jobsRepo.GetAuthorFromMilestoneId(milestoneID)
+	if err != nil {
+		return nil, err
+	}
+
+	if milestoneAuthor.Id != user.Id {
+		return nil, ErrUserNotOwner
+	}
+
+	tx, err := j.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	if milestoneData.Status != "completed" {
+		err = j.jobsRepo.MarkMilestonesCompleted(tx, ctx, milestoneID)
+		if err != nil {
+			return nil, err
+		}
+
+		jobMilestones, err := j.jobsRepo.GetMilestonesByJobId(milestoneData.JobId, tx)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+		completedMilestonesCount := 0
+		for _, milestone := range jobMilestones {
+			if milestone.Status == "completed" {
+				completedMilestonesCount++
+			}
+		}
+		if completedMilestonesCount == len(jobMilestones) {
+			_, err := j.jobsRepo.MarkJobCompleted(ctx, tx, milestoneData.JobId)
+			if err != nil {
+				_ = tx.Rollback()
+				return nil, err
+			}
+		}
+	} else {
+		err = j.jobsRepo.ForceAutoUpdateMilestoneStatusByMilestoneId(ctx, tx, milestoneID)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+		_, err := j.jobsRepo.ForceAutoUpdateJobStatus(ctx, tx, milestoneData.JobId)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	updatedMilestone, err := j.jobsRepo.GetMilestoneById(milestoneID)
+	if err != nil {
+		return nil, err
+	}
+
+	var gqlMilestone gqlmodel.Milestone
+	gqlMilestone.MapDbToGql(*updatedMilestone)
+	return &gqlMilestone, nil
+}

@@ -31,32 +31,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, job *gqlmodel.CreateJo
 }
 
 func (r *mutationResolver) ToggleMilestoneCompleted(ctx context.Context, milestoneID string) (*gqlmodel.Milestone, error) {
-	//user, err := middleware.GetCurrentUserFromContext(ctx)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//milestoneData, err := r.JobsRepo.GetMilestoneById(milestoneID)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//milestoneAuthor, err := r.JobsRepo.GetAuthorFromMilestoneId(milestoneID)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//if milestoneAuthor.Id != user.Id {
-	//	return nil, ErrUserNotOwner
-	//}
-	//
-	//updatedMilestone, err := r.JobsRepo.MarkMilestonesCompleted( ctx)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//var gqlMilestone gqlmodel.Milestone
-	//gqlMilestone.MapDbToGql(*updatedMilestone)
-	return nil, nil
+	return r.JobsService.ToggleMilestoneCompleted(ctx, milestoneID)
 }
 
 func (r *mutationResolver) ToggleJobCompleted(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
