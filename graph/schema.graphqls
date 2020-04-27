@@ -29,7 +29,7 @@ type Mutation {
     # To update a comment based on a comment id
     updateComment(id: ID!, comment: String!): Comment
     # To delete a comment based on comment id
-    deleteCommment(id: ID!) : Comment
+    deleteComment(id: ID!) : Comment
     # Create an application to a job, user id obtained through auth
     createJobApplication(jobID: ID!): [Application]
     # To withdraw application from a job
@@ -38,8 +38,8 @@ type Mutation {
     updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus, note: String): [Application]
     authenticate(githubCode: String!): UserAuthenticationPayload
     refreshToken(token: String!): UserAuthenticationPayload
-    markMilestoneCompleted(milestoneID: String!) : Milestone
-    markJobCompleted(jobID: String!) : Job
+    toggleMilestoneCompleted(milestoneID: String!) : Milestone
+    toggleJobCompleted(jobID: String!) : Job
 }
 
 type UserAuthenticationPayload {

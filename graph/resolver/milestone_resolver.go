@@ -7,13 +7,7 @@ import (
 )
 
 func (r *milestoneResolver) Job(ctx context.Context, obj *gqlmodel.Milestone) (*gqlmodel.Job, error) {
-	var job gqlmodel.Job
-	dbjob, err := r.JobsRepo.GetById(obj.JobID)
-	if err != nil {
-		return nil, err
-	}
-	job.MapDbToGql(*dbjob)
-	return &job, nil
+	return r.JobsService.GetById(ctx, obj.JobID)
 }
 
 func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *gqlmodel.Milestone) (*gqlmodel.User, error) {

@@ -1,9 +1,11 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -30,9 +32,10 @@ func (s *SkillsRepo) GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error) {
 	return s.scanSkills(rows)
 }
 
-// createOrUpdateSkills checks the input skills against those present in the database
+// findOrCreateSkills checks the input skills against those present in the database
 // and maps existing skills to those in db and creates the one that do not exist
 // then it returns a map of skills by the given skill value
+// TODO: Refactor, duplicate method sig
 func findOrCreateSkills(skills []string, userId string, tx *sqlx.Tx) (map[string]*dbmodel.GlobalSkill, error) {
 	if len(skills) == 0 {
 		return nil, ErrInvalidListLength
@@ -179,8 +182,40 @@ func (s *SkillsRepo) GetAll() ([]*dbmodel.GlobalSkill, error) {
 	return result, nil
 }
 
-func addSkillsToUserSkills(skills map[string]*dbmodel.GlobalSkill, tx *sqlx.Tx, userId string) error {
+func (s *SkillsRepo) FindOrCreateSkills(ctx context.Context, tx *sqlx.Tx, skillsList []string, userId string) (skillsMap map[string]*dbmodel.GlobalSkill, err error) {
+	// build a map of unique skills from all the milestones
+	skillsMap, err = findOrCreateSkills(skillsList, userId, tx)
+	if err != nil {
+		return nil, err
+	}
 
+	return skillsMap, nil
+}
+
+func (s *SkillsRepo) MapSkillsToMilestones(ctx context.Context, tx *sqlx.Tx, skillsMap map[string]*dbmodel.GlobalSkill, input *gqlmodel.CreateJobInput, insertedMilestones []*dbmodel.Milestone) (err error) {
+	var milestoneSkillsArgs []interface{}
+	var milestoneSkillsQuery []string
+	for i, milestone := range input.Milestones {
+		milestoneID := insertedMilestones[i].Id
+		for _, skill := range milestone.Skills {
+			milestoneSkillsQuery = append(milestoneSkillsQuery, "(?, ?)")
+			milestoneSkillsArgs = append(milestoneSkillsArgs, skillsMap[strings.ToLower(*skill)].Id, milestoneID)
+		}
+	}
+	newMilestoneSkillsQuery := tx.Rebind(fmt.Sprintf(`insert into milestoneskills(skill_id, milestone_id) values %v returning id`, strings.Join(milestoneSkillsQuery, ",")))
+
+	_, err = tx.ExecContext(ctx, newMilestoneSkillsQuery, milestoneSkillsArgs...)
+	if err != nil {
+		log.Println("error while creating non existing milestoneskills")
+		return err
+	}
+	return nil
+}
+
+func (s *SkillsRepo) AddSkillsToUserSkills(skills map[string]*dbmodel.GlobalSkill, tx *sqlx.Tx, userId string) error {
+	if len(skills) == 0 {
+		return nil
+	}
 	var newUserskillsValue []string
 	var newUserskillsArgs []interface{}
 
@@ -192,7 +227,8 @@ func addSkillsToUserSkills(skills map[string]*dbmodel.GlobalSkill, tx *sqlx.Tx, 
 	stmt := tx.Rebind(fmt.Sprintf(insertIntoUserskillsquery, strings.Join(newUserskillsValue, ",")))
 
 	rows, err := tx.Queryx(stmt, newUserskillsArgs...)
-	rows.Close()
+	defer rows.Close()
+
 	if err != nil {
 		return err
 	}

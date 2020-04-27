@@ -1,0 +1,215 @@
+package service
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
+	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
+	"github.com/jmoiron/sqlx"
+)
+
+var (
+	ErrUserNotOwner                   = errors.New("current user is not owner of this entity, and hence cannot modify it")
+	ErrNoEntityMatchingId             = errors.New("no entity found that matches given id")
+	ErrOwnerApplyToOwnJob             = errors.New("owner cannot apply to their job")
+	ErrApplicationWithdrawnOrRejected = errors.New("owner cannot modify applications with withdrawn status")
+	ErrInvalidNewApplicationState     = errors.New("owner cannot move application status to withdrawn or pending")
+	ErrJobAlreadyCompleted            = errors.New("job is already completed")
+	ErrEntityDeleted                  = errors.New("entity was deleted")
+	ErrUserNotAuthenticated           = errors.New("unauthorized request")
+)
+
+type JobsService struct {
+	db              *sqlx.DB
+	jobsRepo        *postgres.JobsRepo
+	skillsRepo      *postgres.SkillsRepo
+	discussionsRepo *postgres.DiscussionsRepo
+}
+
+func NewJobsService(db *sqlx.DB, jobsRepo *postgres.JobsRepo, skillsRepo *postgres.SkillsRepo, discussionsRepo *postgres.DiscussionsRepo) *JobsService {
+	return &JobsService{db: db, jobsRepo: jobsRepo, skillsRepo: skillsRepo, discussionsRepo: discussionsRepo}
+}
+
+func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (result *gqlmodel.Job, err error) {
+	// validate the input
+	if len(job.Desc) < 5 {
+		return nil, errors.New("description not long enough")
+	}
+	if len(job.Title) < 5 {
+		return nil, errors.New("title not long enough")
+	}
+	if len(job.Difficulty) == 5 {
+		return nil, errors.New("diff not long enough")
+	}
+	if len(job.Milestones) == 0 {
+		return nil, errors.New("just must have at least one milestone")
+	}
+
+	for _, milestone := range job.Milestones {
+		if len(milestone.Skills) == 0 {
+			return nil, errors.New("milestone must have at least one skill")
+		}
+	}
+
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := j.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	newJob, err := j.jobsRepo.CreateJob(ctx, tx, job, user)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	newMilestones, err := j.jobsRepo.CreateMilestones(ctx, tx, newJob.Id, job.Milestones)
+	if err != nil {
+		return nil, err
+	}
+
+	var newSkillsList []string
+	for _, milestone := range job.Milestones {
+		for _, s := range milestone.Skills {
+			val := *s
+			newSkillsList = append(newSkillsList, val)
+		}
+	}
+
+	newSkills, err := j.skillsRepo.FindOrCreateSkills(ctx, tx, newSkillsList, user.Id)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	err = j.skillsRepo.MapSkillsToMilestones(ctx, tx, newSkills, job, newMilestones)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	result = &gqlmodel.Job{}
+	result.MapDbToGql(*newJob)
+	return result, nil
+}
+
+func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId string) (*gqlmodel.Comment, error) {
+	tx, err := j.db.BeginTxx(ctx, nil)
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	newComment, err := j.discussionsRepo.CreateComment(jobId, comment, user.Id, tx, ctx)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	var gqlComment gqlmodel.Comment
+	gqlComment.MapDbToGql(*newComment)
+	return &gqlComment, nil
+}
+
+func (j *JobsService) UpdateJobDiscussion(ctx context.Context, commentId, comment string) (*gqlmodel.Comment, error) {
+	tx, err := j.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, nil
+	}
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	existingDiscussion, err := j.discussionsRepo.GetById(commentId, tx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoEntityMatchingId
+		}
+		return nil, err
+	}
+	if existingDiscussion.CreatedBy != user.Id {
+		return nil, ErrUserNotOwner
+	}
+
+	updatedDiscussion, err := j.discussionsRepo.UpdateComment(commentId, comment, tx, ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	var gqlUpdatedDiscussion gqlmodel.Comment
+	gqlUpdatedDiscussion.MapDbToGql(*updatedDiscussion)
+	return &gqlUpdatedDiscussion, nil
+}
+
+func (j *JobsService) DeleteJobDiscussion(ctx context.Context, commentId string) (*gqlmodel.Comment, error) {
+	if commentId == "" {
+		return nil, ErrNoEntityMatchingId
+	}
+
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	tx, err := j.db.BeginTxx(ctx, nil)
+
+	existingDiscussion, err := j.discussionsRepo.GetById(commentId, tx)
+	if err != nil {
+		_ = tx.Rollback()
+		if err == sql.ErrNoRows {
+			return nil, ErrNoEntityMatchingId
+		}
+		return nil, err
+	}
+	if existingDiscussion.CreatedBy != user.Id {
+		_ = tx.Rollback()
+		return nil, ErrUserNotOwner
+	}
+	discussion, err := j.discussionsRepo.DeleteComment(commentId, tx, ctx)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	var gqlComment gqlmodel.Comment
+	gqlComment.MapDbToGql(*discussion)
+	return &gqlComment, nil
+}
+
+func (j *JobsService) GetById(ctx context.Context, jobId string) (*gqlmodel.Job, error) {
+	tx, err := j.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	job, err := j.jobsRepo.GetById(jobId, tx)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	var gqlJob gqlmodel.Job
+	gqlJob.MapDbToGql(*job)
+	return &gqlJob, nil
+}

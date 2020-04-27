@@ -49,7 +49,7 @@ func (r *userResolver) AppliedJobs(ctx context.Context, obj *gqlmodel.User) ([]*
 	for _, job := range applications {
 		var gqlJob gqlmodel.Job
 		gqlJob.MapDbToGql(*job)
-		jobApplicationStatus, err := r.ApplicationsRepo.GetApplicationStatusForUserAndJob(obj.ID, job.Id)
+		jobApplicationStatus, err := r.ApplicationsService.GetApplicationStatusForUserAndJob(ctx, obj.ID, job.Id)
 		if err != nil {
 			return nil, err
 		}

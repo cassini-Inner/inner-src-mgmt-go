@@ -3,12 +3,13 @@ package resolver
 import (
 	"context"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
 
 func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilterInput) ([]*gqlmodel.Job, error) {
 
 	if filter == nil {
-		filter =&gqlmodel.JobsFilterInput{
+		filter = &gqlmodel.JobsFilterInput{
 			Status:    []*gqlmodel.JobStatus{},
 			Skills:    []*string{},
 			SortOrder: nil,
@@ -55,21 +56,9 @@ func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilter
 }
 
 func (r *queryResolver) Job(ctx context.Context, id string) (*gqlmodel.Job, error) {
-	var j gqlmodel.Job
-	job, err := r.JobsRepo.GetById(id)
-	if err != nil {
-		return nil, err
-	}
-	j.MapDbToGql(*job)
-	return &j, err
+	return r.JobsService.GetById(ctx, id)
 }
 
 func (r *queryResolver) User(ctx context.Context, id string, jobsStatusFilter *gqlmodel.JobStatus) (*gqlmodel.User, error) {
-	user, err := r.UsersRepo.GetById(id)
-	if err != nil {
-		return nil, err
-	}
-	var gqlUser gqlmodel.User
-	gqlUser.MapDbToGql(*user)
-	return &gqlUser, nil
+	return dataloader.GetUserByUserIdLoader(ctx).Load(id)
 }

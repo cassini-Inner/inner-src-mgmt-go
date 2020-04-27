@@ -10,5 +10,5 @@ type Job struct {
 	Status      string
 	TimeCreated string `db:"time_created"`
 	TimeUpdated string `db:"time_updated"`
-	IsDeleted   string `db:"is_deleted"`
+	IsDeleted   bool `db:"is_deleted"`
 }

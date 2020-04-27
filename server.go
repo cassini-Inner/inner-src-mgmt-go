@@ -8,6 +8,7 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 	CustomMiddlewares "github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
+	"github.com/cassini-Inner/inner-src-mgmt-go/service"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/jmoiron/sqlx"
@@ -44,11 +45,14 @@ func main() {
 	}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &resolver.Resolver{
-		ApplicationsRepo: applicationsRepo,
-		DiscussionsRepo:  discussionsRepo,
-		JobsRepo:         jobsRepo,
-		SkillsRepo:       skillsRepo,
-		UsersRepo:        usersRepo,
+		ApplicationsRepo:      applicationsRepo,
+		DiscussionsRepo:       discussionsRepo,
+		JobsRepo:              jobsRepo,
+		SkillsRepo:            skillsRepo,
+		JobsService:           service.NewJobsService(DB, jobsRepo, skillsRepo, discussionsRepo),
+		ApplicationsService:   service.NewApplicationsService(DB, jobsRepo, applicationsRepo),
+		UserService:           service.NewUserProfileService(DB, usersRepo, skillsRepo),
+		AuthenticationService: service.NewAuthenticationService(DB, usersRepo),
 	}}))
 	router := chi.NewRouter()
 
@@ -56,6 +60,7 @@ func main() {
 	// See https://github.com/rs/cors for full option listing
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8081", "http://localhost:8080", "http://localhost:3000"},
+		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete},
 		AllowCredentials: true,
 	}).Handler)
 	router.Use(middleware.RequestID)
