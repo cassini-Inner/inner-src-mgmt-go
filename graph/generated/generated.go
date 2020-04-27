@@ -119,7 +119,7 @@ type ComplexityRoot struct {
 		Authenticate             func(childComplexity int, githubCode string) int
 		CreateJob                func(childComplexity int, job *model.CreateJobInput) int
 		CreateJobApplication     func(childComplexity int, jobID string) int
-		DeleteCommment           func(childComplexity int, id string) int
+		DeleteComment            func(childComplexity int, id string) int
 		DeleteJob                func(childComplexity int, jobID string) int
 		DeleteJobApplication     func(childComplexity int, jobID string) int
 		RefreshToken             func(childComplexity int, token string) int
@@ -214,7 +214,7 @@ type MutationResolver interface {
 	DeleteJob(ctx context.Context, jobID string) (*model.Job, error)
 	AddCommentToJob(ctx context.Context, comment string, jobID string) (*model.Comment, error)
 	UpdateComment(ctx context.Context, id string, comment string) (*model.Comment, error)
-	DeleteCommment(ctx context.Context, id string) (*model.Comment, error)
+	DeleteComment(ctx context.Context, id string) (*model.Comment, error)
 	CreateJobApplication(ctx context.Context, jobID string) ([]*model.Application, error)
 	DeleteJobApplication(ctx context.Context, jobID string) ([]*model.Application, error)
 	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus, note *string) ([]*model.Application, error)
@@ -610,17 +610,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateJobApplication(childComplexity, args["jobID"].(string)), true
 
-	case "Mutation.deleteCommment":
-		if e.complexity.Mutation.DeleteCommment == nil {
+	case "Mutation.deleteComment":
+		if e.complexity.Mutation.DeleteComment == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteCommment_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteComment_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteCommment(childComplexity, args["id"].(string)), true
+		return e.complexity.Mutation.DeleteComment(childComplexity, args["id"].(string)), true
 
 	case "Mutation.deleteJob":
 		if e.complexity.Mutation.DeleteJob == nil {
@@ -1078,7 +1078,7 @@ type Mutation {
     # To update a comment based on a comment id
     updateComment(id: ID!, comment: String!): Comment
     # To delete a comment based on comment id
-    deleteCommment(id: ID!) : Comment
+    deleteComment(id: ID!) : Comment
     # Create an application to a job, user id obtained through auth
     createJobApplication(jobID: ID!): [Application]
     # To withdraw application from a job
@@ -1089,7 +1089,6 @@ type Mutation {
     refreshToken(token: String!): UserAuthenticationPayload
     toggleMilestoneCompleted(milestoneID: String!) : Milestone
     toggleJobCompleted(jobID: String!) : Job
-
 }
 
 type UserAuthenticationPayload {
@@ -1349,7 +1348,7 @@ func (ec *executionContext) field_Mutation_createJob_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteCommment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_deleteComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -3303,7 +3302,7 @@ func (ec *executionContext) _Mutation_updateComment(ctx context.Context, field g
 	return ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_deleteCommment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3319,7 +3318,7 @@ func (ec *executionContext) _Mutation_deleteCommment(ctx context.Context, field 
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_deleteCommment_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_deleteComment_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3327,7 +3326,7 @@ func (ec *executionContext) _Mutation_deleteCommment(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteCommment(rctx, args["id"].(string))
+		return ec.resolvers.Mutation().DeleteComment(rctx, args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6596,8 +6595,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_addCommentToJob(ctx, field)
 		case "updateComment":
 			out.Values[i] = ec._Mutation_updateComment(ctx, field)
-		case "deleteCommment":
-			out.Values[i] = ec._Mutation_deleteCommment(ctx, field)
+		case "deleteComment":
+			out.Values[i] = ec._Mutation_deleteComment(ctx, field)
 		case "createJobApplication":
 			out.Values[i] = ec._Mutation_createJobApplication(ctx, field)
 		case "deleteJobApplication":

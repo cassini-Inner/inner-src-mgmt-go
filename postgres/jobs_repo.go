@@ -6,7 +6,6 @@ import (
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
-	"log"
 	"strings"
 )
 
@@ -156,57 +155,35 @@ func (j *JobsRepo) GetAuthorFromMilestoneId(milestoneId string) (*dbmodel.User, 
 	return &user, nil
 }
 
-func (j *JobsRepo) MarkJobCompleted(ctx context.Context, jobId string) (*dbmodel.Job, error) {
-	// create a new transaction
-	tx, err := j.db.BeginTxx(ctx, nil)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	// get all the milestones for a job
-	milestones, err := j.GetMilestonesByJobId(jobId, tx)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	// mark all the milestones as completed
-	milestoneIds := make([]string, len(milestones))
-	for i, milestone := range milestones {
-		milestoneIds[i] = milestone.Id
-	}
-	err = j.markMilestonesCompleted(milestoneIds, tx, ctx)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-
+func (j *JobsRepo) MarkJobCompleted(ctx context.Context, tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
 	// mark the job status as completed
-	err = j.markJobCompleted(jobId, tx, ctx)
+	_, err := tx.ExecContext(ctx, updateJobStatusCompleted, jobId)
 	if err != nil {
-		_ = tx.Rollback()
 		return nil, err
 	}
 	// commit the transaction
-	updatedJob, err := j.GetById(jobId, tx)
-	err = tx.Commit()
-	if err != nil {
-		log.Println("error while commit job status = completed")
-		log.Println(err)
-		return nil, err
-	}
-
-	// TODO: Make a service layer ya lazy bum
-
-	// we get the job after committing a transaction because if you do it before it loads a job from the database
-	// except the job's data is not updated yet so you still get the stale data
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println(updatedJob)
-	return updatedJob, nil
+	return j.GetById(jobId, tx)
 }
 
-func (j *JobsRepo) markMilestonesCompleted(milestoneIds []string, tx *sqlx.Tx, ctx context.Context) error {
+func (j *JobsRepo) ForceAutoUpdateJobStatus(ctx context.Context, tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
+	_, err := tx.ExecContext(ctx, updateJobStatusByIdForce, jobId)
+	if err != nil {
+		return nil, err
+	}
+
+	return j.GetByIdTx(jobId, tx)
+}
+
+func (j *JobsRepo) ForceAutoUpdateMilestoneStatusByJobID(ctx context.Context, tx *sqlx.Tx, jobId string) error {
+	_, err := tx.ExecContext(ctx, updateMilestoneStatusByJobIdForce, jobId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (j *JobsRepo) MarkMilestonesCompleted(tx *sqlx.Tx, ctx context.Context, milestoneIds ...string) error {
 	stmt, args, err := sqlx.In(updateMilestoneStatusCompleted, milestoneIds)
 	if err != nil {
 		return err
@@ -218,38 +195,6 @@ func (j *JobsRepo) markMilestonesCompleted(milestoneIds []string, tx *sqlx.Tx, c
 		return nil
 	}
 	return nil
-}
-
-func (j *JobsRepo) markJobCompleted(jobId string, tx *sqlx.Tx, ctx context.Context) error {
-	_, err := tx.ExecContext(ctx, updateJobStatusCompleted, jobId)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (j *JobsRepo) MarkMilestoneCompleted(milestoneId string, ctx context.Context) (*dbmodel.Milestone, error) {
-	tx, err := j.db.Beginx()
-	if err != nil {
-		return nil, err
-	}
-
-	err = j.markMilestonesCompleted([]string{milestoneId}, tx, ctx)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-
-	milestone, err := j.GetMilestoneById(milestoneId)
-	if err != nil {
-		return nil, err
-	}
-	return milestone, nil
 }
 
 func (j *JobsRepo) CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId string, milestones []*gqlmodel.MilestoneInput) (createdMilestones []*dbmodel.Milestone, err error) {
@@ -270,9 +215,6 @@ func (j *JobsRepo) CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId stri
 	}
 
 	milestonesInsertResult.Close()
-	if err != nil {
-		return nil, err
-	}
 	return createdMilestones, nil
 }
 

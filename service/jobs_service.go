@@ -8,6 +8,7 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
 	"github.com/jmoiron/sqlx"
+	"log"
 )
 
 var (
@@ -211,5 +212,74 @@ func (j *JobsService) GetById(ctx context.Context, jobId string) (*gqlmodel.Job,
 
 	var gqlJob gqlmodel.Job
 	gqlJob.MapDbToGql(*job)
+	return &gqlJob, nil
+}
+
+func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, ErrUserNotAuthenticated
+	}
+
+	tx, err := j.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	// check if the job exists in the repo
+	job, err := j.jobsRepo.GetByIdTx(jobID, tx)
+	if err != nil {
+		return nil, ErrNoEntityMatchingId
+	}
+	if job.IsDeleted {
+		return nil, ErrEntityDeleted
+	}
+
+	// check if the job is being modified by the person who created it
+	if job.CreatedBy != user.Id {
+		return nil, ErrUserNotOwner
+	}
+
+	// get all the milestones for a job
+	milestones, err := j.jobsRepo.GetMilestonesByJobId(jobID, tx)
+	if err != nil {
+		_ = tx.Rollback()
+		log.Println(err)
+		return nil, err
+	}
+	// mark all the milestones as completed
+	milestoneIds := make([]string, len(milestones))
+	for i, milestone := range milestones {
+		milestoneIds[i] = milestone.Id
+	}
+	if job.Status != "completed" {
+		_, err := j.jobsRepo.MarkJobCompleted(ctx, tx, jobID)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+		err = j.jobsRepo.MarkMilestonesCompleted(tx, ctx, milestoneIds...)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+	} else {
+		_, err := j.jobsRepo.ForceAutoUpdateJobStatus(ctx, tx, jobID)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+		err = j.jobsRepo.ForceAutoUpdateMilestoneStatusByJobID(ctx, tx, jobID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	updatedJob, err := j.jobsRepo.GetByIdTx(jobID, tx)
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	var gqlJob gqlmodel.Job
+	gqlJob.MapDbToGql(*updatedJob)
+
 	return &gqlJob, nil
 }

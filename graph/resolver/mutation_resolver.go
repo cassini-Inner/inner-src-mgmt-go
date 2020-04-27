@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"os"
@@ -23,68 +22,45 @@ var (
 	ErrUserNotAuthenticated           = errors.New("unauthorized request")
 )
 
-func (r *mutationResolver) ToggleMilestoneCompleted(ctx context.Context, milestoneID string) (*gqlmodel.Milestone, error) {
-	user, err := middleware.GetCurrentUserFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	milestoneData, err := r.JobsRepo.GetMilestoneById(milestoneID)
-	if err != nil {
-		return nil, err
-	}
-	milestoneAuthor, err := r.JobsRepo.GetAuthorFromMilestoneId(milestoneID)
-	if err != nil {
-		return nil, err
-	}
-
-	if milestoneAuthor.Id != user.Id {
-		return nil, ErrUserNotOwner
-	}
-
-	updatedMilestone, err := r.JobsRepo.MarkMilestoneCompleted(milestoneData.Id, ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var gqlMilestone gqlmodel.Milestone
-	gqlMilestone.MapDbToGql(*updatedMilestone)
-	return &gqlMilestone, err
-}
-
-func (r *mutationResolver) ToggleJobCompleted(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
-	//user, err := middleware.GetCurrentUserFromContext(ctx)
-	//if err != nil {
-	//	return nil, ErrUserNotAuthenticated
-	//}
-	//
-	//// check if the job exists in the repo
-	//job, err := r.JobsRepo.GetByIdTx(jobID)
-	//if err != nil {
-	//	return nil, ErrNoEntityMatchingId
-	//}
-	//if job.IsDeleted {
-	//	return nil, ErrEntityDeleted
-	//}
-	//
-	//// check if the job is being modified by the person who created it
-	//if job.CreatedBy != user.Id {
-	//	return nil, ErrUserNotOwner
-	//}
-	//updatedJob, err := r.JobsRepo.MarkJobCompleted(ctx, jobID)
-	//var gqlJob gqlmodel.Job
-	//gqlJob.MapDbToGql(*updatedJob)
-	//
-	//return &gqlJob, nil
-	return nil, nil
-}
-
 func (r *mutationResolver) UpdateProfile(ctx context.Context, updatedUserDetails *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
 	return r.UserService.UpdateProfile(ctx, updatedUserDetails)
 }
 
 func (r *mutationResolver) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (*gqlmodel.Job, error) {
 	return r.JobsService.CreateJob(ctx, job)
+}
+
+func (r *mutationResolver) ToggleMilestoneCompleted(ctx context.Context, milestoneID string) (*gqlmodel.Milestone, error) {
+	//user, err := middleware.GetCurrentUserFromContext(ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//milestoneData, err := r.JobsRepo.GetMilestoneById(milestoneID)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//milestoneAuthor, err := r.JobsRepo.GetAuthorFromMilestoneId(milestoneID)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//if milestoneAuthor.Id != user.Id {
+	//	return nil, ErrUserNotOwner
+	//}
+	//
+	//updatedMilestone, err := r.JobsRepo.MarkMilestonesCompleted( ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var gqlMilestone gqlmodel.Milestone
+	//gqlMilestone.MapDbToGql(*updatedMilestone)
+	return nil, nil
+}
+
+func (r *mutationResolver) ToggleJobCompleted(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
+	return r.JobsService.ToggleJobCompleted(ctx, jobID)
 }
 
 func (r *mutationResolver) UpdateJob(ctx context.Context, job *gqlmodel.UpdateJobInput) (*gqlmodel.Job, error) {
@@ -103,7 +79,7 @@ func (r *mutationResolver) UpdateComment(ctx context.Context, id string, comment
 	return r.JobsService.UpdateJobDiscussion(ctx, id, comment)
 }
 
-func (r *mutationResolver) DeleteCommment(ctx context.Context, id string) (*gqlmodel.Comment, error) {
+func (r *mutationResolver) DeleteComment(ctx context.Context, id string) (*gqlmodel.Comment, error) {
 	return r.JobsService.DeleteJobDiscussion(ctx, id)
 }
 
