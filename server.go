@@ -61,6 +61,7 @@ func main() {
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8081", "http://localhost:8080", "http://localhost:3000"},
 		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete},
+		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	}).Handler)
 	router.Use(middleware.RequestID)
