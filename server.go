@@ -49,7 +49,7 @@ func main() {
 		DiscussionsRepo:       discussionsRepo,
 		JobsRepo:              jobsRepo,
 		SkillsRepo:            skillsRepo,
-		JobsService:           service.NewJobsService(DB, jobsRepo, skillsRepo, discussionsRepo),
+		JobsService:           service.NewJobsService(DB, jobsRepo, skillsRepo, discussionsRepo, applicationsRepo),
 		ApplicationsService:   service.NewApplicationsService(DB, jobsRepo, applicationsRepo),
 		UserService:           service.NewUserProfileService(DB, usersRepo, skillsRepo),
 		AuthenticationService: service.NewAuthenticationService(DB, usersRepo),

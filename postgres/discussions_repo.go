@@ -70,9 +70,19 @@ func (d *DiscussionsRepo) GetById(discussionId string, tx *sqlx.Tx) (*dbmodel.Di
 	return &discussion, nil
 }
 
+func (d *DiscussionsRepo) DeleteAllCommentsForJob(tx *sqlx.Tx, jobID string) error {
+	_, err := tx.Exec(deleteDiscussionsForJobIdQuery, jobID)
+	if err!= nil {
+		return err
+	}
+
+	return nil
+}
+
 const (
-	getDiscussionsByJobId = `select * from discussions where job_id = $1 and is_deleted=false order by time_created`
-	getDiscussionById     = `select * from discussions where id = $1 and is_deleted = false`
-	updateDiscussionById  = `update discussions set content = $1 where id = $2 and is_deleted = false returning *`
-	deleteDiscussionById  = `update discussions set is_deleted = true where id = $1 returning *`
+	getDiscussionsByJobId          = `select * from discussions where job_id = $1 and is_deleted=false order by time_created`
+	getDiscussionById              = `select * from discussions where id = $1 and is_deleted = false`
+	updateDiscussionById           = `update discussions set content = $1 where id = $2 and is_deleted = false returning *`
+	deleteDiscussionById           = `update discussions set is_deleted = true where id = $1 returning *`
+	deleteDiscussionsForJobIdQuery = `update discussions set is_deleted = true where job_id = $1`
 )

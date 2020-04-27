@@ -234,6 +234,14 @@ func (a *ApplicationsRepo) GetUserJobApplications(userId string) ([]*dbmodel.Job
 	return result, nil
 }
 
+func (a *ApplicationsRepo) DeleteAllJobApplications(tx *sqlx.Tx, jobId string) error {
+	_, err := tx.Exec(deleteJobApplicationsByJobId, jobId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 const (
 	selectApplicationsForJobIDQuery = `select applications.id, 
 		applications.milestone_id, 
@@ -261,7 +269,7 @@ const (
 		where applicant_id = $1 and applications.status in ('pending', 'accepted', 'rejected')`
 
 	selectApplicationStatusByUserIdJobId = `select applications.status from milestones join applications on milestones.id = applications.milestone_id
-where milestones.job_id = $1 and applications.applicant_id = $2 limit 1`
+where milestones.job_id = $1 and applications.applicant_id = $2 and milestones.is_deleted = false limit 1`
 
 	selectAcceptedApplicationsForJobIDQuery = `select applications.id, 
 		applications.milestone_id, 
@@ -272,7 +280,7 @@ where milestones.job_id = $1 and applications.applicant_id = $2 limit 1`
 		applications.time_updated
 		from applications
 		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
-		where milestones.job_id = $1 and applications.status in ('pending', 'accepted' )`
+		where milestones.job_id = $1 and milestones.is_delete = false and applications.status in ('pending', 'accepted' )`
 
 	updateApplicationsForMilestonesUser = `update applications set status = ?, note = ?, time_updated = ? where applications.milestone_id in (?) and applications.applicant_id = ? returning *`
 
@@ -356,4 +364,10 @@ where milestones.job_id = $1 and applications.applicant_id = $2 limit 1`
 						 else status
 			end
 		where milestones.id = $1 and milestones.is_deleted = false`
+
+	deleteJobApplicationsByJobId = `delete from applications
+where id in (select applications.id
+             from applications
+                      join milestones m on applications.milestone_id = m.id
+             where m.job_id = $1)`
 )

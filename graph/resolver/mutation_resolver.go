@@ -43,7 +43,7 @@ func (r *mutationResolver) UpdateJob(ctx context.Context, job *gqlmodel.UpdateJo
 }
 
 func (r *mutationResolver) DeleteJob(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.JobsService.DeleteJob(ctx, jobID)
 }
 
 func (r *mutationResolver) AddCommentToJob(ctx context.Context, comment string, jobID string) (*gqlmodel.Comment, error) {

@@ -32,8 +32,13 @@ func (j *JobsRepo) UpdateJob(input *gqlmodel.UpdateJobInput) (*dbmodel.Job, erro
 	panic("Not implemented")
 }
 
-func (j *JobsRepo) DeleteJob(jobId string) (*dbmodel.Job, error) {
-	panic("Not implemented")
+func (j *JobsRepo) DeleteJob(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
+	var job dbmodel.Job
+	err := tx.QueryRowx(deleteJobQuery, jobId).StructScan(&job)
+	if err != nil {
+		return nil, err
+	}
+	return &job, nil
 }
 
 // Get the complete job details based on the job id
@@ -225,6 +230,14 @@ func (j *JobsRepo) CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId stri
 	return createdMilestones, nil
 }
 
+func (j *JobsRepo) DeleteMilestonesByJobId(tx *sqlx.Tx, jobID string) error {
+	_, err := tx.Exec(deleteMilestonesByJobId, jobID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 const (
 	createJobQuery = `insert into jobs(title, description, difficulty,created_by) values ($1, $2, $3, $4) returning jobs.id`
 
@@ -243,6 +256,8 @@ const (
 
 	updateMilestoneStatusCompleted = `update milestones set status = 'completed' where id in (?) and is_deleted = false`
 	updateJobStatusCompleted       = `update jobs set status = 'completed' where id = $1 and is_deleted = false`
+	deleteMilestonesByJobId        = `update milestones set is_deleted = true where job_id = $1`
+	deleteJobQuery                 = `update jobs set is_deleted = true where id = $1 returning *`
 )
 
 func getInsertMilestonesStatement(milestoneInputs []*gqlmodel.MilestoneInput, insertedJobId string) (string, []interface{}) {
