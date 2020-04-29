@@ -14,6 +14,7 @@ const (
 	skillsByJobIdLoaderKey       = "skillsByJobIdLoader"
 	applicationsByJobIdLoaderKey = "applicationsByJobIdLoaderKey"
 	dataloadersKey               = "dataloadersKey"
+	viewerHasAppliedLoaderKey = "viewerHasAppliedLoaderKey"
 )
 
 func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
@@ -22,14 +23,17 @@ func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
 		milestoneByJobIdLoader := NewMilestoneByJobIdLoader(db)
 		skillsByMilestoneIdLoader := NewSkillByMilestoneIdLoader(db)
 		skillsByJobIdLoader := NewSkillByJobIdLoader(db)
+		viewerHasAppliedLoader := NewViewerHasAppliedByUserIdLoader(db)
 		applicationsByJobIdLoader := NewApplicationByJobIdLoader(db)
 
 		loaderMap := make(map[string]interface{})
 		loaderMap[userLoaderKey] = userloader
 		loaderMap[milestoneByJobIdLoaderKey] = milestoneByJobIdLoader
 		loaderMap[skillsByMilestoneIdLoaderKey] = skillsByMilestoneIdLoader
+		loaderMap[viewerHasAppliedLoaderKey] = viewerHasAppliedLoader
 		loaderMap[skillsByJobIdLoaderKey] = skillsByJobIdLoader
 		loaderMap[applicationsByJobIdLoaderKey] = applicationsByJobIdLoader
+
 
 		ctxWithLoaders := context.WithValue(r.Context(), dataloadersKey, loaderMap)
 
@@ -57,4 +61,8 @@ func GetSkillByJobIdLoader(ctx context.Context) *generated.SkillByJobIdLoader {
 
 func GetApplicationsByJobIdLoader(ctx context.Context) *generated.ApplicationsByJobIdLoader {
 	return ctx.Value(dataloadersKey).(map[string]interface{})[applicationsByJobIdLoaderKey].(*generated.ApplicationsByJobIdLoader)
+}
+
+func GetViewerHasAppliedLoader(ctx context.Context) *generated.ViewerHasAppliedLoader{
+	return ctx.Value(dataloadersKey).(map[string]interface{})[viewerHasAppliedLoaderKey].(*generated.ViewerHasAppliedLoader);
 }

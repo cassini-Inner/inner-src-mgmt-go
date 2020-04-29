@@ -5,7 +5,7 @@ import (
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 )
 
 func (r *jobResolver) CreatedBy(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.User, error) {
@@ -42,7 +42,10 @@ func (r *jobResolver) Applications(ctx context.Context, obj *gqlmodel.Job) (*gql
 	return dataloader.GetApplicationsByJobIdLoader(ctx).Load(obj.ID)
 }
 
-
-func (r *jobResolver) ViewerHasApplied(ctx context.Context, obj *model.Job) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *jobResolver) ViewerHasApplied(ctx context.Context, obj *gqlmodel.Job) (bool, error) {
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return dataloader.GetViewerHasAppliedLoader(ctx).Load(fmt.Sprintf("%v %v", obj.ID, user.Id))
 }
