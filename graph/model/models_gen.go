@@ -50,7 +50,6 @@ type UpdateUserInput struct {
 	Name       *string   `json:"name"`
 	Role       *string   `json:"role"`
 	Department *string   `json:"department"`
-	Onboarded  *bool     `json:"onboarded"`
 	Bio        *string   `json:"bio"`
 	Contact    *string   `json:"contact"`
 	Skills     []*string `json:"skills"`

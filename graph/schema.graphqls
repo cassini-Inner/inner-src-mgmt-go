@@ -104,6 +104,7 @@ type Job {
     discussion: Discussions
     milestones: Milestones
     applications: Applications
+    viewerHasApplied: Boolean!
 }
 
 type Discussions {

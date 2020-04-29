@@ -80,19 +80,20 @@ type ComplexityRoot struct {
 	}
 
 	Job struct {
-		Applications func(childComplexity int) int
-		CreatedBy    func(childComplexity int) int
-		Desc         func(childComplexity int) int
-		Difficulty   func(childComplexity int) int
-		Discussion   func(childComplexity int) int
-		Duration     func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Milestones   func(childComplexity int) int
-		Skills       func(childComplexity int) int
-		Status       func(childComplexity int) int
-		TimeCreated  func(childComplexity int) int
-		TimeUpdated  func(childComplexity int) int
-		Title        func(childComplexity int) int
+		Applications     func(childComplexity int) int
+		CreatedBy        func(childComplexity int) int
+		Desc             func(childComplexity int) int
+		Difficulty       func(childComplexity int) int
+		Discussion       func(childComplexity int) int
+		Duration         func(childComplexity int) int
+		ID               func(childComplexity int) int
+		Milestones       func(childComplexity int) int
+		Skills           func(childComplexity int) int
+		Status           func(childComplexity int) int
+		TimeCreated      func(childComplexity int) int
+		TimeUpdated      func(childComplexity int) int
+		Title            func(childComplexity int) int
+		ViewerHasApplied func(childComplexity int) int
 	}
 
 	Milestone struct {
@@ -200,6 +201,7 @@ type JobResolver interface {
 	Discussion(ctx context.Context, obj *model.Job) (*model.Discussions, error)
 	Milestones(ctx context.Context, obj *model.Job) (*model.Milestones, error)
 	Applications(ctx context.Context, obj *model.Job) (*model.Applications, error)
+	ViewerHasApplied(ctx context.Context, obj *model.Job) (bool, error)
 }
 type MilestoneResolver interface {
 	Job(ctx context.Context, obj *model.Milestone) (*model.Job, error)
@@ -470,6 +472,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Job.Title(childComplexity), true
+
+	case "Job.viewerHasApplied":
+		if e.complexity.Job.ViewerHasApplied == nil {
+			break
+		}
+
+		return e.complexity.Job.ViewerHasApplied(childComplexity), true
 
 	case "Milestone.assignedTo":
 		if e.complexity.Milestone.AssignedTo == nil {
@@ -1135,7 +1144,6 @@ input UpdateUserInput {
     name: String
     role: String
     department: String
-    onboarded: Boolean
     bio: String
     contact: String
     skills: [String]
@@ -1154,6 +1162,7 @@ type Job {
     discussion: Discussions
     milestones: Milestones
     applications: Applications
+    viewerHasApplied: Boolean!
 }
 
 type Discussions {
@@ -2640,6 +2649,40 @@ func (ec *executionContext) _Job_applications(ctx context.Context, field graphql
 	res := resTmp.(*model.Applications)
 	fc.Result = res
 	return ec.marshalOApplications2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplications(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Job_viewerHasApplied(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Job",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Job().ViewerHasApplied(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Milestone_id(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
@@ -6106,12 +6149,6 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "onboarded":
-			var err error
-			it.Onboarded, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "bio":
 			var err error
 			it.Bio, err = ec.unmarshalOString2ᚖstring(ctx, v)
@@ -6435,6 +6472,20 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 					}
 				}()
 				res = ec._Job_applications(ctx, field, obj)
+				return res
+			})
+		case "viewerHasApplied":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_viewerHasApplied(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		default:

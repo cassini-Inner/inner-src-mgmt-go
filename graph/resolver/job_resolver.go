@@ -2,8 +2,10 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
+	"github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 )
 
 func (r *jobResolver) CreatedBy(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.User, error) {
@@ -38,4 +40,9 @@ func (r *jobResolver) Skills(ctx context.Context, obj *gqlmodel.Job) ([]*gqlmode
 
 func (r *jobResolver) Applications(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Applications, error) {
 	return dataloader.GetApplicationsByJobIdLoader(ctx).Load(obj.ID)
+}
+
+
+func (r *jobResolver) ViewerHasApplied(ctx context.Context, obj *model.Job) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
 }
