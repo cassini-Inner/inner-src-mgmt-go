@@ -44,17 +44,16 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, gith
 	}
 
 	var gqlUser gqlmodel.User
+	var user *dbmodel.User
 	switch usersCount {
 	case 0:
-		user, err := s.usersRepo.CreateNewUser(fetchedUser, tx)
+		user, err = s.usersRepo.CreateNewUser(fetchedUser, tx)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
-		gqlUser.MapDbToGql(*user)
-		return &gqlUser, nil
 	case 1:
-		user, err := s.usersRepo.GetByGithubId(fetchedUser.GithubId.String)
+		user, err = s.usersRepo.GetByGithubId(fetchedUser.GithubId.String)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -62,9 +61,16 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, gith
 		gqlUser.MapDbToGql(*user)
 		return &gqlUser, nil
 	default:
+		_ = tx.Rollback()
 		return nil, errors.New("multiple users by the same name exist in database")
 	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
 
+	gqlUser.MapDbToGql(*user)
+	return &gqlUser, nil
 }
 
 func (s *AuthenticationService) getAccessTokenFromCode(githubCode string) (string, error) {
@@ -104,7 +110,7 @@ func (s *AuthenticationService) getUserInformationFromToken(accessToken string) 
 		"token %v", accessToken))
 
 	response, err := client.Do(request)
-	if err != nil {
+	if err != nil || response.StatusCode != 200 {
 		return nil, err
 	}
 
