@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
@@ -61,4 +62,8 @@ func (r *queryResolver) Job(ctx context.Context, id string) (*gqlmodel.Job, erro
 
 func (r *queryResolver) User(ctx context.Context, id string, jobsStatusFilter *gqlmodel.JobStatus) (*gqlmodel.User, error) {
 	return dataloader.GetUserByUserIdLoader(ctx).Load(id)
+}
+
+func (r *queryResolver) Skills(ctx context.Context, query *string) ([]*gqlmodel.Skill, error) {
+	panic(fmt.Errorf("not implemented"))
 }

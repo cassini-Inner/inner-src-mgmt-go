@@ -135,6 +135,7 @@ type ComplexityRoot struct {
 	Query struct {
 		AllJobs func(childComplexity int, filter *model.JobsFilterInput) int
 		Job     func(childComplexity int, id string) int
+		Skills  func(childComplexity int, query *string) int
 		User    func(childComplexity int, id string, jobsStatusFilter *model.JobStatus) int
 	}
 
@@ -229,6 +230,7 @@ type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
 	Job(ctx context.Context, id string) (*model.Job, error)
 	User(ctx context.Context, id string, jobsStatusFilter *model.JobStatus) (*model.User, error)
+	Skills(ctx context.Context, query *string) ([]*model.Skill, error)
 }
 type SkillResolver interface {
 	CreatedBy(ctx context.Context, obj *model.Skill) (*model.User, error)
@@ -763,6 +765,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Job(childComplexity, args["id"].(string)), true
 
+	case "Query.Skills":
+		if e.complexity.Query.Skills == nil {
+			break
+		}
+
+		args, err := ec.field_Query_Skills_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Skills(childComplexity, args["query"].(*string)), true
+
 	case "Query.User":
 		if e.complexity.Query.User == nil {
 			break
@@ -1071,7 +1085,9 @@ var sources = []*ast.Source{
         id: ID!
         jobsStatusFilter: JobStatus
     ): User
-
+    Skills(
+        query: String
+    ):[Skill!]!
 }
 type Mutation {
     # To update the user information like name, email ...
@@ -1541,6 +1557,20 @@ func (ec *executionContext) field_Query_Job_args(ctx context.Context, rawArgs ma
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_Skills_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["query"]; ok {
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["query"] = arg0
 	return args, nil
 }
 
@@ -3762,6 +3792,47 @@ func (ec *executionContext) _Query_User(ctx context.Context, field graphql.Colle
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_Skills(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_Skills_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Skills(rctx, args["query"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Skill)
+	fc.Result = res
+	return ec.marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkillᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6728,6 +6799,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_User(ctx, field)
 				return res
 			})
+		case "Skills":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_Skills(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -7466,6 +7551,43 @@ func (ec *executionContext) marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑInner�
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalOSkill2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkillᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Skill) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSkill2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
