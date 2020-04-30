@@ -6,83 +6,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type DiscussionsRepo struct {
-	db *sqlx.DB
+type DiscussionsRepo interface {
+	CreateComment(jobId, comment, userId string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error)
+
+	UpdateComment(discussionId, content string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error)
+
+	DeleteComment(discussionId string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error)
+
+	GetByJobId(jobId string) ([]*dbmodel.Discussion, error)
+
+	GetById(discussionId string, tx *sqlx.Tx) (*dbmodel.Discussion, error)
+
+	DeleteAllCommentsForJob(tx *sqlx.Tx, jobID string) error
 }
-
-func NewDiscussionsRepo(db *sqlx.DB) *DiscussionsRepo {
-	return &DiscussionsRepo{db: db}
-}
-
-//TODO: Implement
-func (d *DiscussionsRepo) CreateComment(jobId, comment, userId string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error) {
-	var newDiscussion dbmodel.Discussion
-	err := tx.QueryRowxContext(ctx, `insert into discussions(job_id, created_by, content) values ($1,$2, $3) returning *`, jobId, userId, comment).StructScan(&newDiscussion)
-	if err != nil {
-		return nil, err
-	}
-	return &newDiscussion, nil
-}
-func (d *DiscussionsRepo) UpdateComment(discussionId, content string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error) {
-	var discussion dbmodel.Discussion
-
-	err := tx.QueryRowxContext(ctx, updateDiscussionById, content, discussionId).StructScan(&discussion)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &discussion, nil
-}
-
-func (d *DiscussionsRepo) DeleteComment(discussionId string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error) {
-	var discussion dbmodel.Discussion
-	err := tx.QueryRowxContext(ctx, deleteDiscussionById, discussionId).StructScan(&discussion)
-	if err != nil {
-		return nil, err
-	}
-	return &discussion, nil
-}
-
-func (d *DiscussionsRepo) GetByJobId(jobId string) ([]*dbmodel.Discussion, error) {
-	rows, err := d.db.Queryx(getDiscussionsByJobId, jobId)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []*dbmodel.Discussion
-	for rows != nil && rows.Next() {
-		var discussion dbmodel.Discussion
-		rows.StructScan(&discussion)
-		result = append(result, &discussion)
-	}
-
-	return result, nil
-}
-
-func (d *DiscussionsRepo) GetById(discussionId string, tx *sqlx.Tx) (*dbmodel.Discussion, error) {
-	var discussion dbmodel.Discussion
-	err := tx.QueryRowx(getDiscussionById, discussionId).StructScan(&discussion)
-	if err != nil {
-		return nil, err
-	}
-
-	return &discussion, nil
-}
-
-func (d *DiscussionsRepo) DeleteAllCommentsForJob(tx *sqlx.Tx, jobID string) error {
-	_, err := tx.Exec(deleteDiscussionsForJobIdQuery, jobID)
-	if err!= nil {
-		return err
-	}
-
-	return nil
-}
-
-const (
-	getDiscussionsByJobId          = `select * from discussions where job_id = $1 and is_deleted=false order by time_created`
-	getDiscussionById              = `select * from discussions where id = $1 and is_deleted = false`
-	updateDiscussionById           = `update discussions set content = $1 where id = $2 and is_deleted = false returning *`
-	deleteDiscussionById           = `update discussions set is_deleted = true where id = $1 returning *`
-	deleteDiscussionsForJobIdQuery = `update discussions set is_deleted = true where job_id = $1`
-)

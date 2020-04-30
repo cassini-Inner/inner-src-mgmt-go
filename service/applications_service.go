@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
@@ -13,18 +14,18 @@ import (
 
 type ApplicationsService struct {
 	db               *sqlx.DB
-	jobsRepo         *postgres.JobsRepo
-	applicationsRepo *postgres.ApplicationsRepo
+	jobsRepo         postgres.JobsRepo
+	applicationsRepo postgres.ApplicationsRepo
 }
 
-func NewApplicationsService(db *sqlx.DB, jobsRepo *postgres.JobsRepo, applicationsRepo *postgres.ApplicationsRepo) *ApplicationsService {
+func NewApplicationsService(db *sqlx.DB, jobsRepo postgres.JobsRepo, applicationsRepo postgres.ApplicationsRepo) *ApplicationsService {
 	return &ApplicationsService{db: db, jobsRepo: jobsRepo, applicationsRepo: applicationsRepo}
 }
 
 func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobId string) ([]*gqlmodel.Application, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, ErrUserNotAuthenticated
+		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
 	tx, err := a.db.BeginTxx(ctx, nil)
@@ -32,17 +33,17 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 	job, err := a.jobsRepo.GetByIdTx(jobId, tx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNoEntityMatchingId
+			return nil, custom_errors.ErrNoEntityMatchingId
 		}
 		return nil, err
 	}
 
 	if job.Status == "completed" {
-		return nil, ErrJobAlreadyCompleted
+		return nil,  custom_errors.ErrJobAlreadyCompleted
 	}
 
 	if job.CreatedBy == user.Id {
-		return nil, ErrOwnerApplyToOwnJob
+		return nil,  custom_errors.ErrOwnerApplyToOwnJob
 	}
 
 	milestones, err := a.jobsRepo.GetMilestonesByJobId(jobId, tx)
@@ -101,7 +102,7 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 func (a *ApplicationsService) DeleteUserJobApplication(ctx context.Context, jobId string) ([]*gqlmodel.Application, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, ErrUserNotAuthenticated
+		return nil,  custom_errors.ErrUserNotAuthenticated
 	}
 	tx, err := a.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -160,7 +161,7 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 	}
 	if currentJob.CreatedBy != currentUser.Id {
 		_ = tx.Rollback()
-		return nil, ErrUserNotOwner
+		return nil,  custom_errors.ErrUserNotOwner
 	}
 
 	// owner cannot modify the status of application what was withdrawn by applicant
@@ -168,12 +169,12 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 	// - pending->accepted, pending->rejected, accepted->rejected
 	if currentStatus == "withdrawn" {
 		_ = tx.Rollback()
-		return nil, ErrApplicationWithdrawnOrRejected
+		return nil,  custom_errors.ErrApplicationWithdrawnOrRejected
 	}
 	// owner cannot move the application from pending or withdrawn state to any new state
 	if status.String() == "PENDING" || status.String() == "WITHDRAWN" {
 		_ = tx.Rollback()
-		return nil, ErrInvalidNewApplicationState
+		return nil,  custom_errors.ErrInvalidNewApplicationState
 	}
 
 	milestones, err := a.jobsRepo.GetMilestonesByJobId(jobId, tx)

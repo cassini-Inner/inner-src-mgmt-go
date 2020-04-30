@@ -18,10 +18,10 @@ import (
 
 type AuthenticationService struct {
 	db        *sqlx.DB
-	usersRepo *postgres.UsersRepo
+	usersRepo postgres.UsersRepo
 }
 
-func NewAuthenticationService(db *sqlx.DB, usersRepo *postgres.UsersRepo) *AuthenticationService {
+func NewAuthenticationService(db *sqlx.DB, usersRepo postgres.UsersRepo) *AuthenticationService {
 	return &AuthenticationService{db: db, usersRepo: usersRepo}
 }
 

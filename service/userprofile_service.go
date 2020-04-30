@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
@@ -11,25 +12,24 @@ import (
 
 type UserProfileService struct {
 	db         *sqlx.DB
-	userRepo   *postgres.UsersRepo
-	skillsRepo *postgres.SkillsRepo
+	userRepo   postgres.UsersRepo
+	skillsRepo postgres.SkillsRepo
 }
 
-func NewUserProfileService(db *sqlx.DB, userRepo *postgres.UsersRepo, skillsRepo *postgres.SkillsRepo) *UserProfileService {
+func NewUserProfileService(db *sqlx.DB, userRepo postgres.UsersRepo, skillsRepo postgres.SkillsRepo) *UserProfileService {
 	return &UserProfileService{db: db, userRepo: userRepo, skillsRepo: skillsRepo}
 }
 
 func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
 	currentRequestUser, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, ErrUserNotAuthenticated
+		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
-
 
 	// if any of these fields are being updated
 	if userDetails.Contact != nil || userDetails.Bio != nil || userDetails.Department != nil || userDetails.Name != nil || userDetails.Email != nil {
@@ -94,6 +94,7 @@ func (s *UserProfileService) GetById(ctx context.Context, userId string) (*gqlmo
 	if err != nil {
 		return nil, err
 	}
+
 	user, err := s.userRepo.GetByIdTx(userId, tx)
 	if err != nil {
 		_ = tx.Rollback()

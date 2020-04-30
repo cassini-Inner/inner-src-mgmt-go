@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
@@ -11,27 +12,16 @@ import (
 	"log"
 )
 
-var (
-	ErrUserNotOwner                   = errors.New("current user is not owner of this entity, and hence cannot modify it")
-	ErrNoEntityMatchingId             = errors.New("no entity found that matches given id")
-	ErrOwnerApplyToOwnJob             = errors.New("owner cannot apply to their job")
-	ErrApplicationWithdrawnOrRejected = errors.New("owner cannot modify applications with withdrawn status")
-	ErrInvalidNewApplicationState     = errors.New("owner cannot move application status to withdrawn or pending")
-	ErrJobAlreadyCompleted            = errors.New("job is already completed")
-	ErrEntityDeleted                  = errors.New("entity was deleted")
-	ErrUserNotAuthenticated           = errors.New("unauthorized request")
-)
-
 type JobsService struct {
 	db               *sqlx.DB
-	jobsRepo         *postgres.JobsRepo
-	skillsRepo       *postgres.SkillsRepo
-	discussionsRepo  *postgres.DiscussionsRepo
-	applicationsRepo *postgres.ApplicationsRepo
+	jobsRepo         postgres.JobsRepo
+	skillsRepo       postgres.SkillsRepo
+	discussionsRepo  postgres.DiscussionsRepo
+	applicationsRepo postgres.ApplicationsRepo
 }
 
-func NewJobsService(db *sqlx.DB, jobsRepo *postgres.JobsRepo, skillsRepo *postgres.SkillsRepo, discussionsRepo *postgres.DiscussionsRepo, applicationsRepo *postgres.ApplicationsRepo) *JobsService {
-	return &JobsService{db: db, jobsRepo: jobsRepo, skillsRepo: skillsRepo, discussionsRepo: discussionsRepo, applicationsRepo:applicationsRepo}
+func NewJobsService(db *sqlx.DB, jobsRepo postgres.JobsRepo, skillsRepo postgres.SkillsRepo, discussionsRepo postgres.DiscussionsRepo, applicationsRepo postgres.ApplicationsRepo) *JobsService {
+	return &JobsService{db: db, jobsRepo: jobsRepo, skillsRepo: skillsRepo, discussionsRepo: discussionsRepo, applicationsRepo: applicationsRepo}
 }
 
 func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (result *gqlmodel.Job, err error) {
@@ -134,18 +124,18 @@ func (j *JobsService) UpdateJobDiscussion(ctx context.Context, commentId, commen
 	}
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, ErrUserNotAuthenticated
+		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
 	existingDiscussion, err := j.discussionsRepo.GetById(commentId, tx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNoEntityMatchingId
+			return nil, custom_errors.ErrNoEntityMatchingId
 		}
 		return nil, err
 	}
 	if existingDiscussion.CreatedBy != user.Id {
-		return nil, ErrUserNotOwner
+		return nil, custom_errors.ErrUserNotOwner
 	}
 
 	updatedDiscussion, err := j.discussionsRepo.UpdateComment(commentId, comment, tx, ctx)
@@ -163,12 +153,12 @@ func (j *JobsService) UpdateJobDiscussion(ctx context.Context, commentId, commen
 
 func (j *JobsService) DeleteJobDiscussion(ctx context.Context, commentId string) (*gqlmodel.Comment, error) {
 	if commentId == "" {
-		return nil, ErrNoEntityMatchingId
+		return nil, custom_errors.ErrNoEntityMatchingId
 	}
 
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, ErrUserNotAuthenticated
+		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
 	tx, err := j.db.BeginTxx(ctx, nil)
@@ -177,13 +167,13 @@ func (j *JobsService) DeleteJobDiscussion(ctx context.Context, commentId string)
 	if err != nil {
 		_ = tx.Rollback()
 		if err == sql.ErrNoRows {
-			return nil, ErrNoEntityMatchingId
+			return nil, custom_errors.ErrNoEntityMatchingId
 		}
 		return nil, err
 	}
 	if existingDiscussion.CreatedBy != user.Id {
 		_ = tx.Rollback()
-		return nil, ErrUserNotOwner
+		return nil, custom_errors.ErrUserNotOwner
 	}
 	discussion, err := j.discussionsRepo.DeleteComment(commentId, tx, ctx)
 	if err != nil {
@@ -219,7 +209,7 @@ func (j *JobsService) GetById(ctx context.Context, jobId string) (*gqlmodel.Job,
 func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, ErrUserNotAuthenticated
+		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
 	tx, err := j.db.BeginTxx(ctx, nil)
@@ -229,15 +219,15 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 	// check if the job exists in the repo
 	job, err := j.jobsRepo.GetByIdTx(jobID, tx)
 	if err != nil {
-		return nil, ErrNoEntityMatchingId
+		return nil, custom_errors.ErrNoEntityMatchingId
 	}
 	if job.IsDeleted {
-		return nil, ErrEntityDeleted
+		return nil, custom_errors.ErrEntityDeleted
 	}
 
 	// check if the job is being modified by the person who created it
 	if job.CreatedBy != user.Id {
-		return nil, ErrUserNotOwner
+		return nil, custom_errors.ErrUserNotOwner
 	}
 
 	// get all the milestones for a job
@@ -288,7 +278,7 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 func (j *JobsService) DeleteJob(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, ErrUserNotAuthenticated
+		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
 	tx, err := j.db.BeginTxx(ctx, nil)
@@ -297,11 +287,11 @@ func (j *JobsService) DeleteJob(ctx context.Context, jobID string) (*gqlmodel.Jo
 	}
 	job, err := j.jobsRepo.GetByIdTx(jobID, tx)
 	if err != nil {
-		return nil, ErrNoEntityMatchingId
+		return nil, custom_errors.ErrNoEntityMatchingId
 	}
 
 	if user.Id != job.CreatedBy {
-		return nil, ErrUserNotOwner
+		return nil, custom_errors.ErrUserNotOwner
 	}
 
 	// delete the job from db
@@ -324,18 +314,18 @@ func (j *JobsService) DeleteJob(ctx context.Context, jobID string) (*gqlmodel.Jo
 		return nil, err
 	}
 
-	err  = j.jobsRepo.DeleteMilestonesByJobId(tx, jobID)
+	err = j.jobsRepo.DeleteMilestonesByJobId(tx, jobID)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
-	 err = tx.Commit()
+	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
 	var gqlJob gqlmodel.Job
-	 gqlJob.MapDbToGql(*deletedJob)
-	 return &gqlJob, nil
+	gqlJob.MapDbToGql(*deletedJob)
+	return &gqlJob, nil
 }
 
 // TODO: we're mixing tx and non tx queries here. refactor to only use tx queries
@@ -355,7 +345,7 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 	}
 
 	if milestoneAuthor.Id != user.Id {
-		return nil, ErrUserNotOwner
+		return nil, custom_errors.ErrUserNotOwner
 	}
 
 	tx, err := j.db.BeginTxx(ctx, nil)
