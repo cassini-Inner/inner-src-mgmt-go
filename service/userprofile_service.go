@@ -6,6 +6,7 @@ import (
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
 	"strconv"
 )
@@ -30,14 +31,28 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 	if err != nil {
 		return nil, err
 	}
-
-	// if any of these fields are being updated
-	if userDetails.Contact != nil || userDetails.Bio != nil || userDetails.Department != nil || userDetails.Name != nil || userDetails.Email != nil {
-		_, err := s.userRepo.UpdateUser(currentRequestUser, userDetails, tx)
-		if err != nil {
-			_ = tx.Rollback()
-			return nil, err
-		}
+	if userDetails.Contact != nil {
+		currentRequestUser.Contact = dbmodel.ToNullString(userDetails.Contact)
+	}
+	if userDetails.Bio != nil {
+		currentRequestUser.Bio = dbmodel.ToNullString(userDetails.Bio)
+	}
+	if userDetails.Department != nil {
+		currentRequestUser.Department = dbmodel.ToNullString(userDetails.Department)
+	}
+	if userDetails.Role != nil {
+		currentRequestUser.Role = dbmodel.ToNullString(userDetails.Role)
+	}
+	if userDetails.Email != nil {
+		currentRequestUser.Email = dbmodel.ToNullString(userDetails.Email)
+	}
+	if userDetails.Name != nil {
+		currentRequestUser.Name = dbmodel.ToNullString(userDetails.Name)
+	}
+	user, err := s.userRepo.UpdateUser(currentRequestUser, tx)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
 	}
 
 	// if user skills are to be created
@@ -67,12 +82,6 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 				return nil, err
 			}
 		}
-	}
-
-	user, err := s.userRepo.GetByIdTx(currentRequestUser.Id, tx)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
 	}
 
 	err = tx.Commit()

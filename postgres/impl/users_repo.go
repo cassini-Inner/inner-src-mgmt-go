@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
-	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
 	"github.com/jmoiron/sqlx"
-	"log"
 	"strconv"
+	"time"
 )
 
 var (
@@ -23,43 +22,14 @@ func NewUsersRepo(db *sqlx.DB) *UsersRepoImpl {
 	return &UsersRepoImpl{db: db}
 }
 
-func (u *UsersRepoImpl) UpdateUser(currentUserInfo *dbmodel.User, input *gqlmodel.UpdateUserInput, tx *sqlx.Tx) (*dbmodel.User, error) {
-
-	updatedUserInformation := *currentUserInfo
-	// setup a new transaction
-	// check which fields need to be updated
-	if input.Contact != nil {
-		updatedUserInformation.Contact = dbmodel.ToNullString(input.Contact)
-	}
-	if input.Bio != nil {
-		updatedUserInformation.Bio = dbmodel.ToNullString(input.Bio)
-	}
-	if input.Department != nil {
-		updatedUserInformation.Department = dbmodel.ToNullString(input.Department)
-	}
-	if input.Role != nil {
-		updatedUserInformation.Role = dbmodel.ToNullString(input.Role)
-	}
-	if input.Name != nil {
-		updatedUserInformation.Name = dbmodel.ToNullString(input.Name)
-	}
-	if input.Email != nil {
-		updatedUserInformation.Email = dbmodel.ToNullString(input.Email)
-	}
-
+func (u *UsersRepoImpl) UpdateUser(userInformation *dbmodel.User, tx *sqlx.Tx) (*dbmodel.User, error) {
 	// update the users information in the database
-	_, err := tx.Exec(updateUserByUserIdQuery, updatedUserInformation.Email, updatedUserInformation.Name, updatedUserInformation.Role, updatedUserInformation.Department, updatedUserInformation.Bio, updatedUserInformation.Contact, updatedUserInformation.Id)
+	_, err := tx.Exec(updateUserByUserIdQuery, userInformation.Email, userInformation.Name, userInformation.Role, userInformation.Department, userInformation.Bio, userInformation.PhotoUrl, userInformation.Contact, time.Now(), userInformation.IsDeleted, userInformation.GithubUrl, userInformation.Onboarded, userInformation.GithubId, userInformation.GithubName, userInformation.Id)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
-
-	// delete current entries from userskills table
-	if input.Skills != nil {
-
-	}
-
-	return &updatedUserInformation, nil
+	// fetch the updated data from the db and return
+	return u.GetByIdTx(userInformation.Id, tx)
 }
 
 func (u *UsersRepoImpl) RemoveUserSkillsByUserId(userID string, tx *sqlx.Tx) error {
@@ -142,5 +112,5 @@ const (
 	SelectUsersByGithubIdQuery = `select * from users where github_id = $1 and users.is_deleted = false`
 	countUsersByGithubIdQuery  = `select count(*) from users where github_id = $1`
 	createNewUserQuery         = `insert into users(email, name, role, department, bio, photo_url, contact, github_url, github_id, github_name) VALUES ($1, $2, $3, $4,$5, $6, $7, $8, $9, $10) returning id`
-	updateUserByUserIdQuery    = `update users set email = $1, name = $2, role = $3, department = $4, bio = $5, contact = $6, onboarded=true where id = $7`
+	updateUserByUserIdQuery    = `update users set email = $1, name = $2, role = $3, department = $4, bio = $5, photo_url = $6, contact = $7, time_updated = $8, is_deleted = $9, github_url = $10, onboarded = $11, github_id = $12, github_name = $13 where id = $14`
 )

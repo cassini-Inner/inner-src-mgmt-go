@@ -40,6 +40,7 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, gith
 	// check if the user is signing up for the first time
 	usersCount, err := s.usersRepo.CountUsersByGithubId(fetchedUser.GithubId, tx)
 	if err != nil {
+		_ = tx.Rollback()
 		return nil, err
 	}
 
