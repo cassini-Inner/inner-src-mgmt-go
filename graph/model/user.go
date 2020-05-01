@@ -2,7 +2,7 @@ package model
 
 import (
 	"errors"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/dgrijalva/jwt-go"
 	"os"
 	"time"

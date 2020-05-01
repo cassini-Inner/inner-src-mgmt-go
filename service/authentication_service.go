@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"io"
 	"io/ioutil"
@@ -18,10 +18,10 @@ import (
 
 type AuthenticationService struct {
 	db        *sqlx.DB
-	usersRepo postgres.UsersRepo
+	usersRepo repository.UsersRepo
 }
 
-func NewAuthenticationService(db *sqlx.DB, usersRepo postgres.UsersRepo) *AuthenticationService {
+func NewAuthenticationService(db *sqlx.DB, usersRepo repository.UsersRepo) *AuthenticationService {
 	return &AuthenticationService{db: db, usersRepo: usersRepo}
 }
 

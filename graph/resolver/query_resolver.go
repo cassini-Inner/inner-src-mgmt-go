@@ -8,41 +8,22 @@ import (
 )
 
 func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilterInput) ([]*gqlmodel.Job, error) {
+	var skills []string
+	var statuses []string
 
-	if filter == nil {
-		filter = &gqlmodel.JobsFilterInput{
-			Status:    []*gqlmodel.JobStatus{},
-			Skills:    []*string{},
-			SortOrder: nil,
+	if filter.Skills != nil && len(filter.Skills) != 0 {
+		for _, skill := range filter.Skills {
+			skills = append(skills, *skill)
 		}
 	}
 
-	// if the list of skills is empty, return all jobs
-	var skills []*string
-	if len(filter.Skills) == 0 {
-		dbSkills, err := r.SkillsRepo.GetAll()
-		if err != nil {
-			return nil, err
+	if filter.Status != nil && len(filter.Status) != 0 {
+		for _, status := range filter.Status {
+			statuses = append(statuses, status.String())
 		}
-		for _, skill := range dbSkills {
-			skillValue := skill.Value
-			skills = append(skills, &skillValue)
-		}
-
-		filter.Skills = skills
 	}
 
-	var status []*gqlmodel.JobStatus
-	if len(filter.Status) == 0 {
-		open := gqlmodel.JobStatus("open")
-		ongoing := gqlmodel.JobStatus("ongoing")
-		completed := gqlmodel.JobStatus("completed")
-		status = append(status, &open, &ongoing, &completed)
-
-		filter.Status = status
-	}
-
-	jobsFromDb, err := r.JobsRepo.GetAll(filter)
+	jobsFromDb, err := r.JobsService.GetAllJobs(ctx, skills, statuses)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +31,7 @@ func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilter
 	var result []*gqlmodel.Job
 	for _, dbJob := range jobsFromDb {
 		var tempJob gqlmodel.Job
-		tempJob.MapDbToGql(*dbJob)
+		tempJob.MapDbToGql(dbJob)
 		result = append(result, &tempJob)
 	}
 	return result, nil

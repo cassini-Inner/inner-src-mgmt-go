@@ -10,7 +10,7 @@ import (
 )
 
 func TestServerUp(t *testing.T) {
-	_ = os.Setenv("db_conn_string", "host=localhost port=5432 user=postgres dbname=innersource password=root sslmode=disable")
+	_ = os.Setenv("db_conn_string", "host=localhost port=5432 user=repository dbname=innersource password=root sslmode=disable")
 
 	t.Run("test mux router setup with null db", func(t *testing.T) {
 		db, err := SetupRouter(nil)
@@ -19,7 +19,7 @@ func TestServerUp(t *testing.T) {
 	})
 
 	t.Run("setup mux router with db", func(t *testing.T) {
-		db, err := sqlx.Connect("postgres", os.Getenv("db_conn_string"))
+		db, err := sqlx.Connect("repository", os.Getenv("db_conn_string"))
 		if err != nil {
 			t.Fatalf("could not connect to db: %v", err)
 		}
@@ -30,7 +30,7 @@ func TestServerUp(t *testing.T) {
 	})
 
 	t.Run("test / route", func(t *testing.T) {
-		db, err:= sqlx.Connect("postgres", os.Getenv("db_conn_string"))
+		db, err:= sqlx.Connect("repository", os.Getenv("db_conn_string"))
 		if err != nil {
 			t.Fatalf("could not connect to db: %v", err)
 		}
@@ -46,7 +46,7 @@ func TestServerUp(t *testing.T) {
 	})
 
 	t.Run("test /query route", func(t *testing.T) {
-		db, err:= sqlx.Connect("postgres", os.Getenv("db_conn_string"))
+		db, err:= sqlx.Connect("repository", os.Getenv("db_conn_string"))
 		if err != nil {
 			t.Fatalf("could not connect to db: %v", err)
 		}

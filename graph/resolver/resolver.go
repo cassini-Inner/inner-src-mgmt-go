@@ -1,7 +1,7 @@
 package resolver
 
 import (
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
+	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	"github.com/cassini-Inner/inner-src-mgmt-go/service"
 )
 
@@ -12,10 +12,10 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	ApplicationsRepo      postgres.ApplicationsRepo
-	DiscussionsRepo       postgres.DiscussionsRepo
-	JobsRepo              postgres.JobsRepo
-	SkillsRepo            postgres.SkillsRepo
+	ApplicationsRepo      repository.ApplicationsRepo
+	DiscussionsRepo       repository.DiscussionsRepo
+	JobsRepo              repository.JobsRepo
+	SkillsRepo            repository.SkillsRepo
 	JobsService           *service.JobsService
 	ApplicationsService   *service.ApplicationsService
 	UserService           *service.UserProfileService

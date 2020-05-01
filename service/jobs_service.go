@@ -7,20 +7,21 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
+	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"log"
 )
 
 type JobsService struct {
 	db               *sqlx.DB
-	jobsRepo         postgres.JobsRepo
-	skillsRepo       postgres.SkillsRepo
-	discussionsRepo  postgres.DiscussionsRepo
-	applicationsRepo postgres.ApplicationsRepo
+	jobsRepo         repository.JobsRepo
+	skillsRepo       repository.SkillsRepo
+	discussionsRepo  repository.DiscussionsRepo
+	applicationsRepo repository.ApplicationsRepo
 }
 
-func NewJobsService(db *sqlx.DB, jobsRepo postgres.JobsRepo, skillsRepo postgres.SkillsRepo, discussionsRepo postgres.DiscussionsRepo, applicationsRepo postgres.ApplicationsRepo) *JobsService {
+func NewJobsService(db *sqlx.DB, jobsRepo repository.JobsRepo, skillsRepo repository.SkillsRepo, discussionsRepo repository.DiscussionsRepo, applicationsRepo repository.ApplicationsRepo) *JobsService {
 	return &JobsService{db: db, jobsRepo: jobsRepo, skillsRepo: skillsRepo, discussionsRepo: discussionsRepo, applicationsRepo: applicationsRepo}
 }
 
@@ -93,6 +94,29 @@ func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInpu
 	result = &gqlmodel.Job{}
 	result.MapDbToGql(*newJob)
 	return result, nil
+}
+
+func (j *JobsService) GetAllJobs(ctx context.Context, skills, status []string) ([]dbmodel.Job, error) {
+	if len(skills) == 0 {
+		dbSkills, err := j.skillsRepo.GetAll()
+		if err != nil {
+			return nil, err
+		}
+		for _, skill := range dbSkills {
+			skillValue := skill.Value
+			skills = append(skills, skillValue)
+		}
+	}
+
+	if len(status) == 0 {
+		status = append(status, "open", "ongoing", "completed")
+	}
+
+	jobs, err := j.jobsRepo.GetAll(j.db, skills, status)
+	if err != nil {
+		return nil, err
+	}
+	return jobs, nil
 }
 
 func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId string) (*gqlmodel.Comment, error) {
@@ -191,13 +215,8 @@ func (j *JobsService) DeleteJobDiscussion(ctx context.Context, commentId string)
 }
 
 func (j *JobsService) GetById(ctx context.Context, jobId string) (*gqlmodel.Job, error) {
-	tx, err := j.db.BeginTxx(ctx, nil)
+	job, err := j.jobsRepo.GetById(j.db, jobId)
 	if err != nil {
-		return nil, err
-	}
-	job, err := j.jobsRepo.GetById(jobId, tx)
-	if err != nil {
-		_ = tx.Rollback()
 		return nil, err
 	}
 
@@ -217,7 +236,7 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 		return nil, err
 	}
 	// check if the job exists in the repo
-	job, err := j.jobsRepo.GetByIdTx(jobID, tx)
+	job, err := j.jobsRepo.GetById(tx, jobID)
 	if err != nil {
 		return nil, custom_errors.ErrNoEntityMatchingId
 	}
@@ -231,7 +250,7 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 	}
 
 	// get all the milestones for a job
-	milestones, err := j.jobsRepo.GetMilestonesByJobId(jobID, tx)
+	milestones, err := j.jobsRepo.GetMilestonesByJobId(tx, jobID)
 	if err != nil {
 		_ = tx.Rollback()
 		log.Println(err)
@@ -264,11 +283,12 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 			return nil, err
 		}
 	}
-	updatedJob, err := j.jobsRepo.GetByIdTx(jobID, tx)
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
+
+	updatedJob, err := j.jobsRepo.GetById(j.db, jobID)
 	var gqlJob gqlmodel.Job
 	gqlJob.MapDbToGql(*updatedJob)
 
@@ -281,13 +301,14 @@ func (j *JobsService) DeleteJob(ctx context.Context, jobID string) (*gqlmodel.Jo
 		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
+	job, err := j.jobsRepo.GetById(j.db, jobID)
+	if err != nil {
+		return nil, custom_errors.ErrNoEntityMatchingId
+	}
+
 	tx, err := j.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err
-	}
-	job, err := j.jobsRepo.GetByIdTx(jobID, tx)
-	if err != nil {
-		return nil, custom_errors.ErrNoEntityMatchingId
 	}
 
 	if user.Id != job.CreatedBy {
@@ -359,7 +380,7 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 			return nil, err
 		}
 
-		jobMilestones, err := j.jobsRepo.GetMilestonesByJobId(milestoneData.JobId, tx)
+		jobMilestones, err := j.jobsRepo.GetMilestonesByJobId(tx, milestoneData.JobId)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err

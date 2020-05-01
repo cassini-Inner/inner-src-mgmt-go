@@ -3,7 +3,7 @@ package impl
 import (
 	"github.com/DATA-DOG/go-sqlmock"
 	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"reflect"

@@ -5,19 +5,19 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"strconv"
 )
 
 type UserProfileService struct {
 	db         *sqlx.DB
-	userRepo   postgres.UsersRepo
-	skillsRepo postgres.SkillsRepo
+	userRepo   repository.UsersRepo
+	skillsRepo repository.SkillsRepo
 }
 
-func NewUserProfileService(db *sqlx.DB, userRepo postgres.UsersRepo, skillsRepo postgres.SkillsRepo) *UserProfileService {
+func NewUserProfileService(db *sqlx.DB, userRepo repository.UsersRepo, skillsRepo repository.SkillsRepo) *UserProfileService {
 	return &UserProfileService{db: db, userRepo: userRepo, skillsRepo: skillsRepo}
 }
 

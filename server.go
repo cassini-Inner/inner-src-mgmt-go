@@ -8,7 +8,7 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 	CustomMiddlewares "github.com/cassini-Inner/inner-src-mgmt-go/middleware"
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres/impl"
+	"github.com/cassini-Inner/inner-src-mgmt-go/repository/impl"
 	"github.com/cassini-Inner/inner-src-mgmt-go/service"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -21,6 +21,7 @@ import (
 )
 
 const defaultPort = "8080"
+
 var (
 	ErrNullDB = errors.New("no db supplied")
 )

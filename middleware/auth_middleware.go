@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/pkg/errors"
@@ -16,7 +16,7 @@ const (
 	CurrentUserKey = "currentUserKey"
 )
 
-func AuthMiddleware(repo postgres.UsersRepo) func(http.Handler) http.Handler {
+func AuthMiddleware(repo repository.UsersRepo) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, err := parseToken(r)

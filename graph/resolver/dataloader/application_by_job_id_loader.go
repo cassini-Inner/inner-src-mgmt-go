@@ -16,6 +16,7 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 			rejectedMap := make(map[string]int)
 			pendingMap := make(map[string]int)
 			applicationsQuery, applicationsArgs, err := sqlx.In(applicationsQuery, keys)
+
 			if err != nil {
 				return nil, []error{err}
 			}

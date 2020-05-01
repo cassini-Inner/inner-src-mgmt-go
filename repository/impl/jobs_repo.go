@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"strings"
 )
@@ -42,9 +42,9 @@ func (j *JobsRepoImpl) DeleteJob(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error
 }
 
 // Get the complete job details based on the job id
-func (j *JobsRepoImpl) GetById(jobId string, tx *sqlx.Tx) (*dbmodel.Job, error) {
+func (j *JobsRepoImpl) GetById(db sqlx.Ext, jobId string) (*dbmodel.Job, error) {
 	var job dbmodel.Job
-	err := tx.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
+	err := db.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
 	if err != nil {
 		return nil, err
 	}
@@ -83,18 +83,8 @@ func (j *JobsRepoImpl) GetStatsByUserId(userId string) (*gqlmodel.UserStats, err
 }
 
 //TODO: Add sorting order functionality
-func (j *JobsRepoImpl) GetAll(filters *gqlmodel.JobsFilterInput) ([]*dbmodel.Job, error) {
-	var jobSkills []string
-	for _, skill := range filters.Skills {
-		jobSkills = append(jobSkills, strings.ToLower(*skill))
-	}
-
-	var jobStatuses []string
-	for _, status := range filters.Status {
-		jobStatuses = append(jobStatuses, strings.ToLower(status.String()))
-	}
-
-	query, args, err := sqlx.In(selectAllJobsWithFiltersQuery, jobSkills, jobStatuses)
+func (j *JobsRepoImpl) GetAll(tx sqlx.Ext, skillNames []string, status []string) ([]dbmodel.Job, error) {
+	query, args, err := sqlx.In(selectAllJobsWithFiltersQuery, skillNames, status)
 	if err != nil {
 		return nil, err
 	}
@@ -105,16 +95,16 @@ func (j *JobsRepoImpl) GetAll(filters *gqlmodel.JobsFilterInput) ([]*dbmodel.Job
 		return nil, err
 	}
 
-	var result []*dbmodel.Job
+	var result []dbmodel.Job
 	for rows != nil && rows.Next() {
 		var tempJob dbmodel.Job
 		rows.StructScan(&tempJob)
-		result = append(result, &tempJob)
+		result = append(result, tempJob)
 	}
 	return result, nil
 }
 
-func (j *JobsRepoImpl) GetMilestonesByJobId(jobId string, tx *sqlx.Tx) ([]*dbmodel.Milestone, error) {
+func (j *JobsRepoImpl) GetMilestonesByJobId(tx sqlx.Ext, jobId string) ([]*dbmodel.Milestone, error) {
 	rows, err := tx.Queryx(selectMilestonesByJobId, jobId)
 	if err != nil {
 		return nil, err
@@ -129,8 +119,8 @@ func (j *JobsRepoImpl) GetMilestonesByJobId(jobId string, tx *sqlx.Tx) ([]*dbmod
 	return milestones, nil
 }
 
-func (j *JobsRepoImpl) GetMilestoneIdsByJobId(jobId string, tx *sqlx.Tx) (result []string, err error) {
-	milestones, err := j.GetMilestonesByJobId(jobId, tx)
+func (j *JobsRepoImpl) GetMilestoneIdsByJobId(tx sqlx.Ext, jobId string) (result []string, err error) {
+	milestones, err := j.GetMilestonesByJobId(tx, jobId)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +157,7 @@ func (j *JobsRepoImpl) MarkJobCompleted(ctx context.Context, tx *sqlx.Tx, jobId 
 		return nil, err
 	}
 	// commit the transaction
-	return j.GetById(jobId, tx)
+	return j.GetById(tx, jobId)
 }
 
 func (j *JobsRepoImpl) ForceAutoUpdateJobStatus(ctx context.Context, tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {

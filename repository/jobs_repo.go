@@ -1,9 +1,9 @@
-package postgres
+package repository
 
 import (
 	"context"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -14,19 +14,17 @@ type JobsRepo interface {
 
 	DeleteJob(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error)
 
-	GetById(jobId string, tx *sqlx.Tx) (*dbmodel.Job, error)
-
-	GetByIdTx(jobId string, tx *sqlx.Tx) (*dbmodel.Job, error)
+	GetById(db sqlx.Ext, jobId string) (*dbmodel.Job, error)
 
 	GetByUserId(userId string) ([]*dbmodel.Job, error)
 
 	GetStatsByUserId(userId string) (*gqlmodel.UserStats, error)
 
-	GetAll(filters *gqlmodel.JobsFilterInput) ([]*dbmodel.Job, error)
+	GetAll(tx sqlx.Ext, skillNames []string, status []string) ([]dbmodel.Job, error)
 
-	GetMilestonesByJobId(jobId string, tx *sqlx.Tx) ([]*dbmodel.Milestone, error)
+	GetMilestonesByJobId(tx sqlx.Ext, jobId string) ([]*dbmodel.Milestone, error)
 
-	GetMilestoneIdsByJobId(jobId string, tx *sqlx.Tx) (result []string, err error)
+	GetMilestoneIdsByJobId(tx sqlx.Ext, jobId string) (result []string, err error)
 
 	GetMilestoneById(milestoneId string) (*dbmodel.Milestone, error)
 

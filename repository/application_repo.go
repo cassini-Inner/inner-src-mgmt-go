@@ -1,9 +1,9 @@
-package postgres
+package repository
 
 import (
 	"context"
 	"errors"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 )
 
