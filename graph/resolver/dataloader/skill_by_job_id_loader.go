@@ -59,7 +59,7 @@ func NewSkillByJobIdLoader(db *sqlx.DB) *generated.SkillByJobIdLoader {
 
 			return result, nil
 		},
-		Wait:     1 * time.Millisecond,
-		MaxBatch: 100,
+		Wait:     2 * time.Millisecond,
+		MaxBatch: 200,
 	})
 }

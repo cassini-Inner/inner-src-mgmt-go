@@ -24,6 +24,7 @@ func NewMilestoneByJobIdLoader(db *sqlx.DB) *generated.MilestoneByJobIdLoader {
 			if err != nil {
 				return nil, []error{err}
 			}
+			defer rows.Close()
 			for rows.Next() {
 				var tempMilestone dbmodel.Milestone
 				err := rows.StructScan(&tempMilestone)
@@ -50,7 +51,7 @@ func NewMilestoneByJobIdLoader(db *sqlx.DB) *generated.MilestoneByJobIdLoader {
 			}
 			return milestones, nil
 		},
-		Wait:     1 * time.Millisecond,
-		MaxBatch: 100,
+		Wait:     2 * time.Millisecond,
+		MaxBatch: 20,
 	})
 }

@@ -63,7 +63,7 @@ func NewViewerHasAppliedByUserIdLoader(db *sqlx.DB) *generated.ViewerHasAppliedL
 
 			return bools, nil
 		},
-		Wait:     1 * time.Millisecond,
+		Wait:     2 * time.Millisecond,
 		MaxBatch: 200,
 	})
 

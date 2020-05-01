@@ -5,6 +5,7 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/jmoiron/sqlx"
+	"strings"
 	"time"
 )
 
@@ -15,59 +16,24 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 			acceptedMap := make(map[string]int)
 			rejectedMap := make(map[string]int)
 			pendingMap := make(map[string]int)
+
 			applicationsQuery, applicationsArgs, err := sqlx.In(applicationsQuery, keys)
-
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			acceptedApplicationsQuery, acceptedApplicationsArgs, err := sqlx.In(acceptedApplicationsQuery, keys)
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			pendingApplicationsQuery, pendingApplicationsArgs, err := sqlx.In(pendingApplicationsQuery, keys)
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			rejectedApplicationsQuery, rejectedApplicationsArgs, err := sqlx.In(rejectedApplicationsQuery, keys)
 			if err != nil {
 				return nil, []error{err}
 			}
 
 			applicationsQuery = db.Rebind(applicationsQuery)
-			rejectedApplicationsQuery = db.Rebind(rejectedApplicationsQuery)
-			acceptedApplicationsQuery = db.Rebind(acceptedApplicationsQuery)
-			pendingApplicationsQuery = db.Rebind(pendingApplicationsQuery)
 
 			applicationRows, err := db.Queryx(applicationsQuery, applicationsArgs...)
 			if err != nil {
 				return nil, []error{err}
 			}
-			errors = mapApplicationRowsToGqlModel(applicationRows, applicationsMap)
+			defer applicationRows.Close()
+
+			errors = mapApplicationRowsToGqlModel(applicationRows, applicationsMap, &acceptedMap, &rejectedMap, &pendingMap)
 			if errors != nil {
 				return nil, errors
 			}
-
-			acceptedCountRows, err := db.Queryx(acceptedApplicationsQuery, acceptedApplicationsArgs...)
-			if err != nil {
-				return nil, []error{err}
-			}
-			mapCountRowToValue(acceptedMap, acceptedCountRows, keys)
-
-			rejectedCountRows, err := db.Queryx(rejectedApplicationsQuery, rejectedApplicationsArgs...)
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			mapCountRowToValue(rejectedMap, rejectedCountRows, keys)
-
-			pendingCountRows, err := db.Queryx(pendingApplicationsQuery, pendingApplicationsArgs...)
-			if err != nil {
-				return nil, []error{err}
-			}
-			mapCountRowToValue(pendingMap, pendingCountRows, keys)
 
 			for _, key := range keys {
 				pendingCount := pendingMap[key]
@@ -79,37 +45,15 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 					RejectedCount: &rejectedCount,
 					Applications:  applicationsMap[key],
 				})
-
 			}
-
 			return i, nil
 		},
-		Wait:     1 * time.Millisecond,
-		MaxBatch: 100,
+		Wait:     2 * time.Millisecond,
+		MaxBatch: 200,
 	})
 }
 
-func mapCountRowToValue(storageMap map[string]int, rows *sqlx.Rows, keys []string) error {
-	for _, key := range keys {
-		_, ok := storageMap[key]
-		if !ok {
-			storageMap[key] = 0
-		}
-	}
-	for rows.Next() {
-		var jobId string
-		var count int
-		err := rows.Scan(&jobId, &count)
-		if err != nil {
-			return err
-		}
-		storageMap[jobId] = count
-	}
-
-	return nil
-}
-
-func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap map[string][]*gqlmodel.Application) []error {
+func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap map[string][]*gqlmodel.Application, acceptedCountMap, rejectedCountMap, pendingCountMap *map[string]int) []error {
 	for applicationRows.Next() {
 		var jobId, id, milestoneId, applicantId, status, timeCreated, timeUpdated string
 		var note sql.NullString
@@ -121,6 +65,7 @@ func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap ma
 		if !ok {
 			applicationsMap[jobId] = make([]*gqlmodel.Application, 0)
 		}
+
 		application := &gqlmodel.Application{
 			ID:          id,
 			ApplicantID: applicantId,
@@ -128,6 +73,16 @@ func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap ma
 			Status:      gqlmodel.ApplicationStatus(status),
 			CreatedOn:   timeCreated,
 		}
+
+		switch application.Status.String() {
+		case strings.ToLower(gqlmodel.ApplicationStatusAccepted.String()):
+			(*acceptedCountMap)[jobId]++
+		case strings.ToLower(gqlmodel.ApplicationStatusPending.String()):
+			(*pendingCountMap)[jobId]++
+		case strings.ToLower(gqlmodel.ApplicationStatusRejected.String()):
+			(*rejectedCountMap)[jobId]++
+		}
+
 		if note.Valid {
 			application.Note = &note.String
 		}
@@ -141,19 +96,4 @@ const (
 			from applications
 					 join milestones m on applications.milestone_id = m.id
 			where m.job_id in (?) and applications.status <> 'withdrawn'`
-
-	acceptedApplicationsQuery = `select job_id, count(distinct  a.applicant_id) from milestones
-			join applications a on milestones.id = a.milestone_id where a.status = 'accepted'
-				and milestones.job_id in (?)
-				group by job_id`
-
-	rejectedApplicationsQuery = `select job_id, count(distinct  a.applicant_id) from milestones
-			join applications a on milestones.id = a.milestone_id where a.status = 'rejected'
-				and milestones.job_id in (?)
-				group by job_id`
-
-	pendingApplicationsQuery = `select job_id, count(distinct  a.applicant_id) from milestones
-			join applications a on milestones.id = a.milestone_id where a.status = 'pending'
-				and milestones.job_id in (?)
-				group by job_id`
 )

@@ -98,15 +98,8 @@ func (s *UserProfileService) GetById(ctx context.Context, userId string) (*gqlmo
 	if _, err := strconv.Atoi(userId); err != nil || userId == "" {
 		return nil, ErrInvalidId
 	}
-
-	tx, err := s.db.BeginTxx(ctx, nil)
+	user, err := s.userRepo.GetById(userId)
 	if err != nil {
-		return nil, err
-	}
-
-	user, err := s.userRepo.GetByIdTx(userId, tx)
-	if err != nil {
-		_ = tx.Rollback()
 		return nil, err
 	}
 	var gqlUser gqlmodel.User

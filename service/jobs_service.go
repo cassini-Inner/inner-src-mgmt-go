@@ -11,6 +11,7 @@ import (
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"log"
+	"strings"
 )
 
 type JobsService struct {
@@ -110,6 +111,13 @@ func (j *JobsService) GetAllJobs(ctx context.Context, skills, status []string) (
 
 	if len(status) == 0 {
 		status = append(status, "open", "ongoing", "completed")
+	}
+
+	for i, _ := range skills {
+		skills[i] = strings.ToLower(skills[i])
+	}
+	for i, _ := range status {
+		status[i] = strings.ToLower(status[i])
 	}
 
 	jobs, err := j.jobsRepo.GetAll(j.db, skills, status)

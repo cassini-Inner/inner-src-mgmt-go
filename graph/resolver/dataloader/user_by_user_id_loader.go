@@ -41,8 +41,8 @@ func NewUserByUserIdLoader(db *sqlx.DB) *generated.UserLoader {
 
 			return result, nil
 		},
-		Wait:     1 * time.Millisecond,
-		MaxBatch: 100,
+		Wait:     2 * time.Millisecond,
+		MaxBatch: 200,
 	})
 
 }
