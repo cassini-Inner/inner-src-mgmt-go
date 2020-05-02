@@ -11,6 +11,6 @@ var (
 	ErrJobAlreadyCompleted            = errors.New("job is already completed")
 	ErrEntityDeleted                  = errors.New("entity was deleted")
 	ErrUserNotAuthenticated           = errors.New("unauthorized request")
-	ErrInvalidId           = errors.New("invalid id supplied")
+	ErrInvalidId                      = errors.New("invalid id supplied")
+	ErrInvalidQuery                   = errors.New("invalid query")
 )
-

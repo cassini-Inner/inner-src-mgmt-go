@@ -96,7 +96,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 
 func (s *UserProfileService) GetById(ctx context.Context, userId string) (*gqlmodel.User, error) {
 	if _, err := strconv.Atoi(userId); err != nil || userId == "" {
-		return nil, ErrInvalidId
+		return nil, custom_errors.ErrInvalidId
 	}
 	user, err := s.userRepo.GetById(userId)
 	if err != nil {

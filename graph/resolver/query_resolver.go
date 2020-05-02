@@ -2,7 +2,6 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
@@ -45,6 +44,17 @@ func (r *queryResolver) User(ctx context.Context, id string, jobsStatusFilter *g
 	return dataloader.GetUserByUserIdLoader(ctx).Load(id)
 }
 
-func (r *queryResolver) Skills(ctx context.Context, query *string) ([]*gqlmodel.Skill, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) Skills(ctx context.Context, query *string) (result []*gqlmodel.Skill, err error) {
+	skills, err := r.SkillsService.GetMatchingSkills(query)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, skill := range skills {
+		var gqlSkill gqlmodel.Skill
+		gqlSkill.MapDbToGql(*skill)
+		result = append(result, &gqlSkill)
+	}
+
+	return result, nil
 }
