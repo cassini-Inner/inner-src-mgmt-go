@@ -42,11 +42,11 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 		DiscussionsRepo:       discussionsRepo,
 		JobsRepo:              jobsRepo,
 		SkillsRepo:            skillsRepo,
-		JobsService:           service.NewJobsService(DB, jobsRepo, skillsRepo, discussionsRepo, applicationsRepo),
-		ApplicationsService:   service.NewApplicationsService(DB, jobsRepo, applicationsRepo),
-		UserService:           service.NewUserProfileService(DB, usersRepo, skillsRepo),
-		AuthenticationService: service.NewAuthenticationService(DB, usersRepo),
-		SkillsService:         service.NewSkillsService(DB, skillsRepo),
+		JobsService:           service.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo),
+		ApplicationsService:   service.NewApplicationsService(jobsRepo, applicationsRepo),
+		UserService:           service.NewUserProfileService(usersRepo, skillsRepo),
+		AuthenticationService: service.NewAuthenticationService(usersRepo),
+		SkillsService:         service.NewSkillsService(skillsRepo),
 	}}))
 
 	router := chi.NewRouter()

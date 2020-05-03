@@ -8,6 +8,7 @@ import (
 )
 
 type SkillsRepo interface {
+	Repository
 	GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error)
 
 	GetByUserId(userId string) ([]*dbmodel.GlobalSkill, error)

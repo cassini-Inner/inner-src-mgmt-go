@@ -10,6 +10,10 @@ type DiscussionsRepoImpl struct {
 	db *sqlx.DB
 }
 
+func (d *DiscussionsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	return d.db.BeginTxx(ctx, nil)
+}
+
 func NewDiscussionsRepo(db *sqlx.DB) *DiscussionsRepoImpl {
 	return &DiscussionsRepoImpl{db: db}
 }
@@ -72,7 +76,7 @@ func (d *DiscussionsRepoImpl) GetById(discussionId string, tx *sqlx.Tx) (*dbmode
 
 func (d *DiscussionsRepoImpl) DeleteAllCommentsForJob(tx *sqlx.Tx, jobID string) error {
 	_, err := tx.Exec(deleteDiscussionsForJobIdQuery, jobID)
-	if err!= nil {
+	if err != nil {
 		return err
 	}
 

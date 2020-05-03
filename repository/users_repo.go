@@ -7,6 +7,7 @@ import (
 )
 
 type UsersRepo interface {
+	Repository
 	RemoveUserSkillsByUserId(userID string, tx *sqlx.Tx) error
 	GetByIdTx(userId string, tx *sqlx.Tx) (*dbmodel.User, error)
 	GetById(userId string) (*dbmodel.User, error)

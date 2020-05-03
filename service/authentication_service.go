@@ -8,7 +8,6 @@ import (
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
-	"github.com/jmoiron/sqlx"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,12 +16,11 @@ import (
 )
 
 type AuthenticationService struct {
-	db        *sqlx.DB
 	usersRepo repository.UsersRepo
 }
 
-func NewAuthenticationService(db *sqlx.DB, usersRepo repository.UsersRepo) *AuthenticationService {
-	return &AuthenticationService{db: db, usersRepo: usersRepo}
+func NewAuthenticationService( usersRepo repository.UsersRepo) *AuthenticationService {
+	return &AuthenticationService{ usersRepo: usersRepo}
 }
 
 func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, githubCode string) (*gqlmodel.User, error) {
@@ -36,7 +34,7 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, gith
 		return nil, err
 	}
 
-	tx, err := s.db.BeginTxx(ctx, nil)
+	tx, err := s.usersRepo.BeginTx(ctx)
 	// check if the user is signing up for the first time
 	usersCount, err := s.usersRepo.CountUsersByGithubId(fetchedUser.GithubId, tx)
 	if err != nil {

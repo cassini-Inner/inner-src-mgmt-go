@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
@@ -16,6 +17,10 @@ var (
 
 type UsersRepoImpl struct {
 	db *sqlx.DB
+}
+
+func (u *UsersRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	return u.db.BeginTxx(ctx, nil)
 }
 
 func NewUsersRepo(db *sqlx.DB) *UsersRepoImpl {

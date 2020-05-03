@@ -7,18 +7,16 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
-	"github.com/jmoiron/sqlx"
 	"strconv"
 )
 
 type UserProfileService struct {
-	db         *sqlx.DB
 	userRepo   repository.UsersRepo
 	skillsRepo repository.SkillsRepo
 }
 
-func NewUserProfileService(db *sqlx.DB, userRepo repository.UsersRepo, skillsRepo repository.SkillsRepo) *UserProfileService {
-	return &UserProfileService{db: db, userRepo: userRepo, skillsRepo: skillsRepo}
+func NewUserProfileService( userRepo repository.UsersRepo, skillsRepo repository.SkillsRepo) *UserProfileService {
+	return &UserProfileService{ userRepo: userRepo, skillsRepo: skillsRepo}
 }
 
 func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -27,7 +25,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
-	tx, err := s.db.BeginTxx(ctx, nil)
+	tx, err := s.skillsRepo.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}

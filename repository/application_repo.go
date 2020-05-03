@@ -12,6 +12,7 @@ var (
 )
 
 type ApplicationsRepo interface {
+	Repository
 	GetExistingUserApplications(milestones []*dbmodel.Milestone, userId string, tx *sqlx.Tx, applicationStatus ...string) ([]*dbmodel.Application, error)
 
 	CreateApplication(milestones []*dbmodel.Milestone, userId string, ctx context.Context, tx *sqlx.Tx) ([]*dbmodel.Application, error)

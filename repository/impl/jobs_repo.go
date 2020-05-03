@@ -17,6 +17,10 @@ func NewJobsRepo(db *sqlx.DB) *JobsRepoImpl {
 	return &JobsRepoImpl{db: db}
 }
 
+func (j *JobsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	return j.db.BeginTxx(ctx, nil)
+}
+
 func (j *JobsRepoImpl) CreateJob(ctx context.Context, tx *sqlx.Tx, input *gqlmodel.CreateJobInput, user *dbmodel.User) (*dbmodel.Job, error) {
 	var insertedJob dbmodel.Job
 	// insert the information into the job table
@@ -25,7 +29,7 @@ func (j *JobsRepoImpl) CreateJob(ctx context.Context, tx *sqlx.Tx, input *gqlmod
 	if err != nil {
 		return nil, err
 	}
-	return j.GetByIdTx(insertedJob.Id, tx)
+	return j.GetByIdTx(tx, insertedJob.Id)
 }
 
 func (j *JobsRepoImpl) UpdateJob(input *gqlmodel.UpdateJobInput) (*dbmodel.Job, error) {
@@ -42,16 +46,16 @@ func (j *JobsRepoImpl) DeleteJob(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error
 }
 
 // Get the complete job details based on the job id
-func (j *JobsRepoImpl) GetById(db sqlx.Ext, jobId string) (*dbmodel.Job, error) {
+func (j *JobsRepoImpl) GetById(jobId string) (*dbmodel.Job, error) {
 	var job dbmodel.Job
-	err := db.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
+	err := j.db.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
 	if err != nil {
 		return nil, err
 	}
 	return &job, nil
 }
 
-func (j *JobsRepoImpl) GetByIdTx(jobId string, tx *sqlx.Tx) (*dbmodel.Job, error) {
+func (j *JobsRepoImpl) GetByIdTx(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
 	var job dbmodel.Job
 	err := tx.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
 	if err != nil {
@@ -83,7 +87,7 @@ func (j *JobsRepoImpl) GetStatsByUserId(userId string) (*gqlmodel.UserStats, err
 }
 
 //TODO: Add sorting order functionality
-func (j *JobsRepoImpl) GetAll(tx sqlx.Ext, skillNames []string, status []string) ([]dbmodel.Job, error) {
+func (j *JobsRepoImpl) GetAll(skillNames []string, status []string) ([]dbmodel.Job, error) {
 	query, args, err := sqlx.In(selectAllJobsWithFiltersQuery, skillNames, status)
 	if err != nil {
 		return nil, err
@@ -151,13 +155,12 @@ func (j *JobsRepoImpl) GetAuthorFromMilestoneId(milestoneId string) (*dbmodel.Us
 }
 
 func (j *JobsRepoImpl) MarkJobCompleted(ctx context.Context, tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
-	// mark the job status as completed
 	_, err := tx.ExecContext(ctx, updateJobStatusCompleted, jobId)
 	if err != nil {
 		return nil, err
 	}
 	// commit the transaction
-	return j.GetById(tx, jobId)
+	return j.GetByIdTx(tx, jobId)
 }
 
 func (j *JobsRepoImpl) ForceAutoUpdateJobStatus(ctx context.Context, tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
@@ -166,7 +169,7 @@ func (j *JobsRepoImpl) ForceAutoUpdateJobStatus(ctx context.Context, tx *sqlx.Tx
 		return nil, err
 	}
 
-	return j.GetByIdTx(jobId, tx)
+	return j.GetByIdTx(tx, jobId)
 }
 
 func (j *JobsRepoImpl) ForceAutoUpdateMilestoneStatusByJobID(ctx context.Context, tx *sqlx.Tx, jobId string) error {

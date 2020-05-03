@@ -25,11 +25,15 @@ var (
 	ErrInvalidListLength = errors.New("input list must have atleast one item")
 )
 
+func (s *SkillsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	return s.db.BeginTxx(ctx, nil)
+}
+
 func (s *SkillsRepoImpl) GetMatchingSkills(query *string) ([]*dbmodel.GlobalSkill, error) {
 	if query == nil {
 		return nil, custom_errors.ErrInvalidId
 	}
-	rows, err := s.db.Queryx(skillsMatchingQuery, (*query) + "%")
+	rows, err := s.db.Queryx(skillsMatchingQuery, (*query)+"%")
 	if err != nil {
 		return nil, err
 	}

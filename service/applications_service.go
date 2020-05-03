@@ -8,29 +8,28 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
-	"github.com/jmoiron/sqlx"
 	"strings"
 )
 
 type ApplicationsService struct {
-	db               *sqlx.DB
 	jobsRepo         repository.JobsRepo
 	applicationsRepo repository.ApplicationsRepo
 }
 
-func NewApplicationsService(db *sqlx.DB, jobsRepo repository.JobsRepo, applicationsRepo repository.ApplicationsRepo) *ApplicationsService {
-	return &ApplicationsService{db: db, jobsRepo: jobsRepo, applicationsRepo: applicationsRepo}
+func NewApplicationsService(jobsRepo repository.JobsRepo, applicationsRepo repository.ApplicationsRepo) *ApplicationsService {
+	return &ApplicationsService{jobsRepo: jobsRepo, applicationsRepo: applicationsRepo}
 }
 
 func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobId string) ([]*gqlmodel.Application, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
+
 	if err != nil {
 		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
-	tx, err := a.db.BeginTxx(ctx, nil)
+	tx, err := a.applicationsRepo.BeginTx(ctx)
 
-	job, err := a.jobsRepo.GetById(tx, jobId)
+	job, err := a.jobsRepo.GetById(jobId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, custom_errors.ErrNoEntityMatchingId
@@ -104,7 +103,8 @@ func (a *ApplicationsService) DeleteUserJobApplication(ctx context.Context, jobI
 	if err != nil {
 		return nil, custom_errors.ErrUserNotAuthenticated
 	}
-	tx, err := a.db.BeginTxx(ctx, nil)
+	tx, err := a.applicationsRepo.BeginTx(ctx)
+
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,8 @@ func (a *ApplicationsService) DeleteUserJobApplication(ctx context.Context, jobI
 func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, applicantId string, jobId string, status *gqlmodel.ApplicationStatus, note *string) ([]*gqlmodel.Application, error) {
 	// since this end point can only be user by job owner,
 	// they can only modify job status from pending to accepted or pending
-	tx, err := a.db.BeginTxx(ctx, nil)
+	tx, err := a.applicationsRepo.BeginTx(ctx)
+
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +155,7 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 		_ = tx.Rollback()
 		return nil, err
 	}
-	currentJob, err := a.jobsRepo.GetById(tx, jobId)
+	currentJob, err := a.jobsRepo.GetById(jobId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -188,20 +189,17 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 		_ = tx.Rollback()
 		return nil, err
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
-
 	return gqlmodel.MapDBApplicationListToGql(updateResult), nil
 }
 
 func (a *ApplicationsService) GetApplicationStatusForUserAndJob(ctx context.Context, userId string, joinId string) (string, error) {
-	tx, err := a.db.BeginTxx(ctx, nil)
+	tx, err := a.applicationsRepo.BeginTx(ctx)
 	if err != nil {
 		return "", err
 	}
-
 	return a.applicationsRepo.GetApplicationStatusForUserAndJob(userId, joinId, tx)
 }

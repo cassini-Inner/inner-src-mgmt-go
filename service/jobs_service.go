@@ -9,21 +9,19 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"strings"
 )
 
 type JobsService struct {
-	db               *sqlx.DB
 	jobsRepo         repository.JobsRepo
 	skillsRepo       repository.SkillsRepo
 	discussionsRepo  repository.DiscussionsRepo
 	applicationsRepo repository.ApplicationsRepo
 }
 
-func NewJobsService(db *sqlx.DB, jobsRepo repository.JobsRepo, skillsRepo repository.SkillsRepo, discussionsRepo repository.DiscussionsRepo, applicationsRepo repository.ApplicationsRepo) *JobsService {
-	return &JobsService{db: db, jobsRepo: jobsRepo, skillsRepo: skillsRepo, discussionsRepo: discussionsRepo, applicationsRepo: applicationsRepo}
+func NewJobsService(jobsRepo repository.JobsRepo, skillsRepo repository.SkillsRepo, discussionsRepo repository.DiscussionsRepo, applicationsRepo repository.ApplicationsRepo) *JobsService {
+	return &JobsService{jobsRepo: jobsRepo, skillsRepo: skillsRepo, discussionsRepo: discussionsRepo, applicationsRepo: applicationsRepo}
 }
 
 func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (result *gqlmodel.Job, err error) {
@@ -52,7 +50,7 @@ func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInpu
 		return nil, err
 	}
 
-	tx, err := j.db.BeginTxx(ctx, nil)
+	tx, err := j.jobsRepo.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +118,7 @@ func (j *JobsService) GetAllJobs(ctx context.Context, skills, status []string) (
 		status[i] = strings.ToLower(status[i])
 	}
 
-	jobs, err := j.jobsRepo.GetAll(j.db, skills, status)
+	jobs, err := j.jobsRepo.GetAll(skills, status)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +126,10 @@ func (j *JobsService) GetAllJobs(ctx context.Context, skills, status []string) (
 }
 
 func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId string) (*gqlmodel.Comment, error) {
-	tx, err := j.db.BeginTxx(ctx, nil)
+	tx, err := j.discussionsRepo.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -139,7 +140,6 @@ func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId str
 		_ = tx.Rollback()
 		return nil, err
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId str
 }
 
 func (j *JobsService) UpdateJobDiscussion(ctx context.Context, commentId, comment string) (*gqlmodel.Comment, error) {
-	tx, err := j.db.BeginTxx(ctx, nil)
+	tx, err := j.discussionsRepo.BeginTx(ctx)
 	if err != nil {
 		return nil, nil
 	}
@@ -193,7 +193,7 @@ func (j *JobsService) DeleteJobDiscussion(ctx context.Context, commentId string)
 		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
-	tx, err := j.db.BeginTxx(ctx, nil)
+	tx, err := j.jobsRepo.BeginTx(ctx)
 
 	existingDiscussion, err := j.discussionsRepo.GetById(commentId, tx)
 	if err != nil {
@@ -223,11 +223,10 @@ func (j *JobsService) DeleteJobDiscussion(ctx context.Context, commentId string)
 }
 
 func (j *JobsService) GetById(ctx context.Context, jobId string) (*gqlmodel.Job, error) {
-	job, err := j.jobsRepo.GetById(j.db, jobId)
+	job, err := j.jobsRepo.GetById(jobId)
 	if err != nil {
 		return nil, err
 	}
-
 	var gqlJob gqlmodel.Job
 	gqlJob.MapDbToGql(*job)
 	return &gqlJob, nil
@@ -239,12 +238,12 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
-	tx, err := j.db.BeginTxx(ctx, nil)
+	tx, err := j.jobsRepo.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// check if the job exists in the repo
-	job, err := j.jobsRepo.GetById(tx, jobID)
+	job, err := j.jobsRepo.GetById(jobID)
 	if err != nil {
 		return nil, custom_errors.ErrNoEntityMatchingId
 	}
@@ -296,7 +295,7 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 		return nil, err
 	}
 
-	updatedJob, err := j.jobsRepo.GetById(j.db, jobID)
+	updatedJob, err := j.jobsRepo.GetById(jobID)
 	var gqlJob gqlmodel.Job
 	gqlJob.MapDbToGql(*updatedJob)
 
@@ -309,12 +308,12 @@ func (j *JobsService) DeleteJob(ctx context.Context, jobID string) (*gqlmodel.Jo
 		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
-	job, err := j.jobsRepo.GetById(j.db, jobID)
+	job, err := j.jobsRepo.GetById(jobID)
 	if err != nil {
 		return nil, custom_errors.ErrNoEntityMatchingId
 	}
 
-	tx, err := j.db.BeginTxx(ctx, nil)
+	tx, err := j.jobsRepo.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +376,7 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 		return nil, custom_errors.ErrUserNotOwner
 	}
 
-	tx, err := j.db.BeginTxx(ctx, nil)
+	tx, err := j.jobsRepo.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}
