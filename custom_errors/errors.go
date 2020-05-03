@@ -13,4 +13,5 @@ var (
 	ErrUserNotAuthenticated           = errors.New("unauthorized request")
 	ErrInvalidId                      = errors.New("invalid id supplied")
 	ErrInvalidQuery                   = errors.New("invalid query")
+	ErrNoExistingApplications         = errors.New("no existing applications for user")
 )

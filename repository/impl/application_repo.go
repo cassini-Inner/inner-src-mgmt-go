@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"strings"
@@ -66,7 +67,7 @@ func (a *ApplicationsRepoImpl) GetExistingUserApplications(milestones []*dbmodel
 		return existingApplications, nil
 	}
 
-	return nil, ErrNoExistingApplications
+	return nil, custom_errors.ErrNoExistingApplications
 }
 
 func (a *ApplicationsRepoImpl) CreateApplication(milestones []*dbmodel.Milestone, userId string, ctx context.Context, tx *sqlx.Tx) ([]*dbmodel.Application, error) {

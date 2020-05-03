@@ -56,19 +56,19 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 	existingApplications, err := a.applicationsRepo.GetExistingUserApplications(milestones, user.Id, tx, dbmodel.ApplicationStatusPending, dbmodel.ApplicationStatusAccepted)
 
 	// if some error occurred
-	if err != nil && err != repository.ErrNoExistingApplications {
+	if err != nil && err != custom_errors.ErrNoExistingApplications {
 		_ = tx.Rollback()
 		return nil, err
 	}
 
 	// if no applications exist where status = pending or accepted
-	if err == repository.ErrNoExistingApplications {
+	if err == custom_errors.ErrNoExistingApplications {
 		existingApplications, err = a.applicationsRepo.GetExistingUserApplications(milestones, user.Id, tx, dbmodel.ApplicationStatusWithdrawn, dbmodel.ApplicationStatusRejected)
-		if err != nil && err != repository.ErrNoExistingApplications {
+		if err != nil && err != custom_errors.ErrNoExistingApplications {
 			_ = tx.Rollback()
 			return nil, err
 		}
-		if err == repository.ErrNoExistingApplications {
+		if err == custom_errors.ErrNoExistingApplications {
 			createdApplications, err := a.applicationsRepo.CreateApplication(milestones, user.Id, ctx, tx)
 			if err != nil {
 				_ = tx.Rollback()
