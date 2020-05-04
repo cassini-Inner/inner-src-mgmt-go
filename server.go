@@ -9,7 +9,8 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 	CustomMiddlewares "github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository/impl"
-	"github.com/cassini-Inner/inner-src-mgmt-go/service"
+	"github.com/cassini-Inner/inner-src-mgmt-go/rest"
+	impl2 "github.com/cassini-Inner/inner-src-mgmt-go/service/impl"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/jmoiron/sqlx"
@@ -37,30 +38,41 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	discussionsRepo := impl.NewDiscussionsRepo(DB)
 	applicationsRepo := impl.NewApplicationsRepo(DB)
 
+	jobsService := impl2.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo)
+	applicationsService := impl2.NewApplicationsService(jobsRepo, applicationsRepo)
+	userService := impl2.NewUserProfileService(usersRepo, skillsRepo)
+	authService := impl2.NewAuthenticationService(usersRepo)
+	skillsService := impl2.NewSkillsService(skillsRepo)
+
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &resolver.Resolver{
 		ApplicationsRepo:      applicationsRepo,
 		DiscussionsRepo:       discussionsRepo,
 		JobsRepo:              jobsRepo,
 		SkillsRepo:            skillsRepo,
-		JobsService:           service.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo),
-		ApplicationsService:   service.NewApplicationsService(jobsRepo, applicationsRepo),
-		UserService:           service.NewUserProfileService(usersRepo, skillsRepo),
-		AuthenticationService: service.NewAuthenticationService(usersRepo),
-		SkillsService:         service.NewSkillsService(skillsRepo),
+		JobsService:           jobsService,
+		ApplicationsService:   applicationsService,
+		UserService:           userService,
+		AuthenticationService: authService,
+		SkillsService:         skillsService,
 	}}))
+
+	restAuthHandler := rest.NewAuthenticationHandler(authService)
 
 	router := chi.NewRouter()
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8081", "http://localhost:8080", "http://localhost:3000"},
-		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete},
+		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete, http.MethodConnect},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
+		Debug:true,
 	}).Handler)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
 	router.Use(CustomMiddlewares.AuthMiddleware(usersRepo))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", dataloader.DataloaderMiddleware(DB, srv))
+	router.Handle("/authenticate", restAuthHandler)
+	router.HandleFunc("/read-cookie", rest.GetUIDFromCookie)
 	return router, nil
 }
 

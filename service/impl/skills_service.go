@@ -1,4 +1,4 @@
-package service
+package impl
 
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"

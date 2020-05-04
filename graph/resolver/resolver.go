@@ -2,7 +2,8 @@ package resolver
 
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
-	"github.com/cassini-Inner/inner-src-mgmt-go/service"
+	service "github.com/cassini-Inner/inner-src-mgmt-go/service"
+	impl "github.com/cassini-Inner/inner-src-mgmt-go/service/impl"
 )
 
 //go:generate go run github.com/99designs/gqlgen
@@ -16,9 +17,9 @@ type Resolver struct {
 	DiscussionsRepo       repository.DiscussionsRepo
 	JobsRepo              repository.JobsRepo
 	SkillsRepo            repository.SkillsRepo
-	JobsService           *service.JobsService
-	ApplicationsService   *service.ApplicationsService
-	UserService           *service.UserProfileService
-	AuthenticationService *service.AuthenticationService
-	SkillsService         *service.SkillsService
+	JobsService           *impl.JobsService
+	ApplicationsService   *impl.ApplicationsService
+	UserService           *impl.UserProfileService
+	AuthenticationService service.AuthenticationService
+	SkillsService         *impl.SkillsService
 }

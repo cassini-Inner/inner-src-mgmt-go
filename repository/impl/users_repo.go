@@ -29,12 +29,13 @@ func NewUsersRepo(db *sqlx.DB) *UsersRepoImpl {
 
 func (u *UsersRepoImpl) UpdateUser(tx *sqlx.Tx, updatedUserInformation *dbmodel.User) (*dbmodel.User, error) {
 	// update the users information in the database
-	_, err := tx.Exec(updateUserByUserIdQuery, userInformation.Email, userInformation.Name, userInformation.Role, userInformation.Department, userInformation.Bio, userInformation.PhotoUrl, userInformation.Contact, time.Now(), userInformation.IsDeleted, userInformation.GithubUrl, userInformation.Onboarded, userInformation.GithubId, userInformation.GithubName, userInformation.Id)
+	_, err := tx.Exec(updateUserByUserIdQuery, updatedUserInformation.Email, updatedUserInformation.Name, updatedUserInformation.Role, updatedUserInformation.Department, updatedUserInformation.Bio, updatedUserInformation.PhotoUrl, updatedUserInformation.Contact, time.Now(), updatedUserInformation.IsDeleted, updatedUserInformation.GithubUrl, updatedUserInformation.Onboarded, updatedUserInformation.GithubId, updatedUserInformation.GithubName, updatedUserInformation.Id)
 	if err != nil {
 		return nil, err
 	}
+
 	// fetch the updated data from the db and return
-	return u.GetByIdTx(tx, userInformation.Id)
+	return u.GetByIdTx(tx, updatedUserInformation.Id)
 }
 
 func (u *UsersRepoImpl) RemoveUserSkillsByUserId(tx *sqlx.Tx, userID string) error {
