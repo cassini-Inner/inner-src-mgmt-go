@@ -15,8 +15,8 @@ type UserProfileService struct {
 	skillsRepo repository.SkillsRepo
 }
 
-func NewUserProfileService( userRepo repository.UsersRepo, skillsRepo repository.SkillsRepo) *UserProfileService {
-	return &UserProfileService{ userRepo: userRepo, skillsRepo: skillsRepo}
+func NewUserProfileService(userRepo repository.UsersRepo, skillsRepo repository.SkillsRepo) *UserProfileService {
+	return &UserProfileService{userRepo: userRepo, skillsRepo: skillsRepo}
 }
 
 func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlmodel.UpdateUserInput) (*gqlmodel.User, error) {
@@ -47,7 +47,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 	if userDetails.Name != nil {
 		currentRequestUser.Name = dbmodel.ToNullString(userDetails.Name)
 	}
-	user, err := s.userRepo.UpdateUser(currentRequestUser, tx)
+	user, err := s.userRepo.UpdateUser(tx, currentRequestUser)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -55,7 +55,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 
 	// if user skills are to be created
 	if userDetails.Skills != nil {
-		err := s.userRepo.RemoveUserSkillsByUserId(currentRequestUser.Id, tx)
+		err := s.userRepo.RemoveUserSkillsByUserId(tx, currentRequestUser.Id)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -74,7 +74,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 				_ = tx.Rollback()
 				return nil, err
 			}
-			err = s.skillsRepo.AddSkillsToUserSkills(newSkills, tx, currentRequestUser.Id)
+			err = s.skillsRepo.AddSkillsToUserSkills(tx, newSkills, currentRequestUser.Id)
 			if err != nil {
 				_ = tx.Rollback()
 				return nil, err

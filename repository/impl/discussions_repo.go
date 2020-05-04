@@ -19,7 +19,7 @@ func NewDiscussionsRepo(db *sqlx.DB) *DiscussionsRepoImpl {
 }
 
 //TODO: Implement
-func (d *DiscussionsRepoImpl) CreateComment(jobId, comment, userId string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error) {
+func (d *DiscussionsRepoImpl) CreateComment(ctx context.Context, tx *sqlx.Tx, jobId, comment, userId string) (*dbmodel.Discussion, error) {
 	var newDiscussion dbmodel.Discussion
 	err := tx.QueryRowxContext(ctx, `insert into discussions(job_id, created_by, content) values ($1,$2, $3) returning *`, jobId, userId, comment).StructScan(&newDiscussion)
 	if err != nil {
@@ -27,7 +27,7 @@ func (d *DiscussionsRepoImpl) CreateComment(jobId, comment, userId string, tx *s
 	}
 	return &newDiscussion, nil
 }
-func (d *DiscussionsRepoImpl) UpdateComment(discussionId, content string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error) {
+func (d *DiscussionsRepoImpl) UpdateComment(ctx context.Context, tx *sqlx.Tx, discussionId, content string) (*dbmodel.Discussion, error) {
 	var discussion dbmodel.Discussion
 
 	err := tx.QueryRowxContext(ctx, updateDiscussionById, content, discussionId).StructScan(&discussion)
@@ -39,7 +39,7 @@ func (d *DiscussionsRepoImpl) UpdateComment(discussionId, content string, tx *sq
 	return &discussion, nil
 }
 
-func (d *DiscussionsRepoImpl) DeleteComment(discussionId string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error) {
+func (d *DiscussionsRepoImpl) DeleteComment(ctx context.Context, tx *sqlx.Tx, discussionId string) (*dbmodel.Discussion, error) {
 	var discussion dbmodel.Discussion
 	err := tx.QueryRowxContext(ctx, deleteDiscussionById, discussionId).StructScan(&discussion)
 	if err != nil {
@@ -64,7 +64,7 @@ func (d *DiscussionsRepoImpl) GetByJobId(jobId string) ([]*dbmodel.Discussion, e
 	return result, nil
 }
 
-func (d *DiscussionsRepoImpl) GetById(discussionId string, tx *sqlx.Tx) (*dbmodel.Discussion, error) {
+func (d *DiscussionsRepoImpl) GetById(tx *sqlx.Tx, discussionId string) (*dbmodel.Discussion, error) {
 	var discussion dbmodel.Discussion
 	err := tx.QueryRowx(getDiscussionById, discussionId).StructScan(&discussion)
 	if err != nil {

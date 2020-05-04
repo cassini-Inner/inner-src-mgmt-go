@@ -228,7 +228,7 @@ func (s *SkillsRepoImpl) MapSkillsToMilestones(ctx context.Context, tx *sqlx.Tx,
 	return nil
 }
 
-func (s *SkillsRepoImpl) AddSkillsToUserSkills(skills map[string]*dbmodel.GlobalSkill, tx *sqlx.Tx, userId string) error {
+func (s *SkillsRepoImpl) AddSkillsToUserSkills(tx *sqlx.Tx, skills map[string]*dbmodel.GlobalSkill, userId string) error {
 	if len(skills) == 0 {
 		return nil
 	}

@@ -55,7 +55,7 @@ func TestUsersRepo_GetByIdTx(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, tx)
 
-		newUser, err := repo.GetByIdTx(userId, tx)
+		newUser, err := repo.GetByIdTx(tx, userId)
 		assert.Nil(t, err)
 		assert.NotNil(t, newUser)
 		err = tx.Commit()
@@ -77,7 +77,7 @@ func TestUsersRepo_GetByIdTx(t *testing.T) {
 		assert.NotNil(t, tx)
 		defer tx.Commit()
 
-		user, err := repo.GetByIdTx(userId, tx)
+		user, err := repo.GetByIdTx(tx, userId)
 		assert.Nil(t, user)
 		assert.NotNil(t, err)
 		assert.Equal(t, err, customErrors.ErrNoEntityMatchingId)
@@ -94,7 +94,7 @@ func TestUsersRepo_GetByIdTx(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, tx)
 
-		user, err := repo.GetByIdTx(userId, tx)
+		user, err := repo.GetByIdTx(tx, userId)
 		assert.Nil(t, user)
 		assert.NotNil(t, err)
 		assert.Equal(t, err, customErrors.ErrInvalidId)

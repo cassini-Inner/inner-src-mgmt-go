@@ -111,10 +111,10 @@ func (j *JobsService) GetAllJobs(ctx context.Context, skills, status []string) (
 		status = append(status, "open", "ongoing", "completed")
 	}
 
-	for i, _ := range skills {
+	for i := range skills {
 		skills[i] = strings.ToLower(skills[i])
 	}
-	for i, _ := range status {
+	for i := range status {
 		status[i] = strings.ToLower(status[i])
 	}
 
@@ -135,7 +135,7 @@ func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId str
 		return nil, err
 	}
 
-	newComment, err := j.discussionsRepo.CreateComment(jobId, comment, user.Id, tx, ctx)
+	newComment, err := j.discussionsRepo.CreateComment(ctx, tx, jobId, comment, user.Id)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -159,7 +159,7 @@ func (j *JobsService) UpdateJobDiscussion(ctx context.Context, commentId, commen
 		return nil, custom_errors.ErrUserNotAuthenticated
 	}
 
-	existingDiscussion, err := j.discussionsRepo.GetById(commentId, tx)
+	existingDiscussion, err := j.discussionsRepo.GetById(tx, commentId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, custom_errors.ErrNoEntityMatchingId
@@ -170,7 +170,7 @@ func (j *JobsService) UpdateJobDiscussion(ctx context.Context, commentId, commen
 		return nil, custom_errors.ErrUserNotOwner
 	}
 
-	updatedDiscussion, err := j.discussionsRepo.UpdateComment(commentId, comment, tx, ctx)
+	updatedDiscussion, err := j.discussionsRepo.UpdateComment(ctx, tx, commentId, comment)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (j *JobsService) DeleteJobDiscussion(ctx context.Context, commentId string)
 
 	tx, err := j.jobsRepo.BeginTx(ctx)
 
-	existingDiscussion, err := j.discussionsRepo.GetById(commentId, tx)
+	existingDiscussion, err := j.discussionsRepo.GetById(tx, commentId)
 	if err != nil {
 		_ = tx.Rollback()
 		if err == sql.ErrNoRows {
@@ -207,7 +207,7 @@ func (j *JobsService) DeleteJobDiscussion(ctx context.Context, commentId string)
 		_ = tx.Rollback()
 		return nil, custom_errors.ErrUserNotOwner
 	}
-	discussion, err := j.discussionsRepo.DeleteComment(commentId, tx, ctx)
+	discussion, err := j.discussionsRepo.DeleteComment(ctx, tx, commentId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err

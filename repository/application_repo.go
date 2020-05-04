@@ -13,21 +13,13 @@ var (
 
 type ApplicationsRepo interface {
 	Repository
-	GetExistingUserApplications(milestones []*dbmodel.Milestone, userId string, tx *sqlx.Tx, applicationStatus ...string) ([]*dbmodel.Application, error)
-
-	CreateApplication(milestones []*dbmodel.Milestone, userId string, ctx context.Context, tx *sqlx.Tx) ([]*dbmodel.Application, error)
-
-	SetApplicationStatusForUserMilestone(milestoneIds []string, userId string, applicationStatus string, note string, tx *sqlx.Tx) ([]*dbmodel.Application, error)
-
+	GetExistingUserApplications(tx *sqlx.Tx, milestones []*dbmodel.Milestone, userId string, applicationStatus ...string) ([]*dbmodel.Application, error)
+	CreateApplication(ctx context.Context, tx *sqlx.Tx, milestones []*dbmodel.Milestone, userId string) ([]*dbmodel.Application, error)
+	SetApplicationStatusForUserMilestone(tx *sqlx.Tx, milestoneIds []string, userId string, applicationStatus string, note string) ([]*dbmodel.Application, error)
 	GetByJobId(jobId string) ([]*dbmodel.Application, error)
-
-	GetApplicationStatusForUserAndJob(userId, jobId string, tx *sqlx.Tx) (string, error)
-
-	SetApplicationStatusForUserAndJob(userId, jobId string, milestones []*dbmodel.Milestone, applicationStatus string, note *string, tx *sqlx.Tx, ctx context.Context) ([]*dbmodel.Application, error)
-
+	GetApplicationStatusForUserAndJob(userId string, tx *sqlx.Tx, jobId string) (string, error)
+	SetApplicationStatusForUserAndJob(ctx context.Context, tx *sqlx.Tx, milestones []*dbmodel.Milestone, applicationStatus string, note *string, jobId, userId string) ([]*dbmodel.Application, error)
 	GetAcceptedApplicationsByJobId(jobId string) ([]*dbmodel.Application, error)
-
 	GetUserJobApplications(userId string) ([]*dbmodel.Job, error)
-
 	DeleteAllJobApplications(tx *sqlx.Tx, jobId string) error
 }

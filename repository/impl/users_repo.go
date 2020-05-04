@@ -27,17 +27,17 @@ func NewUsersRepo(db *sqlx.DB) *UsersRepoImpl {
 	return &UsersRepoImpl{db: db}
 }
 
-func (u *UsersRepoImpl) UpdateUser(userInformation *dbmodel.User, tx *sqlx.Tx) (*dbmodel.User, error) {
+func (u *UsersRepoImpl) UpdateUser(tx *sqlx.Tx, updatedUserInformation *dbmodel.User) (*dbmodel.User, error) {
 	// update the users information in the database
 	_, err := tx.Exec(updateUserByUserIdQuery, userInformation.Email, userInformation.Name, userInformation.Role, userInformation.Department, userInformation.Bio, userInformation.PhotoUrl, userInformation.Contact, time.Now(), userInformation.IsDeleted, userInformation.GithubUrl, userInformation.Onboarded, userInformation.GithubId, userInformation.GithubName, userInformation.Id)
 	if err != nil {
 		return nil, err
 	}
 	// fetch the updated data from the db and return
-	return u.GetByIdTx(userInformation.Id, tx)
+	return u.GetByIdTx(tx, userInformation.Id)
 }
 
-func (u *UsersRepoImpl) RemoveUserSkillsByUserId(userID string, tx *sqlx.Tx) error {
+func (u *UsersRepoImpl) RemoveUserSkillsByUserId(tx *sqlx.Tx, userID string) error {
 	_, err := tx.Exec(deleteSkillsFromUserskillsByUserIdQuery, userID)
 	if err != nil {
 		return ErrRemovingCurrentUserSkills
@@ -45,7 +45,7 @@ func (u *UsersRepoImpl) RemoveUserSkillsByUserId(userID string, tx *sqlx.Tx) err
 	return nil
 }
 
-func (u *UsersRepoImpl) GetByIdTx(userId string, tx *sqlx.Tx) (*dbmodel.User, error) {
+func (u *UsersRepoImpl) GetByIdTx(tx *sqlx.Tx, userId string) (*dbmodel.User, error) {
 	_, err := strconv.Atoi(userId)
 	if err != nil {
 		return nil, customErrors.ErrInvalidId
@@ -85,21 +85,21 @@ func (u *UsersRepoImpl) GetByGithubId(githubId string) (*dbmodel.User, error) {
 	return &user, nil
 }
 
-func (u *UsersRepoImpl) CreateNewUser(user *dbmodel.User, tx *sqlx.Tx) (*dbmodel.User, error) {
+func (u *UsersRepoImpl) CreateNewUser(tx *sqlx.Tx, user *dbmodel.User) (*dbmodel.User, error) {
 	newUserId := 0
 	// we are setting up a users bio on sign-up since it's not included as part of on-boarding
 	err := tx.QueryRowx(createNewUserQuery, user.Email, user.Name, user.Role, user.Department, user.Bio, user.PhotoUrl, user.Contact, user.GithubUrl, user.GithubId, user.GithubName).Scan(&newUserId)
 	if err != nil {
 		return nil, err
 	}
-	createdUser, err := u.GetByIdTx(strconv.Itoa(newUserId), tx)
+	createdUser, err := u.GetByIdTx(tx, strconv.Itoa(newUserId))
 	if err != nil {
 		return nil, err
 	}
 	return createdUser, nil
 }
 
-func (u *UsersRepoImpl) CountUsersByGithubId(githubId sql.NullString, tx *sqlx.Tx) (int, error) {
+func (u *UsersRepoImpl) CountUsersByGithubId(tx *sqlx.Tx, githubId sql.NullString) (int, error) {
 	usersCount := 0
 	err := tx.QueryRowx(countUsersByGithubIdQuery, githubId).Scan(&usersCount)
 	if err != nil {

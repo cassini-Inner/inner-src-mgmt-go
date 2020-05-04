@@ -61,7 +61,6 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	router.Use(CustomMiddlewares.AuthMiddleware(usersRepo))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", dataloader.DataloaderMiddleware(DB, srv))
-
 	return router, nil
 }
 

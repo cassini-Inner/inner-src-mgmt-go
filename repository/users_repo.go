@@ -8,12 +8,12 @@ import (
 
 type UsersRepo interface {
 	Repository
-	RemoveUserSkillsByUserId(userID string, tx *sqlx.Tx) error
-	GetByIdTx(userId string, tx *sqlx.Tx) (*dbmodel.User, error)
+	RemoveUserSkillsByUserId(tx *sqlx.Tx, userID string) error
+	GetByIdTx(tx *sqlx.Tx, userId string) (*dbmodel.User, error)
 	GetById(userId string) (*dbmodel.User, error)
 	GetByEmailId(emailId string) (*dbmodel.User, error)
 	GetByGithubId(githubId string) (*dbmodel.User, error)
-	CreateNewUser(user *dbmodel.User, tx *sqlx.Tx) (*dbmodel.User, error)
-	CountUsersByGithubId(githubId sql.NullString, tx *sqlx.Tx) (int, error)
-	UpdateUser(updatedUserInformation *dbmodel.User, tx *sqlx.Tx) (*dbmodel.User, error)
+	CreateNewUser(tx *sqlx.Tx, user *dbmodel.User) (*dbmodel.User, error)
+	CountUsersByGithubId(tx *sqlx.Tx, githubId sql.NullString) (int, error)
+	UpdateUser(tx *sqlx.Tx, updatedUserInformation *dbmodel.User) (*dbmodel.User, error)
 }

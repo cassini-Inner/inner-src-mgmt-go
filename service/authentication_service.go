@@ -19,8 +19,8 @@ type AuthenticationService struct {
 	usersRepo repository.UsersRepo
 }
 
-func NewAuthenticationService( usersRepo repository.UsersRepo) *AuthenticationService {
-	return &AuthenticationService{ usersRepo: usersRepo}
+func NewAuthenticationService(usersRepo repository.UsersRepo) *AuthenticationService {
+	return &AuthenticationService{usersRepo: usersRepo}
 }
 
 func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, githubCode string) (*gqlmodel.User, error) {
@@ -36,7 +36,7 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, gith
 
 	tx, err := s.usersRepo.BeginTx(ctx)
 	// check if the user is signing up for the first time
-	usersCount, err := s.usersRepo.CountUsersByGithubId(fetchedUser.GithubId, tx)
+	usersCount, err := s.usersRepo.CountUsersByGithubId(tx, fetchedUser.GithubId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -46,7 +46,7 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, gith
 	var user *dbmodel.User
 	switch usersCount {
 	case 0:
-		user, err = s.usersRepo.CreateNewUser(fetchedUser, tx)
+		user, err = s.usersRepo.CreateNewUser(tx, fetchedUser)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err

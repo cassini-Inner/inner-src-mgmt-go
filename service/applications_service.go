@@ -52,7 +52,7 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 	}
 
 	// get all the pending or accepted applications of a user
-	existingApplications, err := a.applicationsRepo.GetExistingUserApplications(milestones, user.Id, tx, dbmodel.ApplicationStatusPending, dbmodel.ApplicationStatusAccepted)
+	existingApplications, err := a.applicationsRepo.GetExistingUserApplications(tx, milestones, user.Id, dbmodel.ApplicationStatusPending, dbmodel.ApplicationStatusAccepted)
 
 	// if some error occurred
 	if err != nil && err != custom_errors.ErrNoExistingApplications {
@@ -62,13 +62,13 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 
 	// if no applications exist where status = pending or accepted
 	if err == custom_errors.ErrNoExistingApplications {
-		existingApplications, err = a.applicationsRepo.GetExistingUserApplications(milestones, user.Id, tx, dbmodel.ApplicationStatusWithdrawn, dbmodel.ApplicationStatusRejected)
+		existingApplications, err = a.applicationsRepo.GetExistingUserApplications(tx, milestones, user.Id, dbmodel.ApplicationStatusWithdrawn, dbmodel.ApplicationStatusRejected)
 		if err != nil && err != custom_errors.ErrNoExistingApplications {
 			_ = tx.Rollback()
 			return nil, err
 		}
 		if err == custom_errors.ErrNoExistingApplications {
-			createdApplications, err := a.applicationsRepo.CreateApplication(milestones, user.Id, ctx, tx)
+			createdApplications, err := a.applicationsRepo.CreateApplication(ctx, tx, milestones, user.Id)
 			if err != nil {
 				_ = tx.Rollback()
 				return nil, err
@@ -80,7 +80,7 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 			return gqlmodel.MapDBApplicationListToGql(createdApplications), nil
 		}
 		note := ""
-		existingApplications, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(user.Id, jobId, milestones, dbmodel.ApplicationStatusPending, &note, tx, ctx)
+		existingApplications, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(ctx, tx, milestones, dbmodel.ApplicationStatusPending, &note, jobId, user.Id)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -115,7 +115,7 @@ func (a *ApplicationsService) DeleteUserJobApplication(ctx context.Context, jobI
 		return nil, err
 	}
 
-	applications, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(user.Id, jobId, jobMilestones, dbmodel.ApplicationStatusWithdrawn, nil, tx, ctx)
+	applications, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(ctx, tx, jobMilestones, dbmodel.ApplicationStatusWithdrawn, nil, jobId, user.Id)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -143,7 +143,7 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 	if err != nil {
 		return nil, err
 	}
-	currentStatus, err := a.applicationsRepo.GetApplicationStatusForUserAndJob(applicantId, jobId, tx)
+	currentStatus, err := a.applicationsRepo.GetApplicationStatusForUserAndJob(applicantId, tx, jobId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -184,7 +184,7 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 		return nil, err
 	}
 
-	updateResult, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(applicantId, jobId, milestones, strings.ToLower(status.String()), note, tx, ctx)
+	updateResult, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(ctx, tx, milestones, strings.ToLower(status.String()), note, jobId, applicantId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -201,5 +201,5 @@ func (a *ApplicationsService) GetApplicationStatusForUserAndJob(ctx context.Cont
 	if err != nil {
 		return "", err
 	}
-	return a.applicationsRepo.GetApplicationStatusForUserAndJob(userId, joinId, tx)
+	return a.applicationsRepo.GetApplicationStatusForUserAndJob(userId, tx, joinId)
 }

@@ -8,11 +8,10 @@ import (
 
 type DiscussionsRepo interface {
 	Repository
-
-	CreateComment(jobId, comment, userId string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error)
-	UpdateComment(discussionId, content string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error)
-	DeleteComment(discussionId string, tx *sqlx.Tx, ctx context.Context) (*dbmodel.Discussion, error)
+	CreateComment(ctx context.Context, tx *sqlx.Tx, jobId, comment, userId string) (*dbmodel.Discussion, error)
+	UpdateComment(ctx context.Context, tx *sqlx.Tx, discussionId, content string) (*dbmodel.Discussion, error)
+	DeleteComment(ctx context.Context, tx *sqlx.Tx, discussionId string) (*dbmodel.Discussion, error)
 	GetByJobId(jobId string) ([]*dbmodel.Discussion, error)
-	GetById(discussionId string, tx *sqlx.Tx) (*dbmodel.Discussion, error)
+	GetById(tx *sqlx.Tx, discussionId string) (*dbmodel.Discussion, error)
 	DeleteAllCommentsForJob(tx *sqlx.Tx, jobID string) error
 }

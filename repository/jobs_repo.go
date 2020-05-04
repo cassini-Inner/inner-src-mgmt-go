@@ -9,7 +9,6 @@ import (
 
 type JobsRepo interface {
 	Repository
-
 	CreateJob(ctx context.Context, tx *sqlx.Tx, input *gqlmodel.CreateJobInput, user *dbmodel.User) (*dbmodel.Job, error)
 	UpdateJob(input *gqlmodel.UpdateJobInput) (*dbmodel.Job, error)
 	DeleteJob(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error)

@@ -24,16 +24,16 @@ func NewApplicationsRepo(db *sqlx.DB) *ApplicationsRepoImpl {
 	return &ApplicationsRepoImpl{db: db}
 }
 
-
 func (a *ApplicationsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return a.db.BeginTxx(ctx, nil)
 }
+
 // GetExistingUserApplications return existing user applications on the basis a applicationStatus filter
 // if the number of applications is equal to the number of milestones then the user has properly applied to
 // all the milestones. Returns ErrNoExistingApplications if this is not the case
 
 // will get a null list in other case
-func (a *ApplicationsRepoImpl) GetExistingUserApplications(milestones []*dbmodel.Milestone, userId string, tx *sqlx.Tx, applicationStatus ...string) ([]*dbmodel.Application, error) {
+func (a *ApplicationsRepoImpl) GetExistingUserApplications(tx *sqlx.Tx, milestones []*dbmodel.Milestone, userId string, applicationStatus ...string) ([]*dbmodel.Application, error) {
 
 	// get the list of milestoneIds from the job milestones
 	var milestoneIds []string
@@ -74,7 +74,7 @@ func (a *ApplicationsRepoImpl) GetExistingUserApplications(milestones []*dbmodel
 	return nil, custom_errors.ErrNoExistingApplications
 }
 
-func (a *ApplicationsRepoImpl) CreateApplication(milestones []*dbmodel.Milestone, userId string, ctx context.Context, tx *sqlx.Tx) ([]*dbmodel.Application, error) {
+func (a *ApplicationsRepoImpl) CreateApplication(ctx context.Context, tx *sqlx.Tx, milestones []*dbmodel.Milestone, userId string) ([]*dbmodel.Application, error) {
 	// if the user has not applied to a job already then begin a new transaction to create new applications
 	var applicationInsertArgs []interface{}
 	var applicationInsertValues []string
@@ -100,7 +100,7 @@ func (a *ApplicationsRepoImpl) CreateApplication(milestones []*dbmodel.Milestone
 	return insertedApplications, nil
 }
 
-func (a *ApplicationsRepoImpl) SetApplicationStatusForUserMilestone(milestoneIds []string, userId string, applicationStatus string, note string, tx *sqlx.Tx) ([]*dbmodel.Application, error) {
+func (a *ApplicationsRepoImpl) SetApplicationStatusForUserMilestone(tx *sqlx.Tx, milestoneIds []string, userId string, applicationStatus string, note string) ([]*dbmodel.Application, error) {
 	updateExistingStatement, updateExistingArgs, err := sqlx.In(updateApplicationsForMilestonesUser, applicationStatus, note, time.Now(), milestoneIds, userId)
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (a *ApplicationsRepoImpl) GetByJobId(jobId string) ([]*dbmodel.Application,
 	return scanApplicationRowsx(rows)
 }
 
-func (a *ApplicationsRepoImpl) GetApplicationStatusForUserAndJob(userId, jobId string, tx *sqlx.Tx) (string, error) {
+func (a *ApplicationsRepoImpl) GetApplicationStatusForUserAndJob(userId string, tx *sqlx.Tx, jobId string) (string, error) {
 	// TODO: Will need to refactor this when we allow users to apply to milestones
 	result := ""
 	err := tx.QueryRowx(selectApplicationStatusByUserIdJobId, jobId, userId).Scan(&result)
@@ -137,7 +137,7 @@ func (a *ApplicationsRepoImpl) GetApplicationStatusForUserAndJob(userId, jobId s
 	return strings.ToLower(result), nil
 }
 
-func (a *ApplicationsRepoImpl) SetApplicationStatusForUserAndJob(userId, jobId string, milestones []*dbmodel.Milestone, applicationStatus string, note *string, tx *sqlx.Tx, ctx context.Context) ([]*dbmodel.Application, error) {
+func (a *ApplicationsRepoImpl) SetApplicationStatusForUserAndJob(ctx context.Context, tx *sqlx.Tx, milestones []*dbmodel.Milestone, applicationStatus string, note *string, jobId, userId string) ([]*dbmodel.Application, error) {
 	var milestoneIds []string
 	for _, milestone := range milestones {
 		milestoneIds = append(milestoneIds, milestone.Id)
