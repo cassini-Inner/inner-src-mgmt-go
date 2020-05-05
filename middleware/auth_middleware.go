@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/dgrijalva/jwt-go"
@@ -25,7 +24,6 @@ func AuthMiddleware(repo repository.UsersRepo) func(http.Handler) http.Handler {
 			}
 			claims, ok := token.Claims.(jwt.StandardClaims)
 			//TODO: Change this to block request if valid token is not supplied
-			fmt.Println(claims)
 			if !ok || !token.Valid {
 				next.ServeHTTP(w, r)
 				return
@@ -46,12 +44,11 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(cookie.Value)
 	var claims jwt.StandardClaims
-	token, err := jwt.ParseWithClaims(cookie.Value, &claims,func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(cookie.Value, &claims, func(token *jwt.Token) (interface{}, error) {
 		t := []byte(os.Getenv("JWT_SECRET"))
 		return t, nil
-	},)
+	})
 	if err != nil {
 		return nil, err
 	}

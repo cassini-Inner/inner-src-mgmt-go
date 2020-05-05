@@ -2,34 +2,29 @@ package impl
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"strings"
+	"github.com/cassini-Inner/inner-src-mgmt-go/service"
 )
 
 type AuthenticationService struct {
-	usersRepo repository.UsersRepo
+	usersRepo    repository.UsersRepo
+	oauthService service.OAuthService
 }
 
-func NewAuthenticationService(usersRepo repository.UsersRepo) *AuthenticationService {
-	return &AuthenticationService{usersRepo: usersRepo}
+func NewAuthenticationService(usersRepo repository.UsersRepo, oauthService service.OAuthService) *AuthenticationService {
+	return &AuthenticationService{usersRepo: usersRepo, oauthService: oauthService}
 }
 
-func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, githubCode string) (*gqlmodel.User, error) {
-	accessToken, err := s.getAccessTokenFromCode(githubCode)
+func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, code string) (*gqlmodel.User, error) {
+	_, err := s.oauthService.Authenticate(code)
 	if err != nil {
 		return nil, err
 	}
 
-	fetchedUser, err := s.getUserInformationFromToken(accessToken)
+	fetchedUser, err := s.oauthService.GetUserInfo()
 	if err != nil {
 		return nil, err
 	}
@@ -70,72 +65,4 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, gith
 
 	gqlUser.MapDbToGql(*user)
 	return &gqlUser, nil
-}
-
-func (s *AuthenticationService) getAccessTokenFromCode(githubCode string) (string, error) {
-	urlStr := fmt.Sprintf("https://github.com/login/oauth/access_token?client_id=%v&client_secret=%v&code=%v", os.Getenv("client_id"),
-		os.Getenv("client_secret"),
-		githubCode,
-	)
-
-	client := http.Client{}
-	request, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(""))
-	request.Header.Add("Accept", "application/json")
-	response, err := client.Do(request)
-	if err != nil {
-		return "", err
-	}
-	data, err := s.parseJsonFromResponse(response.Body)
-	if err != nil {
-		return "", err
-	}
-	//TODO: Error message is ambiguous, use the error message provided by github
-	if response.StatusCode != 200 {
-		return "", errors.New("could not authenticate with github")
-	}
-	accessToken, ok := data["access_token"].(string)
-	fmt.Println(accessToken)
-	if !ok {
-		return "", errors.New("could not get access_token from github auth response, token expired or invalid")
-	}
-
-	return accessToken, nil
-}
-
-func (s *AuthenticationService) getUserInformationFromToken(accessToken string) (*dbmodel.User, error) {
-	client := http.Client{}
-	request, _ := http.NewRequest(http.MethodGet, "https://api.github.com/user", strings.NewReader(""))
-	request.Header.Set("Authorization", fmt.Sprintf(
-		"token %v", accessToken))
-
-	response, err := client.Do(request)
-	if err != nil || response.StatusCode != 200 {
-		return nil, err
-	}
-
-	result, err := s.parseJsonFromResponse(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	user := &dbmodel.User{
-		Email:      dbmodel.ToNullString(result["email"]),
-		Name:       dbmodel.ToNullString(result["name"]),
-		Bio:        dbmodel.ToNullString(result["bio"]),
-		PhotoUrl:   dbmodel.ToNullString(result["avatar_url"]),
-		GithubUrl:  dbmodel.ToNullString(result["html_url"]),
-		GithubId:   dbmodel.ToNullString(result["id"]),
-		GithubName: dbmodel.ToNullString(result["login"]),
-	}
-	return user, nil
-}
-
-func (s *AuthenticationService) parseJsonFromResponse(responseBody io.Reader) (map[string]interface{}, error) {
-	var result map[string]interface{}
-	body, _ := ioutil.ReadAll(responseBody)
-	err := json.Unmarshal(body, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
 }
