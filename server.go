@@ -2,6 +2,10 @@ package main
 
 import (
 	"errors"
+	"log"
+	"net/http"
+	"os"
+
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
@@ -16,9 +20,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
-	"log"
-	"net/http"
-	"os"
 )
 
 const defaultPort = "8080"
@@ -64,7 +65,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete, http.MethodConnect},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-		Debug:true,
+		Debug:            true,
 	}).Handler)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
@@ -81,7 +82,7 @@ func main() {
 	_ = os.Setenv("jwt_secret", "innersource_jwt_secret_key")
 	_ = os.Setenv("client_id", "5a4ff35b849d9cc3cab7")
 	_ = os.Setenv("client_secret", "f94c5d74e099ed894f88ac6c75ac19c4c3194427")
-	_ = os.Setenv("db_conn_string", "host=localhost port=5432 user=postgres dbname=innersource password=root sslmode=disable")
+	_ = os.Setenv("db_conn_string", "host=localhost port=5432 user=postgres dbname=innersource password=a sslmode=disable")
 
 	DB, err := sqlx.Connect("postgres", os.Getenv("db_conn_string"))
 	if err != nil {
