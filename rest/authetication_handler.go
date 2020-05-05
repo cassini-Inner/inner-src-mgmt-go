@@ -2,7 +2,8 @@ package rest
 
 import (
 	"encoding/json"
-	service "github.com/cassini-Inner/inner-src-mgmt-go/service"
+	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
+	"github.com/cassini-Inner/inner-src-mgmt-go/service"
 	_ "io/ioutil"
 	"net/http"
 	"time"
@@ -37,6 +38,10 @@ func (a AuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	user, err := a.authService.AuthenticateAndGetUser(r.Context(), body.Code)
 	if err != nil {
+		if err == customErrors.ErrCodeExpired {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -45,7 +50,15 @@ func (a AuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	cookie := http.Cookie{Name: "token", Value: *token, Path: "/", Expires: time.Now().AddDate(0, 0,14), MaxAge: 86400, HttpOnly: true, Secure: false, Domain: "localhost", }
+	cookie := http.Cookie{Name: "token",
+		Value:    *token,
+		Path:     "/",
+		Expires:  time.Now().AddDate(0, 0, 14),
+		MaxAge:   86400,
+		HttpOnly: true,
+		Secure:   false,
+		Domain:   "localhost",
+	}
 	http.SetCookie(w, &cookie)
 
 	w.Write([]byte(`{"success": "true"}`))

@@ -14,4 +14,7 @@ var (
 	ErrInvalidId                      = errors.New("invalid id supplied")
 	ErrInvalidQuery                   = errors.New("invalid query")
 	ErrNoExistingApplications         = errors.New("no existing applications for user")
+	ErrOauthClientNotAuthenticated    = errors.New("oauth process has not been initiated")
+	ErrCodeExpired                    = errors.New("ERR_CODE_EXPIRED_OR_INVALID")
+	ErrInvalidAuthResponse            = errors.New("ERR_INVALID_AUTH_RESPONSE")
 )

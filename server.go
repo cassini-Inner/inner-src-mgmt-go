@@ -42,7 +42,8 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	jobsService := impl2.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo)
 	applicationsService := impl2.NewApplicationsService(jobsRepo, applicationsRepo)
 	userService := impl2.NewUserProfileService(usersRepo, skillsRepo)
-	authService := impl2.NewAuthenticationService(usersRepo)
+	githubOauthService := impl2.NewGithubOauthService()
+	authService := impl2.NewAuthenticationService(usersRepo, githubOauthService)
 	skillsService := impl2.NewSkillsService(skillsRepo)
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &resolver.Resolver{
@@ -73,6 +74,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", dataloader.DataloaderMiddleware(DB, srv))
 	router.Handle("/authenticate", restAuthHandler)
+	router.HandleFunc("/logout", rest.SignoutHandler)
 	router.HandleFunc("/read-cookie", rest.GetUIDFromCookie)
 	return router, nil
 }

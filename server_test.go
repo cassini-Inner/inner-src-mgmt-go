@@ -73,7 +73,7 @@ func TestServerUp(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, srv)
 
-		request:= httptest.NewRequest(http.MethodPost, "/authenticate", nil)
+		request := httptest.NewRequest(http.MethodPost, "/authenticate", nil)
 		response := httptest.NewRecorder()
 		srv.ServeHTTP(response, request)
 		assert.NotEqual(t, http.StatusNotFound, response.Code)
@@ -84,7 +84,18 @@ func TestServerUp(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, srv)
 
-		request:= httptest.NewRequest(http.MethodPost, "/read-cookie", nil)
+		request := httptest.NewRequest(http.MethodPost, "/read-cookie", nil)
+		response := httptest.NewRecorder()
+		srv.ServeHTTP(response, request)
+		assert.NotEqual(t, http.StatusNotFound, response.Code)
+	})
+
+	t.Run("test /logout", func(t *testing.T) {
+		srv, err := setup()
+		assert.Nil(t, err)
+		assert.NotNil(t, srv)
+
+		request := httptest.NewRequest(http.MethodPost, "/logout", nil)
 		response := httptest.NewRecorder()
 		srv.ServeHTTP(response, request)
 		assert.NotEqual(t, http.StatusNotFound, response.Code)
