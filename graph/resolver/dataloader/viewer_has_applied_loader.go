@@ -26,7 +26,7 @@ func NewViewerHasAppliedByUserIdLoader(db *sqlx.DB) *generated.ViewerHasAppliedL
 				jobIds[i] = jobId
 			}
 
-			stmt, args, err := sqlx.In(`select job_id, applicant_id, count(distinct job_id) from milestones join applications on milestones.id = applications.milestone_id and applications.applicant_id in (?) and applications.status in ('pending', 'accepted') where job_id in (?) group by job_id, applicant_id`,userIds, jobIds )
+			stmt, args, err := sqlx.In(`select job_id, applicant_id, count(distinct job_id) from milestones join applications on milestones.id = applications.milestone_id and applications.applicant_id in (?) and applications.status in ('pending', 'accepted') where job_id in (?) group by job_id, applicant_id`, userIds, jobIds)
 
 			if err != nil {
 				return nil, []error{err}
@@ -34,20 +34,30 @@ func NewViewerHasAppliedByUserIdLoader(db *sqlx.DB) *generated.ViewerHasAppliedL
 
 			stmt = db.Rebind(stmt)
 
-			rows, err := db.Queryx(stmt, args...)
-			if err != nil {
+			resultChan := make(chan *FetchStruct)
+			go func(result chan *FetchStruct) {
+				rows, err := db.Queryx(stmt, args...)
+				result <- &FetchStruct{
+					rows: rows,
+					err:  err,
+				}
+			}(resultChan)
+			res := <-resultChan
+
+			if res.err != nil {
 				return nil, []error{err}
 			}
+			defer res.rows.Close()
 
-			for rows.Next() {
+			for res.rows.Next() {
 				var jobId, userId, count int
-				err := rows.Scan(&jobId, &userId, &count)
+				err := res.rows.Scan(&jobId, &userId, &count)
 				if err != nil {
 					return nil, []error{err}
 				}
-				result := false;
+				result := false
 				if count > 0 {
-					result = true;
+					result = true
 				}
 				key := fmt.Sprintf("%v %v", jobId, userId)
 				resultSet[key] = result
@@ -64,7 +74,7 @@ func NewViewerHasAppliedByUserIdLoader(db *sqlx.DB) *generated.ViewerHasAppliedL
 			return bools, nil
 		},
 		Wait:     2 * time.Millisecond,
-		MaxBatch: 200,
+		MaxBatch: 500,
 	})
 
 }

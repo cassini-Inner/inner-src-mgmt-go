@@ -118,6 +118,9 @@ func (j *JobsService) GetAllJobs(ctx context.Context, skills, status []string) (
 		status[i] = strings.ToLower(status[i])
 	}
 
+	if skills == nil || len(skills) == 0 {
+		return nil, nil
+	}
 	jobs, err := j.jobsRepo.GetAll(skills, status)
 	if err != nil {
 		return nil, err

@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+
 func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoader {
 	return generated.NewApplicationsByJobIdLoader(generated.ApplicationsByJobIdLoaderConfig{
 		Fetch: func(keys []string) (i []*gqlmodel.Applications, errors []error) {
@@ -23,14 +24,22 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 			}
 
 			applicationsQuery = db.Rebind(applicationsQuery)
+			resultChan := make(chan *FetchStruct)
 
-			applicationRows, err := db.Queryx(applicationsQuery, applicationsArgs...)
-			if err != nil {
+			go func(result chan *FetchStruct) {
+				rows, err := db.Queryx(applicationsQuery, applicationsArgs...)
+				result <- &FetchStruct{
+					rows: rows,
+					err:  err,
+				}
+			}(resultChan)
+			res := <-resultChan
+			if res.err != nil {
 				return nil, []error{err}
 			}
-			defer applicationRows.Close()
+			defer res.rows.Close()
 
-			errors = mapApplicationRowsToGqlModel(applicationRows, applicationsMap, &acceptedMap, &rejectedMap, &pendingMap)
+			errors = mapApplicationRowsToGqlModel(res.rows, applicationsMap, &acceptedMap, &rejectedMap, &pendingMap)
 			if errors != nil {
 				return nil, errors
 			}
@@ -49,7 +58,7 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 			return i, nil
 		},
 		Wait:     2 * time.Millisecond,
-		MaxBatch: 200,
+		MaxBatch: 500,
 	})
 }
 

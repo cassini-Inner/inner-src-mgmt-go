@@ -47,6 +47,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 	if userDetails.Name != nil {
 		currentRequestUser.Name = dbmodel.ToNullString(userDetails.Name)
 	}
+	currentRequestUser.Onboarded = true
 	user, err := s.userRepo.UpdateUser(tx, currentRequestUser)
 	if err != nil {
 		_ = tx.Rollback()
