@@ -20,14 +20,29 @@ func NewMilestoneByJobIdLoader(db *sqlx.DB) *generated.MilestoneByJobIdLoader {
 				return nil, []error{err}
 			}
 			query = db.Rebind(query)
-			rows, err := db.Queryx(query, args...)
-			if err != nil {
+
+			resultChan := make(chan *FetchStruct)
+			go func(result chan *FetchStruct) {
+				rows, err := db.Queryx(query, args...)
+				result <- &FetchStruct{
+					rows: rows,
+					err:  err,
+				}
+			}(resultChan)
+			res := <-resultChan
+
+			if res.err != nil {
 				return nil, []error{err}
 			}
-			defer rows.Close()
-			for rows.Next() {
+			defer res.rows.Close()
+
+			if res.err != nil {
+				return nil, []error{err}
+			}
+			defer res.rows.Close()
+			for res.rows.Next() {
 				var tempMilestone dbmodel.Milestone
-				err := rows.StructScan(&tempMilestone)
+				err := res.rows.StructScan(&tempMilestone)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -52,6 +67,6 @@ func NewMilestoneByJobIdLoader(db *sqlx.DB) *generated.MilestoneByJobIdLoader {
 			return milestones, nil
 		},
 		Wait:     2 * time.Millisecond,
-		MaxBatch: 20,
+		MaxBatch: 500,
 	})
 }

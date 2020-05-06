@@ -53,6 +53,7 @@ func (s *SkillsRepoImpl) GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error
 // then it returns a map of skills by the given skill value
 // TODO: Refactor, duplicate method sig
 func findOrCreateSkills(skills []string, userId string, tx *sqlx.Tx) (map[string]*dbmodel.GlobalSkill, error) {
+
 	if len(skills) == 0 {
 		return nil, ErrInvalidListLength
 	}

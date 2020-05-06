@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/dgrijalva/jwt-go"
@@ -57,15 +58,13 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 }
 
 func GetCurrentUserFromContext(ctx context.Context) (*dbmodel.User, error) {
-	NoUserInContextError := errors.New("no user in context")
-
 	if ctx.Value(CurrentUserKey) == nil {
-		return nil, NoUserInContextError
+		return nil, customErrors.ErrNoUserInContext
 	}
 
 	user, ok := ctx.Value(CurrentUserKey).(*dbmodel.User)
 	if !ok || user.Id == "" {
-		return nil, NoUserInContextError
+		return nil, customErrors.ErrNoUserInContext
 	}
 	return user, nil
 }
