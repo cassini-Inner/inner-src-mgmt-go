@@ -39,6 +39,7 @@ func (g *GithubOauthService) Authenticate(code string) (string, error) {
 	}
 	//TODO: Error message is ambiguous, use the error message provided by github
 	if response.StatusCode != 200 {
+		fmt.Println(response.StatusCode)
 		return "", customErrors.ErrCodeExpired
 	}
 	accessToken, ok := data["access_token"].(string)

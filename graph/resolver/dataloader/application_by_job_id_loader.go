@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-
 func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoader {
 	return generated.NewApplicationsByJobIdLoader(generated.ApplicationsByJobIdLoaderConfig{
 		Fetch: func(keys []string) (i []*gqlmodel.Applications, errors []error) {
@@ -63,6 +62,7 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 }
 
 func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap map[string][]*gqlmodel.Application, acceptedCountMap, rejectedCountMap, pendingCountMap *map[string]int) []error {
+	applicationCountsMap := make(map[string]map[string]bool)
 	for applicationRows.Next() {
 		var jobId, id, milestoneId, applicantId, status, timeCreated, timeUpdated string
 		var note sql.NullString
@@ -83,13 +83,21 @@ func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap ma
 			CreatedOn:   timeCreated,
 		}
 
-		switch application.Status.String() {
-		case strings.ToLower(gqlmodel.ApplicationStatusAccepted.String()):
-			(*acceptedCountMap)[jobId]++
-		case strings.ToLower(gqlmodel.ApplicationStatusPending.String()):
-			(*pendingCountMap)[jobId]++
-		case strings.ToLower(gqlmodel.ApplicationStatusRejected.String()):
-			(*rejectedCountMap)[jobId]++
+		_, ok = applicationCountsMap[jobId][applicantId]
+		if !ok {
+			applicationCountsMap[jobId] = make(map[string]bool)
+			_, ok = applicationCountsMap[jobId][applicantId]
+			if !ok {
+				applicationCountsMap[jobId][applicantId] = true;
+				switch application.Status.String() {
+				case strings.ToLower(gqlmodel.ApplicationStatusAccepted.String()):
+					(*acceptedCountMap)[jobId]++
+				case strings.ToLower(gqlmodel.ApplicationStatusPending.String()):
+					(*pendingCountMap)[jobId]++
+				case strings.ToLower(gqlmodel.ApplicationStatusRejected.String()):
+					(*rejectedCountMap)[jobId]++
+				}
+			}
 		}
 
 		if note.Valid {

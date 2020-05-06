@@ -5,6 +5,7 @@ import (
 	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	"github.com/cassini-Inner/inner-src-mgmt-go/service"
 	_ "io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -38,6 +39,7 @@ func (a AuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	user, err := a.authService.AuthenticateAndGetUser(r.Context(), body.Code)
 	if err != nil {
+		log.Println(err)
 		if err == customErrors.ErrCodeExpired {
 			w.WriteHeader(http.StatusBadRequest)
 			return
