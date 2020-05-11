@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
@@ -79,18 +80,31 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 
 func main() {
 	//TODO: Make this more secure
-	_ = os.Setenv("jwt_secret", "innersource_jwt_secret_key")
-	_ = os.Setenv("client_id", "5a4ff35b849d9cc3cab7")
-	_ = os.Setenv("client_secret", "f94c5d74e099ed894f88ac6c75ac19c4c3194427")
-	_ = os.Setenv("db_conn_string", "host=localhost port=5432 user=postgres dbname=innersource password=root sslmode=disable")
+	//_ = os.Setenv("jwt_secret", "innersource_jwt_secret_key")
+	//_ = os.Setenv("client_id", "5a4ff35b849d9cc3cab7")
+	//_ = os.Setenv("client_secret", "f94c5d74e099ed894f88ac6c75ac19c4c3194427")
+	//_ = os.Setenv("db_conn_string", "host=localhost port=5432 user=postgres dbname=innersource password=root sslmode=disable")
 
-	DB, err := sqlx.Connect("postgres", os.Getenv("db_conn_string"))
+	DB, err := sqlx.Connect("postgres",
+		fmt.Sprintf("host=%v port=%v user=%v dbname=%v password=%v sslmode=%v",
+			os.Getenv("host"),
+			os.Getenv("port"),
+			os.Getenv("user"),
+			os.Getenv("dbname"),
+			os.Getenv("password"),
+			os.Getenv("sslmode"),
+		),
+	)
 	if err != nil {
 		panic(err)
 	}
 	defer DB.Close()
 
-	port := os.Getenv("PORT")
+	if err = DB.Ping(); err != nil {
+		panic(err)
+	}
+
+	port := os.Getenv("server_port")
 	if port == "" {
 		port = defaultPort
 	}
