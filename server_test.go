@@ -53,7 +53,7 @@ func TestServerUp(t *testing.T) {
 	})
 
 	t.Run("test /query route", func(t *testing.T) {
-		db, err := sqlx.Connect("repository", os.Getenv("db_conn_string"))
+		db, err := sqlx.Connect("postgres", os.Getenv("db_conn_string"))
 		if err != nil {
 			t.Fatalf("could not connect to db: %v", err)
 		}
