@@ -80,19 +80,20 @@ type ComplexityRoot struct {
 	}
 
 	Job struct {
-		Applications func(childComplexity int) int
-		CreatedBy    func(childComplexity int) int
-		Desc         func(childComplexity int) int
-		Difficulty   func(childComplexity int) int
-		Discussion   func(childComplexity int) int
-		Duration     func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Milestones   func(childComplexity int) int
-		Skills       func(childComplexity int) int
-		Status       func(childComplexity int) int
-		TimeCreated  func(childComplexity int) int
-		TimeUpdated  func(childComplexity int) int
-		Title        func(childComplexity int) int
+		Applications     func(childComplexity int) int
+		CreatedBy        func(childComplexity int) int
+		Desc             func(childComplexity int) int
+		Difficulty       func(childComplexity int) int
+		Discussion       func(childComplexity int) int
+		Duration         func(childComplexity int) int
+		ID               func(childComplexity int) int
+		Milestones       func(childComplexity int) int
+		Skills           func(childComplexity int) int
+		Status           func(childComplexity int) int
+		TimeCreated      func(childComplexity int) int
+		TimeUpdated      func(childComplexity int) int
+		Title            func(childComplexity int) int
+		ViewerHasApplied func(childComplexity int) int
 	}
 
 	Milestone struct {
@@ -115,24 +116,26 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddCommentToJob      func(childComplexity int, comment string, jobID string) int
-		Authenticate         func(childComplexity int, githubCode string) int
-		CreateJob            func(childComplexity int, job *model.CreateJobInput) int
-		CreateJobApplication func(childComplexity int, jobID string) int
-		CreateUserProfile    func(childComplexity int, user *model.CreateUserInput) int
-		DeleteCommment       func(childComplexity int, id string) int
-		DeleteJob            func(childComplexity int, jobID string) int
-		DeleteJobApplication func(childComplexity int, jobID string) int
-		RefreshToken         func(childComplexity int, token string) int
-		UpdateComment        func(childComplexity int, id string, comment string) int
-		UpdateJob            func(childComplexity int, job *model.UpdateJobInput) int
-		UpdateJobApplication func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus) int
-		UpdateUserProfile    func(childComplexity int, user *model.UpdateUserInput) int
+		AddCommentToJob          func(childComplexity int, comment string, jobID string) int
+		Authenticate             func(childComplexity int, githubCode string) int
+		CreateJob                func(childComplexity int, job *model.CreateJobInput) int
+		CreateJobApplication     func(childComplexity int, jobID string) int
+		DeleteComment            func(childComplexity int, id string) int
+		DeleteJob                func(childComplexity int, jobID string) int
+		DeleteJobApplication     func(childComplexity int, jobID string) int
+		RefreshToken             func(childComplexity int, token string) int
+		ToggleJobCompleted       func(childComplexity int, jobID string) int
+		ToggleMilestoneCompleted func(childComplexity int, milestoneID string) int
+		UpdateComment            func(childComplexity int, id string, comment string) int
+		UpdateJob                func(childComplexity int, job *model.UpdateJobInput) int
+		UpdateJobApplication     func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus, note *string) int
+		UpdateProfile            func(childComplexity int, user *model.UpdateUserInput) int
 	}
 
 	Query struct {
 		AllJobs func(childComplexity int, filter *model.JobsFilterInput) int
 		Job     func(childComplexity int, id string) int
+		Skills  func(childComplexity int, query *string) int
 		User    func(childComplexity int, id string, jobsStatusFilter *model.JobStatus) int
 	}
 
@@ -199,6 +202,7 @@ type JobResolver interface {
 	Discussion(ctx context.Context, obj *model.Job) (*model.Discussions, error)
 	Milestones(ctx context.Context, obj *model.Job) (*model.Milestones, error)
 	Applications(ctx context.Context, obj *model.Job) (*model.Applications, error)
+	ViewerHasApplied(ctx context.Context, obj *model.Job) (bool, error)
 }
 type MilestoneResolver interface {
 	Job(ctx context.Context, obj *model.Milestone) (*model.Job, error)
@@ -207,24 +211,26 @@ type MilestoneResolver interface {
 	Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error)
 }
 type MutationResolver interface {
-	UpdateUserProfile(ctx context.Context, user *model.UpdateUserInput) (*model.User, error)
-	CreateUserProfile(ctx context.Context, user *model.CreateUserInput) (*model.User, error)
+	UpdateProfile(ctx context.Context, user *model.UpdateUserInput) (*model.User, error)
 	CreateJob(ctx context.Context, job *model.CreateJobInput) (*model.Job, error)
 	UpdateJob(ctx context.Context, job *model.UpdateJobInput) (*model.Job, error)
 	DeleteJob(ctx context.Context, jobID string) (*model.Job, error)
 	AddCommentToJob(ctx context.Context, comment string, jobID string) (*model.Comment, error)
 	UpdateComment(ctx context.Context, id string, comment string) (*model.Comment, error)
-	DeleteCommment(ctx context.Context, id string) (*model.Comment, error)
+	DeleteComment(ctx context.Context, id string) (*model.Comment, error)
 	CreateJobApplication(ctx context.Context, jobID string) ([]*model.Application, error)
 	DeleteJobApplication(ctx context.Context, jobID string) ([]*model.Application, error)
-	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus) ([]*model.Application, error)
+	UpdateJobApplication(ctx context.Context, applicantID string, jobID string, status *model.ApplicationStatus, note *string) ([]*model.Application, error)
 	Authenticate(ctx context.Context, githubCode string) (*model.UserAuthenticationPayload, error)
 	RefreshToken(ctx context.Context, token string) (*model.UserAuthenticationPayload, error)
+	ToggleMilestoneCompleted(ctx context.Context, milestoneID string) (*model.Milestone, error)
+	ToggleJobCompleted(ctx context.Context, jobID string) (*model.Job, error)
 }
 type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
 	Job(ctx context.Context, id string) (*model.Job, error)
 	User(ctx context.Context, id string, jobsStatusFilter *model.JobStatus) (*model.User, error)
+	Skills(ctx context.Context, query *string) ([]*model.Skill, error)
 }
 type SkillResolver interface {
 	CreatedBy(ctx context.Context, obj *model.Skill) (*model.User, error)
@@ -469,6 +475,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Job.Title(childComplexity), true
 
+	case "Job.viewerHasApplied":
+		if e.complexity.Job.ViewerHasApplied == nil {
+			break
+		}
+
+		return e.complexity.Job.ViewerHasApplied(childComplexity), true
+
 	case "Milestone.assignedTo":
 		if e.complexity.Milestone.AssignedTo == nil {
 			break
@@ -608,29 +621,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateJobApplication(childComplexity, args["jobID"].(string)), true
 
-	case "Mutation.createUserProfile":
-		if e.complexity.Mutation.CreateUserProfile == nil {
+	case "Mutation.deleteComment":
+		if e.complexity.Mutation.DeleteComment == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createUserProfile_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteComment_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateUserProfile(childComplexity, args["user"].(*model.CreateUserInput)), true
-
-	case "Mutation.deleteCommment":
-		if e.complexity.Mutation.DeleteCommment == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteCommment_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteCommment(childComplexity, args["id"].(string)), true
+		return e.complexity.Mutation.DeleteComment(childComplexity, args["id"].(string)), true
 
 	case "Mutation.deleteJob":
 		if e.complexity.Mutation.DeleteJob == nil {
@@ -668,6 +669,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RefreshToken(childComplexity, args["token"].(string)), true
 
+	case "Mutation.toggleJobCompleted":
+		if e.complexity.Mutation.ToggleJobCompleted == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_toggleJobCompleted_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ToggleJobCompleted(childComplexity, args["jobID"].(string)), true
+
+	case "Mutation.toggleMilestoneCompleted":
+		if e.complexity.Mutation.ToggleMilestoneCompleted == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_toggleMilestoneCompleted_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ToggleMilestoneCompleted(childComplexity, args["milestoneID"].(string)), true
+
 	case "Mutation.updateComment":
 		if e.complexity.Mutation.UpdateComment == nil {
 			break
@@ -702,19 +727,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateJobApplication(childComplexity, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus)), true
+		return e.complexity.Mutation.UpdateJobApplication(childComplexity, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus), args["note"].(*string)), true
 
-	case "Mutation.updateUserProfile":
-		if e.complexity.Mutation.UpdateUserProfile == nil {
+	case "Mutation.updateProfile":
+		if e.complexity.Mutation.UpdateProfile == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateUserProfile_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateProfile_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateUserProfile(childComplexity, args["user"].(*model.UpdateUserInput)), true
+		return e.complexity.Mutation.UpdateProfile(childComplexity, args["user"].(*model.UpdateUserInput)), true
 
 	case "Query.allJobs":
 		if e.complexity.Query.AllJobs == nil {
@@ -739,6 +764,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Job(childComplexity, args["id"].(string)), true
+
+	case "Query.Skills":
+		if e.complexity.Query.Skills == nil {
+			break
+		}
+
+		args, err := ec.field_Query_Skills_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Skills(childComplexity, args["query"].(*string)), true
 
 	case "Query.User":
 		if e.complexity.Query.User == nil {
@@ -1048,13 +1085,13 @@ var sources = []*ast.Source{
         id: ID!
         jobsStatusFilter: JobStatus
     ): User
-
+    Skills(
+        query: String
+    ):[Skill!]!
 }
 type Mutation {
     # To update the user information like name, email ...
-    updateUserProfile(user: UpdateUserInput): User
-    # To create a user after github auth with email, name and photo url
-    createUserProfile(user: CreateUserInput): User
+    updateProfile(user: UpdateUserInput): User
     # To create a new job
     createJob(job: CreateJobInput): Job
     # To update a job
@@ -1066,15 +1103,17 @@ type Mutation {
     # To update a comment based on a comment id
     updateComment(id: ID!, comment: String!): Comment
     # To delete a comment based on comment id
-    deleteCommment(id: ID!) : Comment
+    deleteComment(id: ID!) : Comment
     # Create an application to a job, user id obtained through auth
     createJobApplication(jobID: ID!): [Application]
     # To withdraw application from a job
     deleteJobApplication(jobID: ID!): [Application]
     # create, accept or reject applicants
-    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): [Application]
+    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus, note: String): [Application]
     authenticate(githubCode: String!): UserAuthenticationPayload
     refreshToken(token: String!): UserAuthenticationPayload
+    toggleMilestoneCompleted(milestoneID: String!) : Milestone
+    toggleJobCompleted(jobID: String!) : Job
 }
 
 type UserAuthenticationPayload {
@@ -1095,8 +1134,6 @@ input UpdateJobInput {
 # For creating a new job
 input CreateJobInput {
     title: String!
-    # assuming this is automatically handled by the resolver
-    # createdBy: User!
     desc: String!
     difficulty: Difficulty!
     milestones: [MilestoneInput]!
@@ -1119,7 +1156,6 @@ input CreateUserInput {
 }
 # For updating user information
 input UpdateUserInput {
-    id: ID!
     email: String
     name: String
     role: String
@@ -1142,6 +1178,7 @@ type Job {
     discussion: Discussions
     milestones: Milestones
     applications: Applications
+    viewerHasApplied: Boolean!
 }
 
 type Discussions {
@@ -1337,21 +1374,7 @@ func (ec *executionContext) field_Mutation_createJob_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createUserProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.CreateUserInput
-	if tmp, ok := rawArgs["user"]; ok {
-		arg0, err = ec.unmarshalOCreateUserInput2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["user"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteCommment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_deleteComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1407,6 +1430,34 @@ func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_toggleJobCompleted_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["jobID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["jobID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_toggleMilestoneCompleted_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["milestoneID"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["milestoneID"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1456,6 +1507,14 @@ func (ec *executionContext) field_Mutation_updateJobApplication_args(ctx context
 		}
 	}
 	args["status"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["note"]; ok {
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["note"] = arg3
 	return args, nil
 }
 
@@ -1473,7 +1532,7 @@ func (ec *executionContext) field_Mutation_updateJob_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateUserProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updateProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.UpdateUserInput
@@ -1498,6 +1557,20 @@ func (ec *executionContext) field_Query_Job_args(ctx context.Context, rawArgs ma
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_Skills_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["query"]; ok {
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["query"] = arg0
 	return args, nil
 }
 
@@ -2608,6 +2681,40 @@ func (ec *executionContext) _Job_applications(ctx context.Context, field graphql
 	return ec.marshalOApplications2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐApplications(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Job_viewerHasApplied(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Job",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Job().ViewerHasApplied(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Milestone_id(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3041,7 +3148,7 @@ func (ec *executionContext) _Milestones_milestones(ctx context.Context, field gr
 	return ec.marshalNMilestone2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3057,7 +3164,7 @@ func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, fie
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_updateUserProfile_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_updateProfile_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3065,45 +3172,7 @@ func (ec *executionContext) _Mutation_updateUserProfile(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateUserProfile(rctx, args["user"].(*model.UpdateUserInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createUserProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Mutation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createUserProfile_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateUserProfile(rctx, args["user"].(*model.CreateUserInput))
+		return ec.resolvers.Mutation().UpdateProfile(rctx, args["user"].(*model.UpdateUserInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3307,7 +3376,7 @@ func (ec *executionContext) _Mutation_updateComment(ctx context.Context, field g
 	return ec.marshalOComment2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_deleteCommment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3323,7 +3392,7 @@ func (ec *executionContext) _Mutation_deleteCommment(ctx context.Context, field 
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_deleteCommment_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_deleteComment_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3331,7 +3400,7 @@ func (ec *executionContext) _Mutation_deleteCommment(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteCommment(rctx, args["id"].(string))
+		return ec.resolvers.Mutation().DeleteComment(rctx, args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3445,7 +3514,7 @@ func (ec *executionContext) _Mutation_updateJobApplication(ctx context.Context, 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateJobApplication(rctx, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus))
+		return ec.resolvers.Mutation().UpdateJobApplication(rctx, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus), args["note"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3533,6 +3602,82 @@ func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field gr
 	res := resTmp.(*model.UserAuthenticationPayload)
 	fc.Result = res
 	return ec.marshalOUserAuthenticationPayload2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserAuthenticationPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_toggleMilestoneCompleted(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_toggleMilestoneCompleted_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ToggleMilestoneCompleted(rctx, args["milestoneID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Milestone)
+	fc.Result = res
+	return ec.marshalOMilestone2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_toggleJobCompleted(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_toggleJobCompleted_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ToggleJobCompleted(rctx, args["jobID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Job)
+	fc.Result = res
+	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_allJobs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3647,6 +3792,47 @@ func (ec *executionContext) _Query_User(ctx context.Context, field graphql.Colle
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_Skills(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_Skills_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Skills(rctx, args["query"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Skill)
+	fc.Result = res
+	return ec.marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkillᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6010,12 +6196,6 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 
 	for k, v := range asMap {
 		switch k {
-		case "id":
-			var err error
-			it.ID, err = ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "email":
 			var err error
 			it.Email, err = ec.unmarshalOString2ᚖstring(ctx, v)
@@ -6365,6 +6545,20 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 				res = ec._Job_applications(ctx, field, obj)
 				return res
 			})
+		case "viewerHasApplied":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Job_viewerHasApplied(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6518,10 +6712,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "updateUserProfile":
-			out.Values[i] = ec._Mutation_updateUserProfile(ctx, field)
-		case "createUserProfile":
-			out.Values[i] = ec._Mutation_createUserProfile(ctx, field)
+		case "updateProfile":
+			out.Values[i] = ec._Mutation_updateProfile(ctx, field)
 		case "createJob":
 			out.Values[i] = ec._Mutation_createJob(ctx, field)
 		case "updateJob":
@@ -6532,8 +6724,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_addCommentToJob(ctx, field)
 		case "updateComment":
 			out.Values[i] = ec._Mutation_updateComment(ctx, field)
-		case "deleteCommment":
-			out.Values[i] = ec._Mutation_deleteCommment(ctx, field)
+		case "deleteComment":
+			out.Values[i] = ec._Mutation_deleteComment(ctx, field)
 		case "createJobApplication":
 			out.Values[i] = ec._Mutation_createJobApplication(ctx, field)
 		case "deleteJobApplication":
@@ -6544,6 +6736,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_authenticate(ctx, field)
 		case "refreshToken":
 			out.Values[i] = ec._Mutation_refreshToken(ctx, field)
+		case "toggleMilestoneCompleted":
+			out.Values[i] = ec._Mutation_toggleMilestoneCompleted(ctx, field)
+		case "toggleJobCompleted":
+			out.Values[i] = ec._Mutation_toggleJobCompleted(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6601,6 +6797,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_User(ctx, field)
+				return res
+			})
+		case "Skills":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_Skills(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "__type":
@@ -7353,6 +7563,43 @@ func (ec *executionContext) marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑInner�
 	return ret
 }
 
+func (ec *executionContext) marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkillᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Skill) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSkill2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) marshalNSkill2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v *model.Skill) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7843,18 +8090,6 @@ func (ec *executionContext) unmarshalOCreateJobInput2ᚖgithubᚗcomᚋcassini�
 		return nil, nil
 	}
 	res, err := ec.unmarshalOCreateJobInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) unmarshalOCreateUserInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (model.CreateUserInput, error) {
-	return ec.unmarshalInputCreateUserInput(ctx, v)
-}
-
-func (ec *executionContext) unmarshalOCreateUserInput2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v interface{}) (*model.CreateUserInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOCreateUserInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateUserInput(ctx, v)
 	return &res, err
 }
 

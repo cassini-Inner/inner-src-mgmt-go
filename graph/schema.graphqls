@@ -13,13 +13,13 @@ type Query {
         id: ID!
         jobsStatusFilter: JobStatus
     ): User
-
+    Skills(
+        query: String
+    ):[Skill!]!
 }
 type Mutation {
     # To update the user information like name, email ...
-    updateUserProfile(user: UpdateUserInput): User
-    # To create a user after github auth with email, name and photo url
-    createUserProfile(user: CreateUserInput): User
+    updateProfile(user: UpdateUserInput): User
     # To create a new job
     createJob(job: CreateJobInput): Job
     # To update a job
@@ -31,15 +31,17 @@ type Mutation {
     # To update a comment based on a comment id
     updateComment(id: ID!, comment: String!): Comment
     # To delete a comment based on comment id
-    deleteCommment(id: ID!) : Comment
+    deleteComment(id: ID!) : Comment
     # Create an application to a job, user id obtained through auth
     createJobApplication(jobID: ID!): [Application]
     # To withdraw application from a job
     deleteJobApplication(jobID: ID!): [Application]
     # create, accept or reject applicants
-    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus): [Application]
+    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus, note: String): [Application]
     authenticate(githubCode: String!): UserAuthenticationPayload
     refreshToken(token: String!): UserAuthenticationPayload
+    toggleMilestoneCompleted(milestoneID: String!) : Milestone
+    toggleJobCompleted(jobID: String!) : Job
 }
 
 type UserAuthenticationPayload {
@@ -60,8 +62,6 @@ input UpdateJobInput {
 # For creating a new job
 input CreateJobInput {
     title: String!
-    # assuming this is automatically handled by the resolver
-    # createdBy: User!
     desc: String!
     difficulty: Difficulty!
     milestones: [MilestoneInput]!
@@ -84,7 +84,6 @@ input CreateUserInput {
 }
 # For updating user information
 input UpdateUserInput {
-    id: ID!
     email: String
     name: String
     role: String
@@ -107,6 +106,7 @@ type Job {
     discussion: Discussions
     milestones: Milestones
     applications: Applications
+    viewerHasApplied: Boolean!
 }
 
 type Discussions {

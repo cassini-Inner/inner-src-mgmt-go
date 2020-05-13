@@ -2,7 +2,7 @@ package model
 
 import (
 	"errors"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/dgrijalva/jwt-go"
 	"os"
 	"time"
@@ -25,7 +25,7 @@ type User struct {
 	CreatedJobs []*Job     `json:"createdJobs"`
 	JobStats    *UserStats `json:"jobStats"`
 	GithubId    string     `json:"githubId"`
-	GithubName  string     `json:"githubNeam"`
+	GithubName  string     `json:"githubName"`
 }
 
 func (u *User) MapDbToGql(dbUser dbmodel.User) {

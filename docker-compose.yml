@@ -1,0 +1,45 @@
+version: '3'
+services:
+
+  db:
+    image: postgres:alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: innersource
+    ports:
+     - 5432:5432
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+    - ./repository/migrations :/migrations
+    command: ["-path", "/migrations", "-database",  "postgres://postgres:root@db:5432/innersource?sslmode=disable", "up"]
+    links:
+      - db
+    depends_on:
+      - db
+    restart: on-failure
+
+  api:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+      - migrate
+    environment:
+      jwt_secret: innersource_jwt_secret_key
+      client_id: 5a4ff35b849d9cc3cab7
+      client_secret: f94c5d74e099ed894f88ac6c75ac19c4c3194427
+      host: db
+      port: 5432
+      user: postgres
+      dbname: innersource
+      password: root
+      sslmode: disable
+      server_port: 8080
+    restart: always

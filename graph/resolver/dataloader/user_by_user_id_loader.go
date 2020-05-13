@@ -3,7 +3,7 @@ package dataloader
 import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
@@ -19,14 +19,28 @@ func NewUserByUserIdLoader(db *sqlx.DB) *generated.UserLoader {
 			}
 
 			query = db.Rebind(query)
-			rows, err := db.Queryx(query, args...)
+			resultChan := make(chan *FetchStruct)
+			go func(result chan *FetchStruct) {
+				rows, err := db.Queryx(query, args...)
+				result <- &FetchStruct{
+					rows: rows,
+					err:  err,
+				}
+			}(resultChan)
+			res := <-resultChan
+
+			if res.err != nil {
+				return nil, []error{err}
+			}
+			defer res.rows.Close()
+
 			if err != nil {
 				return nil, []error{err}
 			}
 
-			for rows.Next() {
+			for res.rows.Next() {
 				var tempUser dbmodel.User
-				err := rows.StructScan(&tempUser)
+				err := res.rows.StructScan(&tempUser)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -41,7 +55,7 @@ func NewUserByUserIdLoader(db *sqlx.DB) *generated.UserLoader {
 
 			return result, nil
 		},
-		Wait:     1 * time.Millisecond,
+		Wait:     5 * time.Millisecond,
 		MaxBatch: 100,
 	})
 

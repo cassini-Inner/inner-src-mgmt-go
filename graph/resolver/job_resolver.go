@@ -2,8 +2,10 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
+	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 )
 
 func (r *jobResolver) CreatedBy(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.User, error) {
@@ -29,7 +31,7 @@ func (r *jobResolver) Discussion(ctx context.Context, obj *gqlmodel.Job) (*gqlmo
 //Get the list of milestones in dbmodel type, converts it to gqlmodel type and returns list of milestones
 func (r *jobResolver) Milestones(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Milestones, error) {
 	return dataloader.GetMilestonesByJobIdLoader(ctx).Load(obj.ID)
-	
+
 }
 
 func (r *jobResolver) Skills(ctx context.Context, obj *gqlmodel.Job) ([]*gqlmodel.Skill, error) {
@@ -37,18 +39,13 @@ func (r *jobResolver) Skills(ctx context.Context, obj *gqlmodel.Job) ([]*gqlmode
 }
 
 func (r *jobResolver) Applications(ctx context.Context, obj *gqlmodel.Job) (*gqlmodel.Applications, error) {
-	applications, err := r.ApplicationsRepo.GetByJobId(obj.ID)
+	return dataloader.GetApplicationsByJobIdLoader(ctx).Load(obj.ID)
+}
+
+func (r *jobResolver) ViewerHasApplied(ctx context.Context, obj *gqlmodel.Job) (bool, error) {
+	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-
-	var gqlApplicationsList []*gqlmodel.Application
-	for _, application := range applications {
-		var gqlApplication gqlmodel.Application
-		gqlApplication.MapDbToGql(application)
-		gqlApplicationsList = append(gqlApplicationsList, &gqlApplication)
-	}
-
-	//TODO: Implement the counters
-	return &gqlmodel.Applications{Applications: gqlApplicationsList}, nil
+	return dataloader.GetViewerHasAppliedLoader(ctx).Load(fmt.Sprintf("%v %v", obj.ID, user.Id))
 }

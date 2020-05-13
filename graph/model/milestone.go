@@ -1,7 +1,7 @@
 package model
 
 import (
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"strings"
 )
 
@@ -29,7 +29,6 @@ func (m *Milestone) MapDbToGql(dbMilestone dbmodel.Milestone) {
 	m.Resolution = dbMilestone.Resolution
 	m.Duration = dbMilestone.Duration
 
-	//TODO: Check how jobStatus enums work
 	status := JobStatus(strings.ToUpper(dbMilestone.Status))
 	m.Status = &status
 	if dbMilestone.AssignedTo.Valid {

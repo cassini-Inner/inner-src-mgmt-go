@@ -2,35 +2,36 @@ package middleware
 
 import (
 	"context"
-	"github.com/cassini-Inner/inner-src-mgmt-go/postgres"
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
+	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/dgrijalva/jwt-go/request"
 	"github.com/pkg/errors"
+	"log"
 	"net/http"
 	"os"
-	"strings"
 )
 
 const (
 	CurrentUserKey = "currentUserKey"
 )
 
-func AuthMiddleware(repo postgres.UsersRepo) func(http.Handler) http.Handler {
+func AuthMiddleware(repo repository.UsersRepo) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, err := parseToken(r)
 			if err != nil {
+				log.Println(err)
 				next.ServeHTTP(w, r)
 				return
 			}
-			claims, ok := token.Claims.(jwt.MapClaims)
+			claims, ok := token.Claims.(jwt.StandardClaims)
 			//TODO: Change this to block request if valid token is not supplied
 			if !ok || !token.Valid {
 				next.ServeHTTP(w, r)
 				return
 			}
-			user, err := repo.GetById(claims["jti"].(string))
+			user, err := repo.GetById(claims.Id)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
@@ -42,43 +43,30 @@ func AuthMiddleware(repo postgres.UsersRepo) func(http.Handler) http.Handler {
 }
 
 func parseToken(r *http.Request) (*jwt.Token, error) {
-	jwtToken, err := request.ParseFromRequest(r, authExtractor,
-		func(token *jwt.Token) (interface{}, error) {
-			t := []byte(os.Getenv("JWT_SECRET"))
-			return t, nil
-		},
-	)
-	return jwtToken, errors.Wrap(err, "parseToken error: ")
-}
-
-var authHeaderExtractor = &request.PostExtractionFilter{
-	Extractor: request.HeaderExtractor{"Authorization"},
-	Filter:    stripBearerPrefixFromToken,
-}
-
-func stripBearerPrefixFromToken(token string) (string, error) {
-	bearer := "BEARER"
-	if len(token) > len(bearer) && strings.ToUpper(token[0:len(bearer)]) == bearer {
-		return token[len(bearer)+1:], nil
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		return nil, err
 	}
-	return token, nil
+	var claims jwt.StandardClaims
+	token, err := jwt.ParseWithClaims(cookie.Value, &claims, func(token *jwt.Token) (interface{}, error) {
+		t := []byte(os.Getenv("jwt_secret"))
+		return t, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	token.Claims = claims
+	return token, errors.Wrap(err, "parseToken error: ")
 }
 
 func GetCurrentUserFromContext(ctx context.Context) (*dbmodel.User, error) {
-	NoUserInContextError := errors.New("no user in context")
-
 	if ctx.Value(CurrentUserKey) == nil {
-		return nil, NoUserInContextError
+		return nil, customErrors.ErrNoUserInContext
 	}
 
 	user, ok := ctx.Value(CurrentUserKey).(*dbmodel.User)
 	if !ok || user.Id == "" {
-		return nil, NoUserInContextError
+		return nil, customErrors.ErrNoUserInContext
 	}
 	return user, nil
-}
-
-var authExtractor = &request.MultiExtractor{
-	authHeaderExtractor,
-	request.ArgumentExtractor{"access_token"},
 }

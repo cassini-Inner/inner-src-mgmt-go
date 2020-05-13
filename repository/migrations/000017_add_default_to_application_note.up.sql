@@ -1,0 +1,1 @@
+alter table applications alter column note set default '';

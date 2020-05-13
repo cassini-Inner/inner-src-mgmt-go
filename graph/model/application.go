@@ -1,7 +1,7 @@
 package model
 
 import (
-	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/postgres/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"strings"
 )
 
@@ -23,4 +23,23 @@ func (a *Application) MapDbToGql(dbApplication *dbmodel.Application) {
 	}
 	a.MilestoneID = dbApplication.MilestoneId
 	a.CreatedOn = dbApplication.TimeCreated
+}
+
+func MapDBApplicationListToGql(dbApplicationList []*dbmodel.Application) []*Application {
+	var result []*Application
+	for _, dbApplication := range dbApplicationList {
+		var a Application
+		a.ID = dbApplication.Id
+		a.ApplicantID = dbApplication.ApplicantId
+		a.Status = ApplicationStatus(strings.ToUpper(dbApplication.Status))
+		if dbApplication.Note.Valid {
+			a.Note = &dbApplication.Note.String
+		}
+		a.MilestoneID = dbApplication.MilestoneId
+		a.CreatedOn = dbApplication.TimeCreated
+
+		result = append(result, &a)
+	}
+
+	return result
 }
