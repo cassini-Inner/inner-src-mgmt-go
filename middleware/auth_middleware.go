@@ -7,6 +7,7 @@ import (
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
+	"log"
 	"net/http"
 	"os"
 )
@@ -20,6 +21,7 @@ func AuthMiddleware(repo repository.UsersRepo) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, err := parseToken(r)
 			if err != nil {
+				log.Println(err)
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -47,7 +49,7 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 	}
 	var claims jwt.StandardClaims
 	token, err := jwt.ParseWithClaims(cookie.Value, &claims, func(token *jwt.Token) (interface{}, error) {
-		t := []byte(os.Getenv("JWT_SECRET"))
+		t := []byte(os.Getenv("jwt_secret"))
 		return t, nil
 	})
 	if err != nil {

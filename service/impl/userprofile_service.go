@@ -7,6 +7,7 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
+	"log"
 	"strconv"
 )
 
@@ -27,6 +28,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 
 	tx, err := s.skillsRepo.BeginTx(ctx)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	if userDetails.Contact != nil {
@@ -50,6 +52,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 	currentRequestUser.Onboarded = true
 	user, err := s.userRepo.UpdateUser(tx, currentRequestUser)
 	if err != nil {
+		log.Println(err)
 		_ = tx.Rollback()
 		return nil, err
 	}
@@ -58,6 +61,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 	if userDetails.Skills != nil {
 		err := s.userRepo.RemoveUserSkillsByUserId(tx, currentRequestUser.Id)
 		if err != nil {
+			log.Println(err)
 			_ = tx.Rollback()
 			return nil, err
 		}
@@ -72,11 +76,13 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 			// create new skills for the users
 			newSkills, err := s.skillsRepo.FindOrCreateSkills(ctx, tx, skillList, currentRequestUser.Id)
 			if err != nil {
+				log.Println(err)
 				_ = tx.Rollback()
 				return nil, err
 			}
 			err = s.skillsRepo.AddSkillsToUserSkills(tx, newSkills, currentRequestUser.Id)
 			if err != nil {
+				log.Println(err)
 				_ = tx.Rollback()
 				return nil, err
 			}
@@ -85,6 +91,7 @@ func (s UserProfileService) UpdateProfile(ctx context.Context, userDetails *gqlm
 
 	err = tx.Commit()
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	var gqlUpdatedUser gqlmodel.User
