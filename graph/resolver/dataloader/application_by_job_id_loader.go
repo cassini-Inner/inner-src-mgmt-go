@@ -56,8 +56,8 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 			}
 			return i, nil
 		},
-		Wait:     2 * time.Millisecond,
-		MaxBatch: 500,
+		Wait:     5 * time.Millisecond,
+		MaxBatch: 100,
 	})
 }
 

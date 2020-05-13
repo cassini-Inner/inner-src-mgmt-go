@@ -66,7 +66,7 @@ func NewMilestoneByJobIdLoader(db *sqlx.DB) *generated.MilestoneByJobIdLoader {
 			}
 			return milestones, nil
 		},
-		Wait:     2 * time.Millisecond,
-		MaxBatch: 500,
+		Wait:     5 * time.Millisecond,
+		MaxBatch: 100,
 	})
 }

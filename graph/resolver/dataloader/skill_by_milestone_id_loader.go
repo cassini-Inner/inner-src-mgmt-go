@@ -67,7 +67,7 @@ where milestone_id in (?)`, keys)
 
 			return result, nil
 		},
-		Wait:     2 * time.Millisecond,
-		MaxBatch: 500,
+		Wait:     5 * time.Millisecond,
+		MaxBatch: 100,
 	})
 }
