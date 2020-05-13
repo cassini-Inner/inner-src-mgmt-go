@@ -3,6 +3,8 @@ package impl
 import (
 	"context"
 	"errors"
+	"log"
+
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
@@ -21,11 +23,13 @@ func NewAuthenticationService(usersRepo repository.UsersRepo, oauthService servi
 func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, code string) (*gqlmodel.User, error) {
 	_, err := s.oauthService.Authenticate(code)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
 	fetchedUser, err := s.oauthService.GetUserInfo()
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
