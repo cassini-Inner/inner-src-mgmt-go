@@ -16,5 +16,5 @@ type SkillsRepo interface {
 	FindOrCreateSkills(ctx context.Context, tx *sqlx.Tx, skillsList []string, userId string) (skillsMap map[string]*dbmodel.GlobalSkill, err error)
 	MapSkillsToMilestones(ctx context.Context, tx *sqlx.Tx, skillsMap map[string]*dbmodel.GlobalSkill, input *gqlmodel.CreateJobInput, insertedMilestones []*dbmodel.Milestone) (err error)
 	AddSkillsToUserSkills(tx *sqlx.Tx, skills map[string]*dbmodel.GlobalSkill, userId string) error
-	GetMatchingSkills(query *string) ([]*dbmodel.GlobalSkill, error)
+	GetMatchingSkills(query string, limit *int) ([]*dbmodel.GlobalSkill, error)
 }
