@@ -1,14 +1,15 @@
 package impl
 
 import (
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	"reflect"
-	"testing"
-	"time"
 )
 
 func TestUsersRepo_GetByIdTx(t *testing.T) {

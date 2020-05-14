@@ -36,6 +36,11 @@ type MilestoneInput struct {
 	Skills     []*string  `json:"skills"`
 }
 
+type SearchResult struct {
+	Jobs  []*Job  `json:"jobs"`
+	Users []*User `json:"users"`
+}
+
 type UpdateJobInput struct {
 	ID         string            `json:"id"`
 	Title      string            `json:"title"`

@@ -2,13 +2,14 @@ package impl
 
 import (
 	"context"
+	"log"
+	"strconv"
+
 	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
-	"log"
-	"strconv"
 )
 
 type UserProfileService struct {
@@ -111,4 +112,12 @@ func (s *UserProfileService) GetById(ctx context.Context, userId string) (*gqlmo
 	var gqlUser gqlmodel.User
 	gqlUser.MapDbToGql(*user)
 	return &gqlUser, nil
+}
+
+func (s *UserProfileService) GetByName(ctx context.Context, userName string, limit *int) ([]dbmodel.User, error) {
+	users, err := s.userRepo.GetByName(userName, limit)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }

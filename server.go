@@ -3,6 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
@@ -17,9 +21,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
-	"log"
-	"net/http"
-	"os"
 )
 
 const defaultPort = "8080"

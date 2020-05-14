@@ -17,6 +17,11 @@ type Query {
         query: String!
         limit: Int
     ):[Skill!]!
+    # For search based on job and user with the query string as input
+    Search(
+        query: String!,
+        limit: Int
+    ): SearchResult
 }
 type Mutation {
     # To update the user information like name, email ...
@@ -159,6 +164,11 @@ type User {
     appliedJobs: [UserJobApplication!]
     # Number of jobs the user has taken/working on/completed
     jobStats: UserStats!
+}
+
+type SearchResult {
+    jobs: [Job!]
+    users: [User!]
 }
 
 type UserJobApplication {

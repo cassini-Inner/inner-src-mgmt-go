@@ -3,10 +3,11 @@ package impl
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
-	"strings"
 )
 
 type JobsRepoImpl struct {
@@ -231,10 +232,27 @@ func (j *JobsRepoImpl) DeleteMilestonesByJobId(tx *sqlx.Tx, jobID string) error 
 	return nil
 }
 
+func (j *JobsRepoImpl) GetByTitle(jobTitle string, limit *int) ([]dbmodel.Job, error) {
+	rows, err := j.db.Queryx(selectJobByTitleQuery, jobTitle, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	var jobs []dbmodel.Job
+	for rows != nil && rows.Next() {
+		var tempJob dbmodel.Job
+		rows.StructScan(&tempJob)
+		jobs = append(jobs, tempJob)
+	}
+
+	return jobs, nil
+}
+
 const (
 	createJobQuery = `insert into jobs(title, description, difficulty,created_by) values ($1, $2, $3, $4) returning jobs.id`
 
 	selectJobByIdQuery            = `SELECT * FROM jobs WHERE id = $1 and is_deleted=false`
+	selectJobByTitleQuery         = `SELECT * FROM jobs WHERE title ~* $1 and is_deleted=false ORDER BY title LIMIT $2`
 	selectJobsByUserIdQuery       = `SELECT * FROM jobs WHERE created_by = $1 and is_deleted=false`
 	selectAllJobsWithFiltersQuery = `select * from jobs where jobs.id in (select milestones.job_id from globalskills 
 		join milestoneskills on globalskills.id = milestoneskills.skill_id

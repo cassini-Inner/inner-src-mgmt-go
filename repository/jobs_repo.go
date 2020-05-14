@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
@@ -27,4 +28,5 @@ type JobsRepo interface {
 	MarkMilestonesCompleted(tx *sqlx.Tx, ctx context.Context, milestoneIds ...string) error
 	CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId string, milestones []*gqlmodel.MilestoneInput) (createdMilestones []*dbmodel.Milestone, err error)
 	DeleteMilestonesByJobId(tx *sqlx.Tx, jobID string) error
+	GetByTitle(jobTitle string, limit *int) ([]dbmodel.Job, error)
 }
