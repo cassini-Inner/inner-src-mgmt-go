@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strconv"
+	"time"
+
 	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
-	"strconv"
-	"time"
 )
 
 var (
@@ -112,8 +113,25 @@ func (u *UsersRepoImpl) CountUsersByGithubId(tx *sqlx.Tx, githubId sql.NullStrin
 	return usersCount, nil
 }
 
+func (u *UsersRepoImpl) GetByName(userName string, limit *int) ([]dbmodel.User, error) {
+	rows, err := u.db.Queryx(selectUserNameQuery, userName, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []dbmodel.User
+	for rows != nil && rows.Next() {
+		var tempUser dbmodel.User
+		rows.StructScan(&tempUser)
+		users = append(users, tempUser)
+	}
+
+	return users, nil
+}
+
 const (
 	selectUserByIdQuery        = `select * from users where users.id = $1 and users.is_deleted = false`
+	selectUserNameQuery        = `select * from users where users.name ~* $1 and users.is_deleted = false order by users.name limit $2`
 	selectUsersByEmailIdQuery  = `select * from users where email = $1 and users.is_deleted = false`
 	SelectUsersByGithubIdQuery = `select * from users where github_id = $1 and users.is_deleted = false`
 	countUsersByGithubIdQuery  = `select count(*) from users where github_id = $1`

@@ -16,9 +16,10 @@ type Query {
     Skills(
         query: String
     ):[Skill!]!
-    # For search based on job and user
+    # For search based on job and user with the query string as input
     Search(
-        query: String!
+        query: String!,
+        limit: Int
     ): SearchResult
 }
 type Mutation {

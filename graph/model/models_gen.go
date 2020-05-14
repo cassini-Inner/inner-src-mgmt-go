@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-
-	"github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
 type CreateJobInput struct {
@@ -39,8 +37,8 @@ type MilestoneInput struct {
 }
 
 type SearchResult struct {
-	Jobs  []*model.Job  `json:"jobs"`
-	Users []*model.User `json:"users"`
+	Jobs  []*Job  `json:"jobs"`
+	Users []*User `json:"users"`
 }
 
 type UpdateJobInput struct {

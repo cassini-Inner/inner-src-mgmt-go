@@ -100,10 +100,3 @@ models:
         resolver: true
       jobStats:
         resolver: true
-
-  SearchResult:
-    fields:
-      jobs:
-        resolver: true
-      users:
-        resolver: true

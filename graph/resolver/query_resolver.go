@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
@@ -57,4 +58,40 @@ func (r *queryResolver) Skills(ctx context.Context, query *string) (result []*gq
 	}
 
 	return result, nil
+}
+
+func (r *queryResolver) Search(ctx context.Context, query string, limit *int) (*gqlmodel.SearchResult, error) {
+	//For fetching jobs with title similar to query string
+	jobsFromDb, err := r.JobsService.GetByTitle(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	var jobs []*gqlmodel.Job
+	for _, dbJob := range jobsFromDb {
+		var tempJob gqlmodel.Job
+		tempJob.MapDbToGql(dbJob)
+		jobs = append(jobs, &tempJob)
+	}
+
+	//For fetching users with name similar to query string
+	usersFromDb, err := r.UserService.GetByName(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []*gqlmodel.User
+	for _, dbUser := range usersFromDb {
+		var tempUser gqlmodel.User
+		tempUser.MapDbToGql(dbUser)
+		users = append(users, &tempUser)
+	}
+
+	//Search result with jobs and users
+	searchResult := gqlmodel.SearchResult{
+		Jobs:  jobs,
+		Users: users,
+	}
+
+	return &searchResult, nil
 }

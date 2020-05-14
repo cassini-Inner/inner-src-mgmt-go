@@ -4,13 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
+	"strings"
+
 	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/middleware"
 	"github.com/cassini-Inner/inner-src-mgmt-go/repository"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
-	"log"
-	"strings"
 )
 
 type JobsService struct {
@@ -233,6 +234,14 @@ func (j *JobsService) GetById(ctx context.Context, jobId string) (*gqlmodel.Job,
 	var gqlJob gqlmodel.Job
 	gqlJob.MapDbToGql(*job)
 	return &gqlJob, nil
+}
+
+func (j *JobsService) GetByTitle(ctx context.Context, jobTitle string, limit *int) ([]dbmodel.Job, error) {
+	jobs, err := j.jobsRepo.GetByTitle(jobTitle, limit)
+	if err != nil {
+		return nil, err
+	}
+	return jobs, nil
 }
 
 func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gqlmodel.Job, error) {
