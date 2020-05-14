@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
@@ -29,17 +28,15 @@ func (s *SkillsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return s.db.BeginTxx(ctx, nil)
 }
 
-func (s *SkillsRepoImpl) GetMatchingSkills(query *string) ([]*dbmodel.GlobalSkill, error) {
-	if query == nil {
-		return nil, custom_errors.ErrInvalidId
-	}
-	rows, err := s.db.Queryx(skillsMatchingQuery, (*query)+"%")
+func (s *SkillsRepoImpl) GetMatchingSkills(query string, limit *int) ([]*dbmodel.GlobalSkill, error) {
+	rows, err := s.db.Queryx(skillsMatchingQuery, (query)+"%", limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	return s.scanSkills(rows)
 }
+
 func (s *SkillsRepoImpl) GetByJobId(jobId string) ([]*dbmodel.GlobalSkill, error) {
 	rows, err := s.db.Queryx(selectSkillsByJobIdQuery, jobId)
 	if err != nil {
@@ -281,5 +278,5 @@ const (
 
 	insertIntoUserskillsquery = `insert into userskills(user_id, skill_id) values %v returning id`
 
-	skillsMatchingQuery = `select * from globalskills where value like $1`
+	skillsMatchingQuery = `select * from globalskills where value like $1 limit $2`
 )

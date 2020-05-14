@@ -13,9 +13,10 @@ func NewSkillsService(skillsRepo repository.SkillsRepo) *SkillsService {
 	return &SkillsService{skillsRepo: skillsRepo}
 }
 
-func (s *SkillsService) GetMatchingSkills(query *string) ([]*model.GlobalSkill, error) {
-	if query == nil || *query == "" {
+func (s *SkillsService) GetMatchingSkills(query string, limit *int) ([]*model.GlobalSkill, error) {
+	if query == "" {
 		return s.skillsRepo.GetAll()
 	}
-	return s.skillsRepo.GetMatchingSkills(query)
+
+	return s.skillsRepo.GetMatchingSkills(query, limit)
 }
