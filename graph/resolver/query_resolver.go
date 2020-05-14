@@ -45,8 +45,8 @@ func (r *queryResolver) User(ctx context.Context, id string, jobsStatusFilter *g
 	return dataloader.GetUserByUserIdLoader(ctx).Load(id)
 }
 
-func (r *queryResolver) Skills(ctx context.Context, query *string) (result []*gqlmodel.Skill, err error) {
-	skills, err := r.SkillsService.GetMatchingSkills(query)
+func (r *queryResolver) Skills(ctx context.Context, query string, limit *int) (result []*gqlmodel.Skill, err error) {
+	skills, err := r.SkillsService.GetMatchingSkills(query, limit)
 	if err != nil {
 		return nil, err
 	}

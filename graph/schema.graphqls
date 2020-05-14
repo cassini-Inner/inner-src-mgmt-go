@@ -14,7 +14,8 @@ type Query {
         jobsStatusFilter: JobStatus
     ): User
     Skills(
-        query: String
+        query: String!
+        limit: Int
     ):[Skill!]!
     # For search based on job and user with the query string as input
     Search(

@@ -136,7 +136,7 @@ type ComplexityRoot struct {
 		AllJobs func(childComplexity int, filter *model.JobsFilterInput) int
 		Job     func(childComplexity int, id string) int
 		Search  func(childComplexity int, query string, limit *int) int
-		Skills  func(childComplexity int, query *string) int
+		Skills  func(childComplexity int, query string, limit *int) int
 		User    func(childComplexity int, id string, jobsStatusFilter *model.JobStatus) int
 	}
 
@@ -236,7 +236,7 @@ type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
 	Job(ctx context.Context, id string) (*model.Job, error)
 	User(ctx context.Context, id string, jobsStatusFilter *model.JobStatus) (*model.User, error)
-	Skills(ctx context.Context, query *string) ([]*model.Skill, error)
+	Skills(ctx context.Context, query string, limit *int) ([]*model.Skill, error)
 	Search(ctx context.Context, query string, limit *int) (*model.SearchResult, error)
 }
 type SkillResolver interface {
@@ -794,7 +794,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Skills(childComplexity, args["query"].(*string)), true
+		return e.complexity.Query.Skills(childComplexity, args["query"].(string), args["limit"].(*int)), true
 
 	case "Query.User":
 		if e.complexity.Query.User == nil {
@@ -1119,7 +1119,8 @@ var sources = []*ast.Source{
         jobsStatusFilter: JobStatus
     ): User
     Skills(
-        query: String
+        query: String!
+        limit: Int
     ):[Skill!]!
     # For search based on job and user with the query string as input
     Search(
@@ -1628,14 +1629,22 @@ func (ec *executionContext) field_Query_Search_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_Skills_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["query"]; ok {
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["query"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["limit"]; ok {
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg1
 	return args, nil
 }
 
@@ -3883,7 +3892,7 @@ func (ec *executionContext) _Query_Skills(ctx context.Context, field graphql.Col
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Skills(rctx, args["query"].(*string))
+		return ec.resolvers.Query().Skills(rctx, args["query"].(string), args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
