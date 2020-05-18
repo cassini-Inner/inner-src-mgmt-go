@@ -1,6 +1,5 @@
 version: '3'
 services:
-
   db:
     image: postgres:alpine
     restart: always
@@ -14,7 +13,7 @@ services:
   migrate:
     image: migrate/migrate
     volumes:
-    - ./repository/migrations :/migrations
+    - ./repository/migrations:/migrations
     command: ["-path", "/migrations", "-database",  "postgres://postgres:root@db:5432/innersource?sslmode=disable", "up"]
     links:
       - db
@@ -28,6 +27,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8080:8080
+    links: 
+      - db
+      - migrate
     depends_on:
       - db
       - migrate
