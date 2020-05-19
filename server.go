@@ -80,19 +80,13 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 }
 
 func main() {
-	//TODO: Make this more secure
-	//_ = os.Setenv("jwt_secret", "innersource_jwt_secret_key")
-	//_ = os.Setenv("client_id", "5a4ff35b849d9cc3cab7")
-	//_ = os.Setenv("client_secret", "f94c5d74e099ed894f88ac6c75ac19c4c3194427")
-	//_ = os.Setenv("db_conn_string", "host=localhost port=5432 user=postgres dbname=innersource password=root sslmode=disable")
-
 	DB, err := sqlx.Connect("postgres",
 		fmt.Sprintf("host=%v port=%v user=%v dbname=%v password=%v sslmode=%v",
 			os.Getenv("host"),
 			os.Getenv("port"),
-			os.Getenv("user"),
-			os.Getenv("dbname"),
-			os.Getenv("password"),
+			os.Getenv("POSTGRES_USER"),
+			os.Getenv("POSTGRES_DB"),
+			os.Getenv("POSTGRES_PASSWORD"),
 			os.Getenv("sslmode"),
 		),
 	)

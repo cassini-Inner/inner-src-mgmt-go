@@ -11,6 +11,10 @@ func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilter
 	var skills []string
 	var statuses []string
 
+	if filter == nil {
+		filter = &gqlmodel.JobsFilterInput{};
+	}
+
 	if filter.Skills != nil && len(filter.Skills) != 0 {
 		for _, skill := range filter.Skills {
 			skills = append(skills, *skill)
