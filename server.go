@@ -84,9 +84,9 @@ func main() {
 		fmt.Sprintf("host=%v port=%v user=%v dbname=%v password=%v sslmode=%v",
 			os.Getenv("host"),
 			os.Getenv("port"),
-			os.Getenv("user"),
-			os.Getenv("dbname"),
-			os.Getenv("password"),
+			os.Getenv("POSTGRES_USER"),
+			os.Getenv("POSTGRES_DB"),
+			os.Getenv("POSTGRES_PASSWORD"),
 			os.Getenv("sslmode"),
 		),
 	)
