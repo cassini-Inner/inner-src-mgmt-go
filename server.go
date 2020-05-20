@@ -63,7 +63,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 
 	router := chi.NewRouter()
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8081", "http://localhost:8080", "http://localhost:3000"},
+		AllowedOrigins:   []string{"http://localhost", "http://10.176.5.190/"},
 		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete, http.MethodConnect},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
@@ -76,6 +76,10 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	router.Handle("/authenticate", restAuthHandler)
 	router.HandleFunc("/logout", rest.SignoutHandler)
 	router.HandleFunc("/read-cookie", rest.GetUIDFromCookie)
+	router.HandleFunc("/ping", func(writer http.ResponseWriter, request *http.Request) {
+		writer.Write([]byte("pong"))
+		writer.WriteHeader(http.StatusOK)
+	})
 	return router, nil
 }
 

@@ -90,7 +90,7 @@ func (u *User) generateToken(expiresAt time.Time) (*string, error) {
 		Issuer:    "innersource",
 	})
 
-	accessToken, err := token.SignedString([]byte(os.Getenv("jwt_secret")))
+	accessToken, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return nil, err
 	}
