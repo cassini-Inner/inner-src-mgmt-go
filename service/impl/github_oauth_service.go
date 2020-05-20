@@ -21,8 +21,8 @@ func NewGithubOauthService() *GithubOauthService {
 }
 
 func (g *GithubOauthService) Authenticate(code string) (string, error) {
-	urlStr := fmt.Sprintf("https://github.com/login/oauth/access_token?client_id=%v&client_secret=%v&code=%v", os.Getenv("client_id"),
-		os.Getenv("client_secret"),
+	urlStr := fmt.Sprintf("https://github.com/login/oauth/access_token?client_id=%v&client_secret=%v&code=%v", os.Getenv("CLIENT_ID"),
+		os.Getenv("CLIENT_SECRET"),
 		code,
 	)
 

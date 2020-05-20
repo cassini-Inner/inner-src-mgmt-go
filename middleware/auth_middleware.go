@@ -49,7 +49,7 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 	}
 	var claims jwt.StandardClaims
 	token, err := jwt.ParseWithClaims(cookie.Value, &claims, func(token *jwt.Token) (interface{}, error) {
-		t := []byte(os.Getenv("jwt_secret"))
+		t := []byte(os.Getenv("JWT_SECRET"))
 		return t, nil
 	})
 	if err != nil {

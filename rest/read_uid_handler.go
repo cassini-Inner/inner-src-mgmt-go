@@ -15,7 +15,7 @@ func GetUIDFromCookie(w http.ResponseWriter, r *http.Request) {
 	}
 	claims := &jwt.StandardClaims{}
 	_, err = jwt.ParseWithClaims(cookie.Value, claims, func(token *jwt.Token) (i interface{}, err error) {
-		return []byte(os.Getenv("jwt_secret")), nil
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil {
