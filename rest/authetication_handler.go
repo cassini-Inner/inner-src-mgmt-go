@@ -35,11 +35,12 @@ func (a AuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	if body.Code == "" {
 		w.WriteHeader(http.StatusBadRequest)
+		log.Println("invalid code")
 		return
 	}
 	user, err := a.authService.AuthenticateAndGetUser(r.Context(), body.Code)
 	if err != nil {
-		log.Println(err)
+		log.Printf("AuthService Error: %v", err)
 		if err == customErrors.ErrCodeExpired {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -50,6 +51,7 @@ func (a AuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	token, err := user.GenerateAccessToken()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
 		return
 	}
 	cookie := http.Cookie{Name: "token",
