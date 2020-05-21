@@ -25,6 +25,8 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
+      args:
+        SERVER_PORT: ${SERVER_PORT}
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     links: 
@@ -37,7 +39,7 @@ services:
       host: db
       port: 5432
       sslmode: disable
-      server_port: ${SERVER_PORT}
+      SERVER_PORT: ${SERVER_PORT}
     env_file:
       - .env
     restart: always

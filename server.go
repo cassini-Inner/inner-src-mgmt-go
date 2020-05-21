@@ -103,7 +103,7 @@ func main() {
 		panic(err)
 	}
 
-	port := os.Getenv("server_port")
+	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		port = defaultPort
 	}
