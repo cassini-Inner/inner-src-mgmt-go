@@ -61,7 +61,7 @@ func (a AuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		MaxAge:   86400,
 		HttpOnly: true,
 		Secure:   false,
-		Domain:   "localhost",
+		Domain:   r.RequestURI,
 	}
 	http.SetCookie(w, &cookie)
 
