@@ -63,10 +63,12 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 
 	router := chi.NewRouter()
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost", "http://10.176.5.190/"},
-		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete, http.MethodConnect},
+		AllowedOrigins:   []string{"http://10.176.20.185", "http://localhost", "http://10.176.5.190"},
+		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete, http.MethodConnect,
+			http.MethodTrace, http.MethodHead, http.MethodPatch},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
+		Debug: true,
 	}).Handler)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
@@ -103,7 +105,7 @@ func main() {
 		panic(err)
 	}
 
-	port := os.Getenv("server_port")
+	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		port = defaultPort
 	}

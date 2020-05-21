@@ -37,6 +37,7 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, code
 	// check if the user is signing up for the first time
 	usersCount, err := s.usersRepo.CountUsersByGithubId(tx, fetchedUser.GithubId)
 	if err != nil {
+		log.Println(err)
 		_ = tx.Rollback()
 		return nil, err
 	}
@@ -47,12 +48,14 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, code
 	case 0:
 		user, err = s.usersRepo.CreateNewUser(tx, fetchedUser)
 		if err != nil {
+			log.Println(err)
 			_ = tx.Rollback()
 			return nil, err
 		}
 	case 1:
 		user, err = s.usersRepo.GetByGithubId(fetchedUser.GithubId.String)
 		if err != nil {
+			log.Println(err)
 			_ = tx.Rollback()
 			return nil, err
 		}
@@ -60,7 +63,7 @@ func (s *AuthenticationService) AuthenticateAndGetUser(ctx context.Context, code
 		return &gqlUser, nil
 	default:
 		_ = tx.Rollback()
-		return nil, errors.New("multiple users by the same name exist in database")
+		return nil, errors.New("multiple users by the same id exist in database")
 	}
 	err = tx.Commit()
 	if err != nil {

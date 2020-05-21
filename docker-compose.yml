@@ -7,8 +7,6 @@ services:
       - .env
     ports:
       - 5432:5432
-    networks:
-      - innersource
 
   migrate:
     image: migrate/migrate
@@ -22,15 +20,15 @@ services:
     env_file:
       - .env
     restart: on-failure
-    networks:
-      - innersource
 
   api:
     build:
       context: ./
       dockerfile: Dockerfile
+      args:
+        SERVER_PORT: ${SERVER_PORT}
     ports:
-      - 8080:8080
+      - ${SERVER_PORT}:${SERVER_PORT}
     links: 
       - db
       - migrate
@@ -41,13 +39,7 @@ services:
       host: db
       port: 5432
       sslmode: disable
-      server_port: 8080
+      SERVER_PORT: ${SERVER_PORT}
     env_file:
       - .env
     restart: always
-    networks:
-      - innersource
-
-networks:
-  innersource:
-      name: innersource
