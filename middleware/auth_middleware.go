@@ -19,6 +19,7 @@ const (
 func AuthMiddleware(repo repository.UsersRepo) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Println(r.Cookies())
 			token, err := parseToken(r)
 			if err != nil {
 				log.Println(err)
