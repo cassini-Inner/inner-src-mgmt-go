@@ -41,7 +41,7 @@ func (a AuthenticationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	user, err := a.authService.AuthenticateAndGetUser(r.Context(), body.Code)
 	if err != nil {
 		log.Printf("AuthService Error: %v", err)
-		if err == customErrors.ErrCodeExpired {
+		if err == customErrors.ErrCodeExpired || err == customErrors.ErrInvalidAuthResponse {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
