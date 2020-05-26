@@ -99,14 +99,37 @@ func (j *JobsRepoImpl) GetAll(skillNames []string, status []string) ([]dbmodel.J
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+	return scanRows(rows)
+}
 
-	var result []dbmodel.Job
-	for rows != nil && rows.Next() {
-		var tempJob dbmodel.Job
-		rows.StructScan(&tempJob)
-		result = append(result, tempJob)
+func (j *JobsRepoImpl) GetAllPaginated(skillNames []string, status []string, limit int, cursor *string) ([]dbmodel.Job, error) {
+	if cursor != nil {
+		query, args, err := sqlx.In(selectAllJobsLimitedWithID, cursor, skillNames, status, limit)
+		if err != nil {
+			return nil, err
+		}
+		query = j.db.Rebind(query)
+
+		rows, err := j.db.Queryx(query, args...)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		return scanRows(rows)
 	}
-	return result, nil
+	query, args, err := sqlx.In(selectAllJobsLimited, skillNames,status, limit)
+	if err != nil {
+		return nil, err
+	}
+	query = j.db.Rebind(query)
+
+	rows, err := j.db.Queryx(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanRows(rows)
 }
 
 func (j *JobsRepoImpl) GetMilestonesByJobId(tx sqlx.Ext, jobId string) ([]*dbmodel.Milestone, error) {
@@ -248,6 +271,18 @@ func (j *JobsRepoImpl) GetByTitle(jobTitle string, limit *int) ([]dbmodel.Job, e
 	return jobs, nil
 }
 
+func scanRows(rows *sqlx.Rows) (result []dbmodel.Job, err error) {
+	for rows != nil && rows.Next() {
+		var tempJob dbmodel.Job
+		err = rows.StructScan(&tempJob)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, tempJob)
+	}
+	return result, nil
+}
+
 const (
 	createJobQuery = `insert into jobs(title, description, difficulty,created_by) values ($1, $2, $3, $4) returning jobs.id`
 
@@ -264,6 +299,33 @@ const (
 	selectMilestoneByIdQuery     = `SELECT * FROM milestones WHERE id = $1 and is_deleted=false`
 	selectUserByMilestoneIdQuery = `select * from users where id in (select created_by from jobs join milestones m on 
 	jobs.id = m.job_id and m.id = $1 and m.is_deleted = false and jobs.is_deleted = false)`
+
+	// TODO: These 2 queries can be optimised further. Need feedback on this
+	selectAllJobsLimited = `select *
+from jobs
+where id in (select distinct job_id
+             from milestones
+                      join milestoneskills on milestones.id = milestoneskills.milestone_id and milestoneskills.is_deleted = false and milestones.is_deleted = false
+                      join globalskills g on milestoneskills.skill_id = g.id
+             where value in (?)
+             )
+and status in (?)
+and jobs.is_deleted = false
+order by jobs.time_created desc
+fetch first ? rows only`
+
+	selectAllJobsLimitedWithID = `select *
+from jobs
+where id in (select distinct job_id
+             from milestones
+                      join milestoneskills on milestones.id = milestoneskills.milestone_id and job_id < ? and milestoneskills.is_deleted = false and milestones.is_deleted = false
+                      join globalskills g on milestoneskills.skill_id = g.id
+             where value in (?)
+             )
+and status in (?)
+and jobs.is_deleted = false
+order by jobs.time_created desc
+fetch first ? rows only`
 
 	updateMilestoneStatusCompleted = `update milestones set status = 'completed' where id in (?) and is_deleted = false`
 	updateJobStatusCompleted       = `update jobs set status = 'completed' where id = $1 and is_deleted = false`

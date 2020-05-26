@@ -7,6 +7,11 @@ type Query {
     Job(
         id: ID!
     ): Job
+    Jobs(
+        filter: JobsFilterInput
+        limit: Int!
+        after: ID
+    ) : JobsConnection
     # To get user information with user id with or without
     # job status filter (open/ongoing/completed)
     User (
@@ -23,6 +28,23 @@ type Query {
         limit: Int
     ): SearchResult
 }
+
+type JobsConnection {
+    totalCount: Int!
+    edges: [JobEdge!]!
+    pageInfo: JobPageInfo
+}
+
+type JobPageInfo {
+    hasNextPage: Boolean!,
+    endCursor: String
+}
+
+type JobEdge {
+    node: Job!
+    cursor: ID!
+}
+
 type Mutation {
     # To update the user information like name, email ...
     updateProfile(user: UpdateUserInput): User

@@ -17,6 +17,6 @@ var (
 	ErrOauthClientNotAuthenticated    = errors.New("oauth process has not been initiated")
 	ErrCodeExpired                    = errors.New("ERR_CODE_EXPIRED_OR_INVALID")
 	ErrInvalidAuthResponse            = errors.New("ERR_INVALID_AUTH_RESPONSE")
-	ErrNoUserInContext                = errors.New(
-		"no User in context")
+	ErrNoUserInContext                = errors.New("no User in context")
+	ErrInvalidCursor                  = errors.New("ERR_INVALID_CURSOR")
 )

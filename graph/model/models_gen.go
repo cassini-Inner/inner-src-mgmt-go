@@ -21,6 +21,22 @@ type CreateUserInput struct {
 	PhotoURL string `json:"photoUrl"`
 }
 
+type JobEdge struct {
+	Node   *Job   `json:"node"`
+	Cursor string `json:"cursor"`
+}
+
+type JobPageInfo struct {
+	HasNextPage bool    `json:"hasNextPage"`
+	EndCursor   *string `json:"endCursor"`
+}
+
+type JobsConnection struct {
+	TotalCount int          `json:"totalCount"`
+	Edges      []*JobEdge   `json:"edges"`
+	PageInfo   *JobPageInfo `json:"pageInfo"`
+}
+
 type JobsFilterInput struct {
 	Status    []*JobStatus `json:"status"`
 	Skills    []*string    `json:"skills"`

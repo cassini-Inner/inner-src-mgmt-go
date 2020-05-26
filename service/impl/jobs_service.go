@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"log"
 	"strings"
@@ -127,6 +128,59 @@ func (j *JobsService) GetAllJobs(ctx context.Context, skills, status []string) (
 		return nil, err
 	}
 	return jobs, nil
+}
+
+func (j *JobsService) GetAllJobsPaginated(ctx context.Context, skills, status []string, limit int, cursor *string) (result []*gqlmodel.Job, err error) {
+	if len(skills) == 0 {
+		dbSkills, err := j.skillsRepo.GetAll()
+		if err != nil {
+			return nil, err
+		}
+		for _, skill := range dbSkills {
+			skillValue := skill.Value
+			skills = append(skills, skillValue)
+		}
+	}
+
+	if len(status) == 0 {
+		status = append(status, "open", "ongoing", "completed")
+	}
+
+	for i := range skills {
+		skills[i] = strings.ToLower(skills[i])
+	}
+	for i := range status {
+		status[i] = strings.ToLower(status[i])
+	}
+
+	if skills == nil || len(skills) == 0 {
+		return result, nil
+	}
+	var cursorString *string
+	if cursor != nil{
+		if *cursor == "" {
+			return result, custom_errors.ErrInvalidCursor
+		}
+		decodedCursor, err := base64.StdEncoding.DecodeString(*cursor)
+		if err != nil {
+			return result, custom_errors.ErrInvalidCursor
+		}
+		cursorStr := string(decodedCursor)
+		cursorString = &cursorStr
+	}
+	// fetches one job more than the specified limit to make it easier to check if there is a next page
+	// or not
+	dbJobs, err := j.jobsRepo.GetAllPaginated(skills, status, limit+1, cursorString)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, job := range dbJobs {
+		gqlJob := gqlmodel.Job{}
+		gqlJob.MapDbToGql(job)
+		result = append(result, &gqlJob)
+	}
+	return result, nil
 }
 
 func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId string) (*gqlmodel.Comment, error) {
