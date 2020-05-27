@@ -63,7 +63,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 
 	router := chi.NewRouter()
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://10.176.20.185", "http://localhost", "http://10.176.5.190"},
+		AllowedOrigins:   []string{"http://10.176.20.185", "http://localhost:3000", "http://10.176.5.190"},
 		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete, http.MethodConnect,
 			http.MethodTrace, http.MethodHead, http.MethodPatch},
 		AllowedHeaders:   []string{"*"},

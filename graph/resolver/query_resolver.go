@@ -2,7 +2,7 @@ package resolver
 
 import (
 	"context"
-
+	"encoding/base64"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
@@ -12,7 +12,7 @@ func (r *queryResolver) AllJobs(ctx context.Context, filter *gqlmodel.JobsFilter
 	var statuses []string
 
 	if filter == nil {
-		filter = &gqlmodel.JobsFilterInput{};
+		filter = &gqlmodel.JobsFilterInput{}
 	}
 
 	if filter.Skills != nil && len(filter.Skills) != 0 {
@@ -98,4 +98,52 @@ func (r *queryResolver) Search(ctx context.Context, query string, limit *int) (*
 	}
 
 	return &searchResult, nil
+}
+
+func (r *queryResolver) Jobs(ctx context.Context, filter *gqlmodel.JobsFilterInput, limit int, after *string) (connection *gqlmodel.JobsConnection, err error) {
+	var skills []string
+	var statuses []string
+
+	if filter == nil {
+		filter = &gqlmodel.JobsFilterInput{}
+	}
+
+	if filter.Skills != nil && len(filter.Skills) != 0 {
+		for _, skill := range filter.Skills {
+			skills = append(skills, *skill)
+		}
+	}
+
+	if filter.Status != nil && len(filter.Status) != 0 {
+		for _, status := range filter.Status {
+			statuses = append(statuses, status.String())
+		}
+	}
+
+	jobs, err := r.JobsService.GetAllJobsPaginated(ctx, skills, statuses, limit, after)
+	if err != nil {
+		return connection, err
+	}
+	var edges []*gqlmodel.JobEdge
+
+	for i, job := range jobs {
+		if i < limit {
+			edges = append(edges, &gqlmodel.JobEdge{
+				Node:   job,
+				Cursor: base64.StdEncoding.EncodeToString([]byte(job.ID)),
+			})
+		}
+	}
+	var endCursor *string
+	if len(edges) > 0 {
+		endCursor = &edges[len(edges)-1].Cursor
+	}
+	return &gqlmodel.JobsConnection{
+		TotalCount: 10,
+		Edges:      edges,
+		PageInfo: &gqlmodel.JobPageInfo{
+			HasNextPage: len(jobs) > limit,
+			EndCursor:   endCursor,
+		},
+	}, nil
 }
