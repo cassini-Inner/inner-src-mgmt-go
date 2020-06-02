@@ -39,9 +39,10 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	jobsRepo := impl.NewJobsRepo(DB)
 	discussionsRepo := impl.NewDiscussionsRepo(DB)
 	applicationsRepo := impl.NewApplicationsRepo(DB)
+	milestonesRepo := impl.NewMilestonesRepoImpl(DB)
 
-	jobsService := impl2.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo)
-	applicationsService := impl2.NewApplicationsService(jobsRepo, applicationsRepo)
+	jobsService := impl2.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo, milestonesRepo)
+	applicationsService := impl2.NewApplicationsService(jobsRepo, applicationsRepo, milestonesRepo)
 	userService := impl2.NewUserProfileService(usersRepo, skillsRepo)
 	githubOauthService := impl2.NewGithubOauthService()
 	authService := impl2.NewAuthenticationService(usersRepo, githubOauthService)

@@ -30,7 +30,7 @@ func (j *JobsRepoImpl) CreateJob(ctx context.Context, tx *sqlx.Tx, input *gqlmod
 	if err != nil {
 		return nil, err
 	}
-	return j.GetByIdTx(tx, insertedJob.Id)
+	return j.getByIdTx(tx, insertedJob.Id)
 }
 
 func (j *JobsRepoImpl) UpdateJob(input *gqlmodel.UpdateJobInput) (*dbmodel.Job, error) {
@@ -50,15 +50,6 @@ func (j *JobsRepoImpl) DeleteJob(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error
 func (j *JobsRepoImpl) GetById(jobId string) (*dbmodel.Job, error) {
 	var job dbmodel.Job
 	err := j.db.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
-	if err != nil {
-		return nil, err
-	}
-	return &job, nil
-}
-
-func (j *JobsRepoImpl) GetByIdTx(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
-	var job dbmodel.Job
-	err := tx.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +109,7 @@ func (j *JobsRepoImpl) GetAllPaginated(skillNames []string, status []string, lim
 		defer rows.Close()
 		return scanRows(rows)
 	}
-	query, args, err := sqlx.In(selectAllJobsLimited, skillNames,status, limit)
+	query, args, err := sqlx.In(selectAllJobsLimited, skillNames, status, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -132,59 +123,13 @@ func (j *JobsRepoImpl) GetAllPaginated(skillNames []string, status []string, lim
 	return scanRows(rows)
 }
 
-func (j *JobsRepoImpl) GetMilestonesByJobId(tx sqlx.Ext, jobId string) ([]*dbmodel.Milestone, error) {
-	rows, err := tx.Queryx(selectMilestonesByJobId, jobId)
-	if err != nil {
-		return nil, err
-	}
-
-	var milestones []*dbmodel.Milestone
-	for rows.Next() {
-		var milestone dbmodel.Milestone
-		rows.StructScan(&milestone)
-		milestones = append(milestones, &milestone)
-	}
-	return milestones, nil
-}
-
-func (j *JobsRepoImpl) GetMilestoneIdsByJobId(tx sqlx.Ext, jobId string) (result []string, err error) {
-	milestones, err := j.GetMilestonesByJobId(tx, jobId)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, milestone := range milestones {
-		result = append(result, milestone.Id)
-	}
-
-	return result, nil
-}
-
-func (j *JobsRepoImpl) GetMilestoneById(milestoneId string) (*dbmodel.Milestone, error) {
-	var milestone dbmodel.Milestone
-	err := j.db.QueryRowx(selectMilestoneByIdQuery, milestoneId).StructScan(&milestone)
-	if err != nil {
-		return nil, err
-	}
-	return &milestone, nil
-}
-
-func (j *JobsRepoImpl) GetAuthorFromMilestoneId(milestoneId string) (*dbmodel.User, error) {
-	var user dbmodel.User
-	err := j.db.QueryRowx(selectUserByMilestoneIdQuery, milestoneId).StructScan(&user)
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
 func (j *JobsRepoImpl) MarkJobCompleted(ctx context.Context, tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
 	_, err := tx.ExecContext(ctx, updateJobStatusCompleted, jobId)
 	if err != nil {
 		return nil, err
 	}
 	// commit the transaction
-	return j.GetByIdTx(tx, jobId)
+	return j.getByIdTx(tx, jobId)
 }
 
 func (j *JobsRepoImpl) ForceAutoUpdateJobStatus(ctx context.Context, tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
@@ -193,66 +138,7 @@ func (j *JobsRepoImpl) ForceAutoUpdateJobStatus(ctx context.Context, tx *sqlx.Tx
 		return nil, err
 	}
 
-	return j.GetByIdTx(tx, jobId)
-}
-
-func (j *JobsRepoImpl) ForceAutoUpdateMilestoneStatusByJobID(ctx context.Context, tx *sqlx.Tx, jobId string) error {
-	_, err := tx.ExecContext(ctx, updateMilestoneStatusByJobIdForce, jobId)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (j *JobsRepoImpl) ForceAutoUpdateMilestoneStatusByMilestoneId(ctx context.Context, tx *sqlx.Tx, milestoneID string) error {
-	_, err := tx.ExecContext(ctx, updateMilestoneStatusByMilestoneIDForce, milestoneID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (j *JobsRepoImpl) MarkMilestonesCompleted(tx *sqlx.Tx, ctx context.Context, milestoneIds ...string) error {
-	stmt, args, err := sqlx.In(updateMilestoneStatusCompleted, milestoneIds)
-	if err != nil {
-		return err
-	}
-
-	stmt = tx.Rebind(stmt)
-	_, err = tx.ExecContext(ctx, stmt, args...)
-	if err != nil {
-		return nil
-	}
-	return nil
-}
-
-func (j *JobsRepoImpl) CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId string, milestones []*gqlmodel.MilestoneInput) (createdMilestones []*dbmodel.Milestone, err error) {
-	stmt, valueArgs := getInsertMilestonesStatement(milestones, jobId)
-	stmt = tx.Rebind(stmt)
-	// get the ids of newly inserted milestones
-	milestonesInsertResult, err := tx.QueryxContext(ctx, stmt, valueArgs...)
-	if err != nil {
-		return nil, err
-	}
-	for milestonesInsertResult.Next() {
-		var tempMilestone dbmodel.Milestone
-		err := milestonesInsertResult.StructScan(&tempMilestone)
-		if err != nil {
-			return nil, err
-		}
-		createdMilestones = append(createdMilestones, &tempMilestone)
-	}
-
-	milestonesInsertResult.Close()
-	return createdMilestones, nil
-}
-
-func (j *JobsRepoImpl) DeleteMilestonesByJobId(tx *sqlx.Tx, jobID string) error {
-	_, err := tx.Exec(deleteMilestonesByJobId, jobID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return j.getByIdTx(tx, jobId)
 }
 
 func (j *JobsRepoImpl) GetByTitle(jobTitle string, limit *int) ([]dbmodel.Job, error) {
@@ -269,6 +155,14 @@ func (j *JobsRepoImpl) GetByTitle(jobTitle string, limit *int) ([]dbmodel.Job, e
 	}
 
 	return jobs, nil
+}
+
+func (j *JobsRepoImpl) getByIdTx(tx *sqlx.Tx, id string) (result *dbmodel.Job, err error) {
+	err = tx.QueryRowx(selectJobByIdQuery, id).StructScan(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func scanRows(rows *sqlx.Rows) (result []dbmodel.Job, err error) {

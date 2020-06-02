@@ -14,10 +14,15 @@ import (
 type ApplicationsService struct {
 	jobsRepo         repository.JobsRepo
 	applicationsRepo repository.ApplicationsRepo
+	milestonesRepo   repository.MilestonesRepo
 }
 
-func NewApplicationsService(jobsRepo repository.JobsRepo, applicationsRepo repository.ApplicationsRepo) *ApplicationsService {
-	return &ApplicationsService{jobsRepo: jobsRepo, applicationsRepo: applicationsRepo}
+func NewApplicationsService(jobsRepo repository.JobsRepo, applicationsRepo repository.ApplicationsRepo, milestonesRepo repository.MilestonesRepo) *ApplicationsService {
+	return &ApplicationsService{
+		jobsRepo:         jobsRepo,
+		applicationsRepo: applicationsRepo,
+		milestonesRepo:   milestonesRepo,
+	}
 }
 
 func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobId string) ([]*gqlmodel.Application, error) {
@@ -45,7 +50,7 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 		return nil, custom_errors.ErrOwnerApplyToOwnJob
 	}
 
-	milestones, err := a.jobsRepo.GetMilestonesByJobId(tx, jobId)
+	milestones, err := a.milestonesRepo.GetByJobId(tx, jobId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -109,7 +114,7 @@ func (a *ApplicationsService) DeleteUserJobApplication(ctx context.Context, jobI
 		return nil, err
 	}
 
-	jobMilestones, err := a.jobsRepo.GetMilestonesByJobId(tx, jobId)
+	jobMilestones, err := a.milestonesRepo.GetByJobId(tx, jobId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -178,7 +183,7 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 		return nil, custom_errors.ErrInvalidNewApplicationState
 	}
 
-	milestones, err := a.jobsRepo.GetMilestonesByJobId(tx, jobId)
+	milestones, err := a.milestonesRepo.GetByJobId(tx, jobId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err

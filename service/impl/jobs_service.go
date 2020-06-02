@@ -20,10 +20,17 @@ type JobsService struct {
 	skillsRepo       repository.SkillsRepo
 	discussionsRepo  repository.DiscussionsRepo
 	applicationsRepo repository.ApplicationsRepo
+	milestonesRepo   repository.MilestonesRepo
 }
 
-func NewJobsService(jobsRepo repository.JobsRepo, skillsRepo repository.SkillsRepo, discussionsRepo repository.DiscussionsRepo, applicationsRepo repository.ApplicationsRepo) *JobsService {
-	return &JobsService{jobsRepo: jobsRepo, skillsRepo: skillsRepo, discussionsRepo: discussionsRepo, applicationsRepo: applicationsRepo}
+func NewJobsService(jobsRepo repository.JobsRepo, skillsRepo repository.SkillsRepo, discussionsRepo repository.DiscussionsRepo, applicationsRepo repository.ApplicationsRepo, milestonesRepo repository.MilestonesRepo) *JobsService {
+	return &JobsService{
+		jobsRepo:         jobsRepo,
+		skillsRepo:       skillsRepo,
+		discussionsRepo:  discussionsRepo,
+		applicationsRepo: applicationsRepo,
+		milestonesRepo:   milestonesRepo,
+	}
 }
 
 func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (result *gqlmodel.Job, err error) {
@@ -57,17 +64,30 @@ func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInpu
 		return nil, err
 	}
 
+	// create the job
 	newJob, err := j.jobsRepo.CreateJob(ctx, tx, job, user)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
 
-	newMilestones, err := j.jobsRepo.CreateMilestones(ctx, tx, newJob.Id, job.Milestones)
+	// create the milestones
+	var newMilestones []*dbmodel.Milestone
+	for _, milestone := range job.Milestones {
+		newMilestones = append(newMilestones, &dbmodel.Milestone{
+			Title:       milestone.Title,
+			Description: milestone.Duration,
+			JobId:       newJob.Id,
+			Resolution:  milestone.Resolution,
+			Duration:    milestone.Duration,
+		})
+	}
+	createdMilestones, err := j.milestonesRepo.CreateMilestones(ctx, tx, newJob.Id, newMilestones)
 	if err != nil {
 		return nil, err
 	}
 
+	// find or create skills
 	var newSkillsList []string
 	for _, milestone := range job.Milestones {
 		for _, s := range milestone.Skills {
@@ -75,14 +95,14 @@ func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInpu
 			newSkillsList = append(newSkillsList, val)
 		}
 	}
-
 	newSkills, err := j.skillsRepo.FindOrCreateSkills(ctx, tx, newSkillsList, user.Id)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
 
-	err = j.skillsRepo.MapSkillsToMilestones(ctx, tx, newSkills, job, newMilestones)
+	// map skills to new milestones
+	err = j.skillsRepo.MapSkillsToMilestones(ctx, tx, newSkills, job, createdMilestones)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -157,7 +177,7 @@ func (j *JobsService) GetAllJobsPaginated(ctx context.Context, skills, status []
 		return result, nil
 	}
 	var cursorString *string
-	if cursor != nil{
+	if cursor != nil {
 		if *cursor == "" {
 			return result, custom_errors.ErrInvalidCursor
 		}
@@ -323,16 +343,11 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 	}
 
 	// get all the milestones for a job
-	milestones, err := j.jobsRepo.GetMilestonesByJobId(tx, jobID)
+	milestoneIds, err := j.milestonesRepo.GetIdsByJobId(tx, jobID)
 	if err != nil {
 		_ = tx.Rollback()
 		log.Println(err)
 		return nil, err
-	}
-	// mark all the milestones as completed
-	milestoneIds := make([]string, len(milestones))
-	for i, milestone := range milestones {
-		milestoneIds[i] = milestone.Id
 	}
 	if job.Status != "completed" {
 		_, err := j.jobsRepo.MarkJobCompleted(ctx, tx, jobID)
@@ -340,7 +355,7 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 			_ = tx.Rollback()
 			return nil, err
 		}
-		err = j.jobsRepo.MarkMilestonesCompleted(tx, ctx, milestoneIds...)
+		err = j.milestonesRepo.MarkMilestonesCompleted(tx, ctx, milestoneIds...)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -351,7 +366,7 @@ func (j *JobsService) ToggleJobCompleted(ctx context.Context, jobID string) (*gq
 			_ = tx.Rollback()
 			return nil, err
 		}
-		err = j.jobsRepo.ForceAutoUpdateMilestoneStatusByJobID(ctx, tx, jobID)
+		err = j.milestonesRepo.ForceAutoUpdateMilestoneStatusByJobID(ctx, tx, jobID)
 		if err != nil {
 			return nil, err
 		}
@@ -408,7 +423,7 @@ func (j *JobsService) DeleteJob(ctx context.Context, jobID string) (*gqlmodel.Jo
 		return nil, err
 	}
 
-	err = j.jobsRepo.DeleteMilestonesByJobId(tx, jobID)
+	err = j.milestonesRepo.DeleteMilestonesByJobId(tx, jobID)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -429,11 +444,11 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 		return nil, err
 	}
 
-	milestoneData, err := j.jobsRepo.GetMilestoneById(milestoneID)
+	milestoneData, err := j.milestonesRepo.GetById(milestoneID)
 	if err != nil {
 		return nil, err
 	}
-	milestoneAuthor, err := j.jobsRepo.GetAuthorFromMilestoneId(milestoneID)
+	milestoneAuthor, err := j.milestonesRepo.GetAuthor(milestoneID)
 	if err != nil {
 		return nil, err
 	}
@@ -448,12 +463,12 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 	}
 	// if the milestone status was already completed we will need to modify on the
 	if milestoneData.Status != "completed" {
-		err = j.jobsRepo.MarkMilestonesCompleted(tx, ctx, milestoneID)
+		err = j.milestonesRepo.MarkMilestonesCompleted(tx, ctx, milestoneID)
 		if err != nil {
 			return nil, err
 		}
 
-		jobMilestones, err := j.jobsRepo.GetMilestonesByJobId(tx, milestoneData.JobId)
+		jobMilestones, err := j.milestonesRepo.GetByJobId(tx, milestoneData.JobId)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -472,7 +487,7 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 			}
 		}
 	} else {
-		err = j.jobsRepo.ForceAutoUpdateMilestoneStatusByMilestoneId(ctx, tx, milestoneID)
+		err = j.milestonesRepo.ForceAutoUpdateMilestoneStatusByMilestoneId(ctx, tx, milestoneID)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -488,7 +503,7 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 		return nil, err
 	}
 
-	updatedMilestone, err := j.jobsRepo.GetMilestoneById(milestoneID)
+	updatedMilestone, err := j.milestonesRepo.GetById(milestoneID)
 	if err != nil {
 		return nil, err
 	}

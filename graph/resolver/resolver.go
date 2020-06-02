@@ -16,6 +16,7 @@ type Resolver struct {
 	DiscussionsRepo       repository.DiscussionsRepo
 	JobsRepo              repository.JobsRepo
 	SkillsRepo            repository.SkillsRepo
+	MilestonesRepo        repository.MilestonesRepo
 	JobsService           service.JobsService
 	ApplicationsService   service.ApplicationsService
 	UserService           service.UserProfileService
