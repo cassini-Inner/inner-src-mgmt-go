@@ -22,6 +22,14 @@ func (j *JobsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return j.db.BeginTxx(ctx, nil)
 }
 
+func (j *JobsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil {
+		err = tx.Rollback()
+	}
+	return err
+}
+
 func (j *JobsRepoImpl) CreateJob(ctx context.Context, tx *sqlx.Tx, input *gqlmodel.CreateJobInput, user *dbmodel.User) (*dbmodel.Job, error) {
 	var insertedJob dbmodel.Job
 	// insert the information into the job table

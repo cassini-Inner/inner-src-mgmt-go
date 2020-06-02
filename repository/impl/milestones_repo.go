@@ -20,7 +20,15 @@ func (m MilestonesRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return m.db.BeginTxx(ctx, nil)
 }
 
-func (m MilestonesRepoImpl) CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId string, milestones []*dbmodel.Milestone) (createdMilestones []*dbmodel.Milestone, err error){
+func (m *MilestonesRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil {
+		err = tx.Rollback()
+	}
+	return err
+}
+
+func (m MilestonesRepoImpl) CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId string, milestones []*dbmodel.Milestone) (createdMilestones []*dbmodel.Milestone, err error) {
 	stmt, valueArgs := m.getInsertMilestonesStatement(milestones, jobId)
 	stmt = tx.Rebind(stmt)
 
@@ -126,7 +134,6 @@ func (m MilestonesRepoImpl) DeleteMilestonesByJobId(tx *sqlx.Tx, jobID string) e
 	}
 	return nil
 }
-
 
 // prepares a statement to insert multiple milestones in a single statement
 func (m MilestonesRepoImpl) getInsertMilestonesStatement(milestoneInputs []*dbmodel.Milestone, insertedJobId string) (string, []interface{}) {

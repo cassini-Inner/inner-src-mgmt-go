@@ -20,12 +20,20 @@ type UsersRepoImpl struct {
 	db *sqlx.DB
 }
 
+func NewUsersRepo(db *sqlx.DB) *UsersRepoImpl {
+	return &UsersRepoImpl{db: db}
+}
+
 func (u *UsersRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return u.db.BeginTxx(ctx, nil)
 }
 
-func NewUsersRepo(db *sqlx.DB) *UsersRepoImpl {
-	return &UsersRepoImpl{db: db}
+func (u *UsersRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil {
+		err = tx.Rollback()
+	}
+	return err
 }
 
 func (u *UsersRepoImpl) UpdateUser(tx *sqlx.Tx, updatedUserInformation *dbmodel.User) (*dbmodel.User, error) {

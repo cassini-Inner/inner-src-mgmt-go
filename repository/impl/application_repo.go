@@ -28,6 +28,14 @@ func (a *ApplicationsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return a.db.BeginTxx(ctx, nil)
 }
 
+func (a *ApplicationsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil{
+		err = tx.Rollback()
+	}
+	return err
+}
+
 // GetExistingUserApplications return existing user applications on the basis a applicationStatus filter
 // if the number of applications is equal to the number of milestones then the user has properly applied to
 // all the milestones. Returns ErrNoExistingApplications if this is not the case

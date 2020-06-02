@@ -28,6 +28,14 @@ func (s *SkillsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return s.db.BeginTxx(ctx, nil)
 }
 
+func (d *SkillsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil {
+		err = tx.Rollback()
+	}
+	return err
+}
+
 func (s *SkillsRepoImpl) GetMatchingSkills(query string, limit *int) ([]*dbmodel.GlobalSkill, error) {
 	rows, err := s.db.Queryx(skillsMatchingQuery, (query)+"%", limit)
 	if err != nil {

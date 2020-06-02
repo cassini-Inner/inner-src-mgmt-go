@@ -10,15 +10,22 @@ type DiscussionsRepoImpl struct {
 	db *sqlx.DB
 }
 
-func (d *DiscussionsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
-	return d.db.BeginTxx(ctx, nil)
-}
-
 func NewDiscussionsRepo(db *sqlx.DB) *DiscussionsRepoImpl {
 	return &DiscussionsRepoImpl{db: db}
 }
 
-//TODO: Implement
+func (d *DiscussionsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	return d.db.BeginTxx(ctx, nil)
+}
+
+func (d *DiscussionsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil {
+		err = tx.Rollback()
+	}
+	return err
+}
+
 func (d *DiscussionsRepoImpl) CreateComment(ctx context.Context, tx *sqlx.Tx, jobId, comment, userId string) (*dbmodel.Discussion, error) {
 	var newDiscussion dbmodel.Discussion
 	err := tx.QueryRowxContext(ctx, `insert into discussions(job_id, created_by, content) values ($1,$2, $3) returning *`, jobId, userId, comment).StructScan(&newDiscussion)
@@ -27,6 +34,7 @@ func (d *DiscussionsRepoImpl) CreateComment(ctx context.Context, tx *sqlx.Tx, jo
 	}
 	return &newDiscussion, nil
 }
+
 func (d *DiscussionsRepoImpl) UpdateComment(ctx context.Context, tx *sqlx.Tx, discussionId, content string) (*dbmodel.Discussion, error) {
 	var discussion dbmodel.Discussion
 
