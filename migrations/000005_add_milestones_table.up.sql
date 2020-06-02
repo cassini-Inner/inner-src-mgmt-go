@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS MILESTONES
 (
     id          INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     assigned_to INT REFERENCES Users (id),
-    job_id      INTEGER REFERENCES JOBS (id),
+    job_id      INTEGER REFERENCES jobs (id),
     title       VARCHAR(1000)  NOT NULL,
     description VARCHAR(10000) NOT NULL,
     duration    VARCHAR(50)    NOT NULL,
