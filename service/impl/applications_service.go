@@ -120,6 +120,16 @@ func (a *ApplicationsService) DeleteUserJobApplication(ctx context.Context, jobI
 		return nil, err
 	}
 
+	// if the user is withdrawing an application where they were previously accepted into a job/milestone
+	for _, milestone := range jobMilestones {
+		if milestone.AssignedTo.Valid && milestone.AssignedTo.String == user.Id {
+			_, err = a.milestonesRepo.SetMilestoneAssignedTo(tx, milestone.Id, nil)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	applications, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(ctx, tx, jobMilestones, dbmodel.ApplicationStatusWithdrawn, nil, jobId, user.Id)
 	if err != nil {
 		_ = tx.Rollback()
@@ -193,6 +203,19 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
+	}
+	var idToBeAssigned *string
+	if status.String() == "ACCEPTED" {
+		idToBeAssigned = &applicantId
+	} else {
+		idToBeAssigned = nil
+	}
+	for _, milestone := range milestones {
+		_, err = a.milestonesRepo.SetMilestoneAssignedTo(tx, milestone.Id, idToBeAssigned)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
 	}
 	err = tx.Commit()
 	if err != nil {

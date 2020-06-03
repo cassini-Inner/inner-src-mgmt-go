@@ -24,6 +24,7 @@ func (r ReviewRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
 }
 
 func (r ReviewRepoImpl) GetById(id string) (review *dbmodel.Review, err error) {
+	review = &dbmodel.Review{}
 	err = r.db.QueryRowx(selectReviewById, id).StructScan(review)
 	if err != nil {
 		return nil, err
@@ -32,6 +33,7 @@ func (r ReviewRepoImpl) GetById(id string) (review *dbmodel.Review, err error) {
 }
 
 func (r ReviewRepoImpl) GetByIdTx(tx *sqlx.Tx, id string) (review *dbmodel.Review, err error) {
+	review = &dbmodel.Review{}
 	err = tx.QueryRowx(selectReviewById, id).StructScan(review)
 	if err != nil {
 		return nil, err
@@ -40,20 +42,23 @@ func (r ReviewRepoImpl) GetByIdTx(tx *sqlx.Tx, id string) (review *dbmodel.Revie
 }
 
 func (r ReviewRepoImpl) Add(tx *sqlx.Tx, review dbmodel.Review) (result *dbmodel.Review, err error) {
-	if err = tx.QueryRowx(insertReview, review.Rating, review.Remark, review.MilestoneId, review.UserId).StructScan(&result); err != nil {
+	result = &dbmodel.Review{}
+	if err = tx.QueryRowx(insertReview, review.Rating, review.Remark, review.MilestoneId, review.UserId).StructScan(result); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
 func (r ReviewRepoImpl) Update(tx *sqlx.Tx, id string, review dbmodel.Review) (result *dbmodel.Review, err error) {
-	if err = tx.QueryRowx(updateReview, review.Rating, review.Remark, time.Now().UTC(), id).StructScan(&result); err != nil {
+	result = &dbmodel.Review{}
+	if err = tx.QueryRowx(updateReview, review.Rating, review.Remark, time.Now().UTC(), id).StructScan(result); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
 func (r ReviewRepoImpl) Delete(tx *sqlx.Tx, id string) (review *dbmodel.Review, err error) {
+	review = &dbmodel.Review{}
 	if err = tx.QueryRowx(deleteReview, id).StructScan(review); err != nil {
 		return nil, err
 	}

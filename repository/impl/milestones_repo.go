@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
@@ -40,12 +41,12 @@ func (m MilestonesRepoImpl) CreateMilestones(ctx context.Context, tx *sqlx.Tx, j
 	}
 
 	for milestonesInsertResult.Next() {
-		var tempMilestone dbmodel.Milestone
-		err := milestonesInsertResult.StructScan(&tempMilestone)
+		tempMilestone := &dbmodel.Milestone{}
+		err := milestonesInsertResult.StructScan(tempMilestone)
 		if err != nil {
 			return nil, err
 		}
-		createdMilestones = append(createdMilestones, &tempMilestone)
+		createdMilestones = append(createdMilestones, tempMilestone)
 	}
 
 	return createdMilestones, nil
@@ -59,9 +60,9 @@ func (m MilestonesRepoImpl) GetByJobId(tx sqlx.Ext, jobId string) ([]*dbmodel.Mi
 
 	var milestones []*dbmodel.Milestone
 	for rows.Next() {
-		var milestone dbmodel.Milestone
-		rows.StructScan(&milestone)
-		milestones = append(milestones, &milestone)
+		milestone := &dbmodel.Milestone{}
+		rows.StructScan(milestone)
+		milestones = append(milestones, milestone)
 	}
 	return milestones, nil
 }
@@ -80,21 +81,21 @@ func (m MilestonesRepoImpl) GetIdsByJobId(tx sqlx.Ext, jobId string) (result []s
 }
 
 func (m MilestonesRepoImpl) GetById(milestoneId string) (*dbmodel.Milestone, error) {
-	var milestone dbmodel.Milestone
-	err := m.db.QueryRowx(selectMilestoneByIdQuery, milestoneId).StructScan(&milestone)
+	milestone := &dbmodel.Milestone{}
+	err := m.db.QueryRowx(selectMilestoneByIdQuery, milestoneId).StructScan(milestone)
 	if err != nil {
 		return nil, err
 	}
-	return &milestone, nil
+	return milestone, nil
 }
 
 func (m MilestonesRepoImpl) GetAuthor(milestoneId string) (*dbmodel.User, error) {
-	var user dbmodel.User
-	err := m.db.QueryRowx(selectUserByMilestoneIdQuery, milestoneId).StructScan(&user)
+	user := &dbmodel.User{}
+	err := m.db.QueryRowx(selectUserByMilestoneIdQuery, milestoneId).StructScan(user)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (m MilestonesRepoImpl) ForceAutoUpdateMilestoneStatusByJobID(ctx context.Context, tx *sqlx.Tx, jobId string) error {
@@ -127,6 +128,16 @@ func (m MilestonesRepoImpl) MarkMilestonesCompleted(tx *sqlx.Tx, ctx context.Con
 	return nil
 }
 
+func (m MilestonesRepoImpl) SetMilestoneAssignedTo(tx *sqlx.Tx, milestoneId string, userId *string) (updatedMilestone *dbmodel.Milestone, err error) {
+	updatedMilestone = &dbmodel.Milestone{}
+	if err = tx.QueryRowx(setMilestoneAssignedTo, userId, milestoneId).StructScan(updatedMilestone); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+	}
+	return updatedMilestone, nil
+}
+
 func (m MilestonesRepoImpl) DeleteMilestonesByJobId(tx *sqlx.Tx, jobID string) error {
 	_, err := tx.Exec(deleteMilestonesByJobId, jobID)
 	if err != nil {
@@ -147,3 +158,7 @@ func (m MilestonesRepoImpl) getInsertMilestonesStatement(milestoneInputs []*dbmo
 		strings.Join(valueStrings, ", "))
 	return stmt, valueArgs
 }
+
+const (
+	setMilestoneAssignedTo = "update milestones set assigned_to=$1 where id=$2 returning *"
+)

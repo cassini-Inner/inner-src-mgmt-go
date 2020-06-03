@@ -31,9 +31,9 @@ func (j *JobsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
 }
 
 func (j *JobsRepoImpl) CreateJob(ctx context.Context, tx *sqlx.Tx, input *gqlmodel.CreateJobInput, user *dbmodel.User) (*dbmodel.Job, error) {
-	var insertedJob dbmodel.Job
+	insertedJob := &dbmodel.Job{}
 	// insert the information into the job table
-	err := tx.QueryRowxContext(ctx, createJobQuery, input.Title, input.Desc, input.Difficulty, user.Id).StructScan(&insertedJob)
+	err := tx.QueryRowxContext(ctx, createJobQuery, input.Title, input.Desc, input.Difficulty, user.Id).StructScan(insertedJob)
 
 	if err != nil {
 		return nil, err
@@ -46,37 +46,35 @@ func (j *JobsRepoImpl) UpdateJob(input *gqlmodel.UpdateJobInput) (*dbmodel.Job, 
 }
 
 func (j *JobsRepoImpl) DeleteJob(tx *sqlx.Tx, jobId string) (*dbmodel.Job, error) {
-	var job dbmodel.Job
-	err := tx.QueryRowx(deleteJobQuery, jobId).StructScan(&job)
+	deletedJob := &dbmodel.Job{}
+	err := tx.QueryRowx(deleteJobQuery, jobId).StructScan(deletedJob)
 	if err != nil {
 		return nil, err
 	}
-	return &job, nil
+	return deletedJob, nil
 }
 
 // Get the complete job details based on the job id
 func (j *JobsRepoImpl) GetById(jobId string) (*dbmodel.Job, error) {
-	var job dbmodel.Job
-	err := j.db.QueryRowx(selectJobByIdQuery, jobId).StructScan(&job)
+	job := &dbmodel.Job{}
+	err := j.db.QueryRowx(selectJobByIdQuery, jobId).StructScan(job)
 	if err != nil {
 		return nil, err
 	}
-	return &job, nil
+	return job, nil
 }
 
 // GetByUserId returns all jobs created by that user
 func (j *JobsRepoImpl) GetByUserId(userId string) ([]*dbmodel.Job, error) {
-
 	rows, err := j.db.Queryx(selectJobsByUserIdQuery, userId)
 	if err != nil {
 		return nil, err
 	}
-
 	var jobs []*dbmodel.Job
 	for rows.Next() {
-		var job dbmodel.Job
-		rows.StructScan(&job)
-		jobs = append(jobs, &job)
+		job := &dbmodel.Job{}
+		rows.StructScan(job)
+		jobs = append(jobs, job)
 	}
 	return jobs, nil
 }
@@ -157,15 +155,16 @@ func (j *JobsRepoImpl) GetByTitle(jobTitle string, limit *int) ([]dbmodel.Job, e
 
 	var jobs []dbmodel.Job
 	for rows != nil && rows.Next() {
-		var tempJob dbmodel.Job
-		rows.StructScan(&tempJob)
-		jobs = append(jobs, tempJob)
+		tempJob := &dbmodel.Job{}
+		rows.StructScan(tempJob)
+		jobs = append(jobs, *tempJob)
 	}
 
 	return jobs, nil
 }
 
 func (j *JobsRepoImpl) getByIdTx(tx *sqlx.Tx, id string) (result *dbmodel.Job, err error) {
+	result = &dbmodel.Job{}
 	err = tx.QueryRowx(selectJobByIdQuery, id).StructScan(result)
 	if err != nil {
 		return nil, err
@@ -175,12 +174,12 @@ func (j *JobsRepoImpl) getByIdTx(tx *sqlx.Tx, id string) (result *dbmodel.Job, e
 
 func scanRows(rows *sqlx.Rows) (result []dbmodel.Job, err error) {
 	for rows != nil && rows.Next() {
-		var tempJob dbmodel.Job
-		err = rows.StructScan(&tempJob)
+		 tempJob := &dbmodel.Job{}
+		err = rows.StructScan(tempJob)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, tempJob)
+		result = append(result, *tempJob)
 	}
 	return result, nil
 }

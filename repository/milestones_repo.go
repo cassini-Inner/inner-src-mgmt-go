@@ -19,6 +19,6 @@ type MilestonesRepo interface {
 	ForceAutoUpdateMilestoneStatusByJobID(ctx context.Context, tx *sqlx.Tx, jobId string) error
 	ForceAutoUpdateMilestoneStatusByMilestoneId(ctx context.Context, tx *sqlx.Tx, milestoneID string) error
 	MarkMilestonesCompleted(tx *sqlx.Tx, ctx context.Context, milestoneIds ...string) error
-
+	SetMilestoneAssignedTo(tx *sqlx.Tx, milestoneId string, userId *string) (*dbmodel.Milestone, error)
 	DeleteMilestonesByJobId(tx *sqlx.Tx, jobID string) error
 }

@@ -200,9 +200,9 @@ func (a *ApplicationsRepoImpl) GetUserJobApplications(userId string) ([]*dbmodel
 
 	var result []*dbmodel.Job
 	for rows != nil && rows.Next() {
-		var job dbmodel.Job
-		rows.StructScan(&job)
-		result = append(result, &job)
+		 job := &dbmodel.Job{}
+		rows.StructScan(job)
+		result = append(result, job)
 	}
 	return result, nil
 }
@@ -230,12 +230,12 @@ func scanApplicationRowsById(rows *sql.Rows) (result []string, err error) {
 func scanApplicationRowsx(rows *sqlx.Rows) ([]*dbmodel.Application, error) {
 	var result []*dbmodel.Application
 	for rows != nil && rows.Next() {
-		var application dbmodel.Application
-		err := rows.StructScan(&application)
+		 application := &dbmodel.Application{}
+		err := rows.StructScan(application)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, &application)
+		result = append(result, application)
 	}
 
 	return result, nil

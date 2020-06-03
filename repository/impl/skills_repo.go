@@ -28,7 +28,7 @@ func (s *SkillsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return s.db.BeginTxx(ctx, nil)
 }
 
-func (d *SkillsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+func (s *SkillsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
 	err = tx.Commit()
 	if err != nil {
 		err = tx.Rollback()
@@ -96,13 +96,13 @@ func findOrCreateSkills(skills []string, userId string, tx *sqlx.Tx) (map[string
 	// assign the database id to each skill in map
 	// if a skill is not present in the database then id = 0
 	for uniqueSkillsRows != nil && uniqueSkillsRows.Next() {
-		var tempSkill dbmodel.GlobalSkill
-		err := uniqueSkillsRows.StructScan(&tempSkill)
+		tempSkill := &dbmodel.GlobalSkill{}
+		err := uniqueSkillsRows.StructScan(tempSkill)
 		if err != nil {
 			return nil, err
 		}
 		skillsMap[strings.ToLower(tempSkill.Value)] = tempSkill.Id
-		resultMap[strings.ToLower(tempSkill.Value)] = &tempSkill
+		resultMap[strings.ToLower(tempSkill.Value)] = tempSkill
 	}
 	uniqueSkillsRows.Close()
 
@@ -141,12 +141,12 @@ func findOrCreateSkills(skills []string, userId string, tx *sqlx.Tx) (map[string
 		}
 		// build a list of all skill ids
 		for newSkillRows.Next() {
-			var insertedSkill dbmodel.GlobalSkill
-			err := newSkillRows.StructScan(&insertedSkill)
+			insertedSkill := &dbmodel.GlobalSkill{}
+			err := newSkillRows.StructScan(insertedSkill)
 			if err != nil {
 				return nil, err
 			}
-			resultMap[strings.ToLower(insertedSkill.Value)] = &insertedSkill
+			resultMap[strings.ToLower(insertedSkill.Value)] = insertedSkill
 		}
 		newSkillRows.Close()
 	}
@@ -174,12 +174,12 @@ func (s *SkillsRepoImpl) scanSkills(rows *sqlx.Rows) ([]*dbmodel.GlobalSkill, er
 	var result []*dbmodel.GlobalSkill
 
 	for rows != nil && rows.Next() {
-		var skill dbmodel.GlobalSkill
-		err := rows.StructScan(&skill)
+		skill := &dbmodel.GlobalSkill{}
+		err := rows.StructScan(skill)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, &skill)
+		result = append(result, skill)
 	}
 	return result, nil
 }
@@ -193,12 +193,12 @@ func (s *SkillsRepoImpl) GetAll() ([]*dbmodel.GlobalSkill, error) {
 	}
 
 	for rows.Next() {
-		var skill dbmodel.GlobalSkill
-		err := rows.StructScan(&skill)
+		 skill := &dbmodel.GlobalSkill{}
+		err := rows.StructScan(skill)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, &skill)
+		result = append(result, skill)
 	}
 
 	return result, nil
