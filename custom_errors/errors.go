@@ -19,4 +19,5 @@ var (
 	ErrInvalidAuthResponse            = errors.New("ERR_INVALID_AUTH_RESPONSE")
 	ErrNoUserInContext                = errors.New("no User in context")
 	ErrInvalidCursor                  = errors.New("ERR_INVALID_CURSOR")
+	ErrJobAlreadyAssigned             = errors.New("job is already assigned to another user")
 )

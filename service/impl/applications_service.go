@@ -25,6 +25,8 @@ func NewApplicationsService(jobsRepo repository.JobsRepo, applicationsRepo repos
 	}
 }
 
+// creates a job application of currently signed in user. This applies to a whole job
+// TODO: allow people to apply to individual milestones
 func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobId string) ([]*gqlmodel.Application, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 
@@ -54,6 +56,18 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
+	}
+
+	totalUnassignedCount := 0
+	for _, milestone := range milestones {
+		// if a milestone is not assigned to anyone field is not valid as the table value is null
+		if !milestone.AssignedTo.Valid {
+			totalUnassignedCount++
+		}
+	}
+
+	if totalUnassignedCount != len(milestones) {
+		return nil, custom_errors.ErrJobAlreadyAssigned
 	}
 
 	// get all the pending or accepted applications of a user
