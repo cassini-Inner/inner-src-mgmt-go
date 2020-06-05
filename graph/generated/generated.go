@@ -41,6 +41,7 @@ type ResolverRoot interface {
 	Milestone() MilestoneResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Review() ReviewResolver
 	Skill() SkillResolver
 	User() UserResolver
 }
@@ -106,6 +107,11 @@ type ComplexityRoot struct {
 		HasNextPage func(childComplexity int) int
 	}
 
+	JobReview struct {
+		Job             func(childComplexity int) int
+		MilestoneReview func(childComplexity int) int
+	}
+
 	JobsConnection struct {
 		Edges      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
@@ -119,11 +125,17 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Job         func(childComplexity int) int
 		Resolution  func(childComplexity int) int
+		Review      func(childComplexity int) int
 		Skills      func(childComplexity int) int
 		Status      func(childComplexity int) int
 		TimeCreated func(childComplexity int) int
 		TimeUpdated func(childComplexity int) int
 		Title       func(childComplexity int) int
+	}
+
+	MilestoneReview struct {
+		Milestone func(childComplexity int) int
+		Review    func(childComplexity int) int
 	}
 
 	Milestones struct {
@@ -132,20 +144,22 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddCommentToJob          func(childComplexity int, comment string, jobID string) int
-		Authenticate             func(childComplexity int, githubCode string) int
-		CreateJob                func(childComplexity int, job *model.CreateJobInput) int
-		CreateJobApplication     func(childComplexity int, jobID string) int
-		DeleteComment            func(childComplexity int, id string) int
-		DeleteJob                func(childComplexity int, jobID string) int
-		DeleteJobApplication     func(childComplexity int, jobID string) int
-		RefreshToken             func(childComplexity int, token string) int
-		ToggleJobCompleted       func(childComplexity int, jobID string) int
-		ToggleMilestoneCompleted func(childComplexity int, milestoneID string) int
-		UpdateComment            func(childComplexity int, id string, comment string) int
-		UpdateJob                func(childComplexity int, job *model.UpdateJobInput) int
-		UpdateJobApplication     func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus, note *string) int
-		UpdateProfile            func(childComplexity int, user *model.UpdateUserInput) int
+		AddCommentToJob                  func(childComplexity int, comment string, jobID string) int
+		Authenticate                     func(childComplexity int, githubCode string) int
+		CreateJob                        func(childComplexity int, job *model.CreateJobInput) int
+		CreateJobApplication             func(childComplexity int, jobID string) int
+		CreateMilestonePerformanceReview func(childComplexity int, review model.ReviewInput, milestoneID string) int
+		DeleteComment                    func(childComplexity int, id string) int
+		DeleteJob                        func(childComplexity int, jobID string) int
+		DeleteJobApplication             func(childComplexity int, jobID string) int
+		RefreshToken                     func(childComplexity int, token string) int
+		ToggleJobCompleted               func(childComplexity int, jobID string) int
+		ToggleMilestoneCompleted         func(childComplexity int, milestoneID string) int
+		UpdateComment                    func(childComplexity int, id string, comment string) int
+		UpdateJob                        func(childComplexity int, job *model.UpdateJobInput) int
+		UpdateJobApplication             func(childComplexity int, applicantID string, jobID string, status *model.ApplicationStatus, note *string) int
+		UpdateMilestonePerformanceReview func(childComplexity int, review model.ReviewInput, id string) int
+		UpdateProfile                    func(childComplexity int, user *model.UpdateUserInput) int
 	}
 
 	Query struct {
@@ -155,6 +169,15 @@ type ComplexityRoot struct {
 		Search  func(childComplexity int, query string, limit *int) int
 		Skills  func(childComplexity int, query string, limit *int) int
 		User    func(childComplexity int, id string, jobsStatusFilter *model.JobStatus) int
+	}
+
+	Review struct {
+		CreatedFor  func(childComplexity int) int
+		Id          func(childComplexity int) int
+		Rating      func(childComplexity int) int
+		Remark      func(childComplexity int) int
+		TimeCreated func(childComplexity int) int
+		TimeUpdated func(childComplexity int) int
 	}
 
 	SearchResult struct {
@@ -184,6 +207,7 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 		Onboarded   func(childComplexity int) int
 		PhotoURL    func(childComplexity int) int
+		Reviews     func(childComplexity int) int
 		Role        func(childComplexity int) int
 		Skills      func(childComplexity int) int
 		TimeCreated func(childComplexity int) int
@@ -231,6 +255,7 @@ type MilestoneResolver interface {
 	Job(ctx context.Context, obj *model.Milestone) (*model.Job, error)
 
 	AssignedTo(ctx context.Context, obj *model.Milestone) (*model.User, error)
+	Review(ctx context.Context, obj *model.Milestone) (*model.Review, error)
 	Skills(ctx context.Context, obj *model.Milestone) ([]*model.Skill, error)
 }
 type MutationResolver interface {
@@ -248,6 +273,8 @@ type MutationResolver interface {
 	RefreshToken(ctx context.Context, token string) (*model.UserAuthenticationPayload, error)
 	ToggleMilestoneCompleted(ctx context.Context, milestoneID string) (*model.Milestone, error)
 	ToggleJobCompleted(ctx context.Context, jobID string) (*model.Job, error)
+	CreateMilestonePerformanceReview(ctx context.Context, review model.ReviewInput, milestoneID string) (*model.Review, error)
+	UpdateMilestonePerformanceReview(ctx context.Context, review model.ReviewInput, id string) (*model.Review, error)
 }
 type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
@@ -256,6 +283,9 @@ type QueryResolver interface {
 	User(ctx context.Context, id string, jobsStatusFilter *model.JobStatus) (*model.User, error)
 	Skills(ctx context.Context, query string, limit *int) ([]*model.Skill, error)
 	Search(ctx context.Context, query string, limit *int) (*model.SearchResult, error)
+}
+type ReviewResolver interface {
+	CreatedFor(ctx context.Context, obj *model.Review) (*model.User, error)
 }
 type SkillResolver interface {
 	CreatedBy(ctx context.Context, obj *model.Skill) (*model.User, error)
@@ -266,6 +296,7 @@ type UserResolver interface {
 	CreatedJobs(ctx context.Context, obj *model.User) ([]*model.Job, error)
 	AppliedJobs(ctx context.Context, obj *model.User) ([]*model.UserJobApplication, error)
 	JobStats(ctx context.Context, obj *model.User) (*model.UserStats, error)
+	Reviews(ctx context.Context, obj *model.User) ([]*model.JobReview, error)
 }
 
 type executableSchema struct {
@@ -535,6 +566,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.JobPageInfo.HasNextPage(childComplexity), true
 
+	case "JobReview.job":
+		if e.complexity.JobReview.Job == nil {
+			break
+		}
+
+		return e.complexity.JobReview.Job(childComplexity), true
+
+	case "JobReview.milestoneReview":
+		if e.complexity.JobReview.MilestoneReview == nil {
+			break
+		}
+
+		return e.complexity.JobReview.MilestoneReview(childComplexity), true
+
 	case "JobsConnection.edges":
 		if e.complexity.JobsConnection.Edges == nil {
 			break
@@ -598,6 +643,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Milestone.Resolution(childComplexity), true
 
+	case "Milestone.review":
+		if e.complexity.Milestone.Review == nil {
+			break
+		}
+
+		return e.complexity.Milestone.Review(childComplexity), true
+
 	case "Milestone.skills":
 		if e.complexity.Milestone.Skills == nil {
 			break
@@ -632,6 +684,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Milestone.Title(childComplexity), true
+
+	case "MilestoneReview.milestone":
+		if e.complexity.MilestoneReview.Milestone == nil {
+			break
+		}
+
+		return e.complexity.MilestoneReview.Milestone(childComplexity), true
+
+	case "MilestoneReview.review":
+		if e.complexity.MilestoneReview.Review == nil {
+			break
+		}
+
+		return e.complexity.MilestoneReview.Review(childComplexity), true
 
 	case "Milestones.milestones":
 		if e.complexity.Milestones.Milestones == nil {
@@ -694,6 +760,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateJobApplication(childComplexity, args["jobID"].(string)), true
+
+	case "Mutation.createMilestonePerformanceReview":
+		if e.complexity.Mutation.CreateMilestonePerformanceReview == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createMilestonePerformanceReview_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateMilestonePerformanceReview(childComplexity, args["review"].(model.ReviewInput), args["milestoneId"].(string)), true
 
 	case "Mutation.deleteComment":
 		if e.complexity.Mutation.DeleteComment == nil {
@@ -803,6 +881,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateJobApplication(childComplexity, args["applicantID"].(string), args["jobID"].(string), args["status"].(*model.ApplicationStatus), args["note"].(*string)), true
 
+	case "Mutation.updateMilestonePerformanceReview":
+		if e.complexity.Mutation.UpdateMilestonePerformanceReview == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateMilestonePerformanceReview_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateMilestonePerformanceReview(childComplexity, args["review"].(model.ReviewInput), args["id"].(string)), true
+
 	case "Mutation.updateProfile":
 		if e.complexity.Mutation.UpdateProfile == nil {
 			break
@@ -886,6 +976,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.User(childComplexity, args["id"].(string), args["jobsStatusFilter"].(*model.JobStatus)), true
+
+	case "Review.createdFor":
+		if e.complexity.Review.CreatedFor == nil {
+			break
+		}
+
+		return e.complexity.Review.CreatedFor(childComplexity), true
+
+	case "Review.id":
+		if e.complexity.Review.Id == nil {
+			break
+		}
+
+		return e.complexity.Review.Id(childComplexity), true
+
+	case "Review.rating":
+		if e.complexity.Review.Rating == nil {
+			break
+		}
+
+		return e.complexity.Review.Rating(childComplexity), true
+
+	case "Review.remark":
+		if e.complexity.Review.Remark == nil {
+			break
+		}
+
+		return e.complexity.Review.Remark(childComplexity), true
+
+	case "Review.timeCreated":
+		if e.complexity.Review.TimeCreated == nil {
+			break
+		}
+
+		return e.complexity.Review.TimeCreated(childComplexity), true
+
+	case "Review.timeUpdated":
+		if e.complexity.Review.TimeUpdated == nil {
+			break
+		}
+
+		return e.complexity.Review.TimeUpdated(childComplexity), true
 
 	case "SearchResult.jobs":
 		if e.complexity.SearchResult.Jobs == nil {
@@ -1026,6 +1158,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.PhotoURL(childComplexity), true
+
+	case "User.reviews":
+		if e.complexity.User.Reviews == nil {
+			break
+		}
+
+		return e.complexity.User.Reviews(childComplexity), true
 
 	case "User.role":
 		if e.complexity.User.Role == nil {
@@ -1213,21 +1352,6 @@ var sources = []*ast.Source{
     ): SearchResult
 }
 
-type JobsConnection {
-    totalCount: Int!
-    edges: [JobEdge!]!
-    pageInfo: JobPageInfo
-}
-
-type JobPageInfo {
-    hasNextPage: Boolean!,
-    endCursor: String
-}
-
-type JobEdge {
-    node: Job!
-    cursor: ID!
-}
 
 type Mutation {
     # To update the user information like name, email ...
@@ -1254,6 +1378,29 @@ type Mutation {
     refreshToken(token: String!): UserAuthenticationPayload
     toggleMilestoneCompleted(milestoneID: String!) : Milestone
     toggleJobCompleted(jobID: String!) : Job
+    createMilestonePerformanceReview(review: ReviewInput!, milestoneId: ID!): Review
+    updateMilestonePerformanceReview(review: ReviewInput!, id: ID!): Review
+}
+
+input ReviewInput {
+    rating: Int!
+    remark: String
+}
+
+type JobsConnection {
+    totalCount: Int!
+    edges: [JobEdge!]!
+    pageInfo: JobPageInfo
+}
+
+type JobPageInfo {
+    hasNextPage: Boolean!,
+    endCursor: String
+}
+
+type JobEdge {
+    node: Job!
+    cursor: ID!
 }
 
 type UserAuthenticationPayload {
@@ -1304,6 +1451,7 @@ input UpdateUserInput {
     contact: String
     skills: [String]
 }
+
 type Job {
     id: ID!
     title: String!
@@ -1319,6 +1467,15 @@ type Job {
     milestones: Milestones
     applications: Applications
     viewerHasApplied: Boolean!
+}
+
+type Review {
+    id: ID!
+    rating: Int!
+    remark: String
+    createdFor: User!
+    timeCreated: String!
+    timeUpdated: String!
 }
 
 type Discussions {
@@ -1370,6 +1527,17 @@ type User {
     appliedJobs: [UserJobApplication!]
     # Number of jobs the user has taken/working on/completed
     jobStats: UserStats!
+    reviews: [JobReview]!
+}
+
+type JobReview {
+    job: Job!,
+    milestoneReview: [MilestoneReview!]!,
+}
+
+type MilestoneReview {
+    review : Review!,
+    milestone: Milestone!
 }
 
 type SearchResult {
@@ -1403,6 +1571,7 @@ type Milestone {
     duration: String!
     status: JobStatus
     assignedTo: User
+    review: Review
     skills: [Skill]!
 }
 
@@ -1516,6 +1685,28 @@ func (ec *executionContext) field_Mutation_createJob_args(ctx context.Context, r
 		}
 	}
 	args["job"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createMilestonePerformanceReview_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ReviewInput
+	if tmp, ok := rawArgs["review"]; ok {
+		arg0, err = ec.unmarshalNReviewInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReviewInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["review"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["milestoneId"]; ok {
+		arg1, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["milestoneId"] = arg1
 	return args, nil
 }
 
@@ -1674,6 +1865,28 @@ func (ec *executionContext) field_Mutation_updateJob_args(ctx context.Context, r
 		}
 	}
 	args["job"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateMilestonePerformanceReview_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ReviewInput
+	if tmp, ok := rawArgs["review"]; ok {
+		arg0, err = ec.unmarshalNReviewInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReviewInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["review"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["id"]; ok {
+		arg1, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg1
 	return args, nil
 }
 
@@ -3053,6 +3266,74 @@ func (ec *executionContext) _JobPageInfo_endCursor(ctx context.Context, field gr
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _JobReview_job(ctx context.Context, field graphql.CollectedField, obj *model.JobReview) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "JobReview",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Job, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Job)
+	fc.Result = res
+	return ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _JobReview_milestoneReview(ctx context.Context, field graphql.CollectedField, obj *model.JobReview) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "JobReview",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MilestoneReview, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.MilestoneReview)
+	fc.Result = res
+	return ec.marshalNMilestoneReview2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneReviewᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _JobsConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.JobsConnection) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3486,6 +3767,37 @@ func (ec *executionContext) _Milestone_assignedTo(ctx context.Context, field gra
 	return ec.marshalOUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Milestone_review(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Milestone",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Milestone().Review(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Review)
+	fc.Result = res
+	return ec.marshalOReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Milestone_skills(ctx context.Context, field graphql.CollectedField, obj *model.Milestone) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3518,6 +3830,74 @@ func (ec *executionContext) _Milestone_skills(ctx context.Context, field graphql
 	res := resTmp.([]*model.Skill)
 	fc.Result = res
 	return ec.marshalNSkill2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _MilestoneReview_review(ctx context.Context, field graphql.CollectedField, obj *model.MilestoneReview) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "MilestoneReview",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Review, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Review)
+	fc.Result = res
+	return ec.marshalNReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _MilestoneReview_milestone(ctx context.Context, field graphql.CollectedField, obj *model.MilestoneReview) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "MilestoneReview",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Milestone, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Milestone)
+	fc.Result = res
+	return ec.marshalNMilestone2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestone(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Milestones_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.Milestones) (ret graphql.Marshaler) {
@@ -4117,6 +4497,82 @@ func (ec *executionContext) _Mutation_toggleJobCompleted(ctx context.Context, fi
 	return ec.marshalOJob2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_createMilestonePerformanceReview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createMilestonePerformanceReview_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateMilestonePerformanceReview(rctx, args["review"].(model.ReviewInput), args["milestoneId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Review)
+	fc.Result = res
+	return ec.marshalOReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateMilestonePerformanceReview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateMilestonePerformanceReview_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateMilestonePerformanceReview(rctx, args["review"].(model.ReviewInput), args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Review)
+	fc.Result = res
+	return ec.marshalOReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_allJobs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4415,6 +4871,207 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Review_id(ctx context.Context, field graphql.CollectedField, obj *model.Review) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Review",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Id, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Review_rating(ctx context.Context, field graphql.CollectedField, obj *model.Review) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Review",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rating, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Review_remark(ctx context.Context, field graphql.CollectedField, obj *model.Review) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Review",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Remark, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Review_createdFor(ctx context.Context, field graphql.CollectedField, obj *model.Review) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Review",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Review().CreatedFor(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Review_timeCreated(ctx context.Context, field graphql.CollectedField, obj *model.Review) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Review",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TimeCreated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Review_timeUpdated(ctx context.Context, field graphql.CollectedField, obj *model.Review) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Review",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TimeUpdated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _SearchResult_jobs(ctx context.Context, field graphql.CollectedField, obj *model.SearchResult) (ret graphql.Marshaler) {
@@ -5210,6 +5867,40 @@ func (ec *executionContext) _User_jobStats(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.UserStats)
 	fc.Result = res
 	return ec.marshalNUserStats2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐUserStats(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_reviews(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().Reviews(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.JobReview)
+	fc.Result = res
+	return ec.marshalNJobReview2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobReview(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserAuthenticationPayload_profile(ctx context.Context, field graphql.CollectedField, obj *model.UserAuthenticationPayload) (ret graphql.Marshaler) {
@@ -6717,6 +7408,30 @@ func (ec *executionContext) unmarshalInputMilestoneInput(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputReviewInput(ctx context.Context, obj interface{}) (model.ReviewInput, error) {
+	var it model.ReviewInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "rating":
+			var err error
+			it.Rating, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "remark":
+			var err error
+			it.Remark, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateJobInput(ctx context.Context, obj interface{}) (model.UpdateJobInput, error) {
 	var it model.UpdateJobInput
 	var asMap = obj.(map[string]interface{})
@@ -7206,6 +7921,38 @@ func (ec *executionContext) _JobPageInfo(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var jobReviewImplementors = []string{"JobReview"}
+
+func (ec *executionContext) _JobReview(ctx context.Context, sel ast.SelectionSet, obj *model.JobReview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jobReviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JobReview")
+		case "job":
+			out.Values[i] = ec._JobReview_job(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "milestoneReview":
+			out.Values[i] = ec._JobReview_milestoneReview(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var jobsConnectionImplementors = []string{"JobsConnection"}
 
 func (ec *executionContext) _JobsConnection(ctx context.Context, sel ast.SelectionSet, obj *model.JobsConnection) graphql.Marshaler {
@@ -7313,6 +8060,17 @@ func (ec *executionContext) _Milestone(ctx context.Context, sel ast.SelectionSet
 				res = ec._Milestone_assignedTo(ctx, field, obj)
 				return res
 			})
+		case "review":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Milestone_review(ctx, field, obj)
+				return res
+			})
 		case "skills":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -7327,6 +8085,38 @@ func (ec *executionContext) _Milestone(ctx context.Context, sel ast.SelectionSet
 				}
 				return res
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var milestoneReviewImplementors = []string{"MilestoneReview"}
+
+func (ec *executionContext) _MilestoneReview(ctx context.Context, sel ast.SelectionSet, obj *model.MilestoneReview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, milestoneReviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MilestoneReview")
+		case "review":
+			out.Values[i] = ec._MilestoneReview_review(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "milestone":
+			out.Values[i] = ec._MilestoneReview_milestone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7410,6 +8200,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_toggleMilestoneCompleted(ctx, field)
 		case "toggleJobCompleted":
 			out.Values[i] = ec._Mutation_toggleJobCompleted(ctx, field)
+		case "createMilestonePerformanceReview":
+			out.Values[i] = ec._Mutation_createMilestonePerformanceReview(ctx, field)
+		case "updateMilestonePerformanceReview":
+			out.Values[i] = ec._Mutation_updateMilestonePerformanceReview(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7509,6 +8303,64 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var reviewImplementors = []string{"Review"}
+
+func (ec *executionContext) _Review(ctx context.Context, sel ast.SelectionSet, obj *model.Review) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, reviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Review")
+		case "id":
+			out.Values[i] = ec._Review_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "rating":
+			out.Values[i] = ec._Review_rating(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "remark":
+			out.Values[i] = ec._Review_remark(ctx, field, obj)
+		case "createdFor":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Review_createdFor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "timeCreated":
+			out.Values[i] = ec._Review_timeCreated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "timeUpdated":
+			out.Values[i] = ec._Review_timeUpdated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7714,6 +8566,20 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_jobStats(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "reviews":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_reviews(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -8211,6 +9077,43 @@ func (ec *executionContext) marshalNJobEdge2ᚖgithubᚗcomᚋcassiniᚑInnerᚋ
 	return ec._JobEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNJobReview2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobReview(ctx context.Context, sel ast.SelectionSet, v []*model.JobReview) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOJobReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobReview(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) unmarshalNJobStatus2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) (model.JobStatus, error) {
 	var res model.JobStatus
 	return res, res.UnmarshalGQL(v)
@@ -8289,6 +9192,75 @@ func (ec *executionContext) unmarshalNMilestoneInput2ᚕᚖgithubᚗcomᚋcassin
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) marshalNMilestoneReview2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneReview(ctx context.Context, sel ast.SelectionSet, v model.MilestoneReview) graphql.Marshaler {
+	return ec._MilestoneReview(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMilestoneReview2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneReviewᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MilestoneReview) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMilestoneReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneReview(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNMilestoneReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐMilestoneReview(ctx context.Context, sel ast.SelectionSet, v *model.MilestoneReview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._MilestoneReview(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNReview2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v model.Review) graphql.Marshaler {
+	return ec._Review(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v *model.Review) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Review(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNReviewInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReviewInput(ctx context.Context, v interface{}) (model.ReviewInput, error) {
+	return ec.unmarshalInputReviewInput(ctx, v)
 }
 
 func (ec *executionContext) marshalNSkill2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSkill(ctx context.Context, sel ast.SelectionSet, v model.Skill) graphql.Marshaler {
@@ -9021,6 +9993,17 @@ func (ec *executionContext) marshalOJobPageInfo2ᚖgithubᚗcomᚋcassiniᚑInne
 	return ec._JobPageInfo(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOJobReview2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobReview(ctx context.Context, sel ast.SelectionSet, v model.JobReview) graphql.Marshaler {
+	return ec._JobReview(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOJobReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobReview(ctx context.Context, sel ast.SelectionSet, v *model.JobReview) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._JobReview(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOJobStatus2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v interface{}) (model.JobStatus, error) {
 	var res model.JobStatus
 	return res, res.UnmarshalGQL(v)
@@ -9160,6 +10143,17 @@ func (ec *executionContext) marshalOMilestones2ᚖgithubᚗcomᚋcassiniᚑInner
 		return graphql.Null
 	}
 	return ec._Milestones(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOReview2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v model.Review) graphql.Marshaler {
+	return ec._Review(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v *model.Review) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Review(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSearchResult2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐSearchResult(ctx context.Context, sel ast.SelectionSet, v model.SearchResult) graphql.Marshaler {
