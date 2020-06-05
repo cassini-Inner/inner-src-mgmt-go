@@ -1,0 +1,1 @@
+alter table reviews drop constraint review_unique_milestoneId_userId;
