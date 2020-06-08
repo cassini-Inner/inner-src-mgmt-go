@@ -76,7 +76,7 @@ func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInpu
 	for _, milestone := range job.Milestones {
 		newMilestones = append(newMilestones, &dbmodel.Milestone{
 			Title:       milestone.Title,
-			Description: milestone.Duration,
+			Description: milestone.Desc,
 			JobId:       newJob.Id,
 			Resolution:  milestone.Resolution,
 			Duration:    milestone.Duration,
