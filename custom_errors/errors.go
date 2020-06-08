@@ -25,5 +25,5 @@ var (
 	ErrNoUserAssigned                 = errors.New("no user assigned to milestone")
 	ErrMilestoneNotCompleted          = errors.New("review can only be added to completed milestones")
 	ErrAlreadyExists                  = errors.New("already exists")
-	ErrInternalIssue = errors.New("internal server error")
+	ErrInternalIssue                  = errors.New("internal server error")
 )

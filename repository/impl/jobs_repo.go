@@ -174,7 +174,7 @@ func (j *JobsRepoImpl) getByIdTx(tx *sqlx.Tx, id string) (result *dbmodel.Job, e
 
 func scanRows(rows *sqlx.Rows) (result []dbmodel.Job, err error) {
 	for rows != nil && rows.Next() {
-		 tempJob := &dbmodel.Job{}
+		tempJob := &dbmodel.Job{}
 		err = rows.StructScan(tempJob)
 		if err != nil {
 			return nil, err

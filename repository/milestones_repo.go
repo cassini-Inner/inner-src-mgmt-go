@@ -12,7 +12,7 @@ type MilestonesRepo interface {
 	CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId string, milestones []*dbmodel.Milestone) (createdMilestones []*dbmodel.Milestone, err error)
 
 	GetByJobId(tx sqlx.Ext, jobId string) ([]*dbmodel.Milestone, error)
-	GetByJobIds(jobIds ...string)([]*dbmodel.Milestone, error)
+	GetByJobIds(jobIds ...string) ([]*dbmodel.Milestone, error)
 	GetIdsByJobId(tx sqlx.Ext, jobId string) (result []string, err error)
 	GetById(milestoneId string) (*dbmodel.Milestone, error)
 	GetAuthor(milestoneId string) (*dbmodel.User, error)

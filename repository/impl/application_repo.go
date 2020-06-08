@@ -30,7 +30,7 @@ func (a *ApplicationsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 
 func (a *ApplicationsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
 	err = tx.Commit()
-	if err != nil{
+	if err != nil {
 		err = tx.Rollback()
 	}
 	return err
@@ -200,7 +200,7 @@ func (a *ApplicationsRepoImpl) GetUserJobApplications(userId string) ([]*dbmodel
 
 	var result []*dbmodel.Job
 	for rows != nil && rows.Next() {
-		 job := &dbmodel.Job{}
+		job := &dbmodel.Job{}
 		rows.StructScan(job)
 		result = append(result, job)
 	}
@@ -230,7 +230,7 @@ func scanApplicationRowsById(rows *sql.Rows) (result []string, err error) {
 func scanApplicationRowsx(rows *sqlx.Rows) ([]*dbmodel.Application, error) {
 	var result []*dbmodel.Application
 	for rows != nil && rows.Next() {
-		 application := &dbmodel.Application{}
+		application := &dbmodel.Application{}
 		err := rows.StructScan(application)
 		if err != nil {
 			return nil, err

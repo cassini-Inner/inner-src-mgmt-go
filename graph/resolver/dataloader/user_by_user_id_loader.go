@@ -60,5 +60,3 @@ func NewUserByUserIdLoader(db *sqlx.DB) *generated.UserLoader {
 	})
 
 }
-
-

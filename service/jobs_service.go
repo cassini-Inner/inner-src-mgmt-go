@@ -19,5 +19,5 @@ type JobsService interface {
 	DeleteJob(ctx context.Context, jobID string) (*gqlmodel.Job, error)
 	ToggleMilestoneCompleted(ctx context.Context, milestoneID string) (*gqlmodel.Milestone, error)
 	AddDiscussionToJob(ctx context.Context, comment, jobId string) (*gqlmodel.Comment, error)
-	GetByMilestonesForJobIds(jobIds ...string)([]*dbmodel.Milestone, error)
+	GetByMilestonesForJobIds(jobIds ...string) ([]*dbmodel.Milestone, error)
 }

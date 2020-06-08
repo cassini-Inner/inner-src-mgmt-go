@@ -193,7 +193,7 @@ func (s *SkillsRepoImpl) GetAll() ([]*dbmodel.GlobalSkill, error) {
 	}
 
 	for rows.Next() {
-		 skill := &dbmodel.GlobalSkill{}
+		skill := &dbmodel.GlobalSkill{}
 		err := rows.StructScan(skill)
 		if err != nil {
 			return nil, err

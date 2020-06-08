@@ -5,4 +5,3 @@ type UserJobApplication struct {
 	UserJobStatus     JobStatus         `json:"userJobStatus"`
 	Job               *Job              `json:"job"`
 }
-

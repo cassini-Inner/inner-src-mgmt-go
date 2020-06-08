@@ -7,5 +7,5 @@ import (
 )
 
 func (r *commentResolver) CreatedBy(ctx context.Context, obj *gqlmodel.Comment) (*gqlmodel.User, error) {
-		return dataloader.GetUserByUserIdLoader(ctx).Load(obj.CreatedBy)
+	return dataloader.GetUserByUserIdLoader(ctx).Load(obj.CreatedBy)
 }
