@@ -95,7 +95,7 @@ func (r *userResolver) Reviews(ctx context.Context, obj *gqlmodel.User) (result 
 		}
 		mappedMilestone := gqlmodel.Milestone{}
 		mappedMilestone.MapDbToGql(*milestone)
-		jobMilestones[milestone.JobId] = append(jobMilestones[milestone.Id], &mappedMilestone)
+		jobMilestones[milestone.JobId] = append(jobMilestones[milestone.JobId], &mappedMilestone)
 	}
 
 	// a map of milestoneId -> review
