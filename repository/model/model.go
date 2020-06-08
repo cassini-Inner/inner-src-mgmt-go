@@ -100,11 +100,11 @@ type Discussion struct {
 }
 
 type Review struct {
-	Id string
-	Rating int
-	Remark string
+	Id          string
+	Rating      int
+	Remark      string
 	MilestoneId string `db:"milestone_id"`
-	UserId string `db:"user_id"`
+	UserId      string `db:"user_id"`
 	TimeCreated string `db:"time_created"`
 	TimeUpdated string `db:"time_updated"`
 	IsDeleted   bool   `db:"is_deleted"`

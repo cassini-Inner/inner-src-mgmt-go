@@ -2,13 +2,19 @@ package impl
 
 import (
 	"context"
+	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"time"
 )
 
 type ReviewRepoImpl struct {
 	db *sqlx.DB
+}
+
+func NewReviewRepoImpl(db *sqlx.DB) *ReviewRepoImpl {
+	return &ReviewRepoImpl{db: db}
 }
 
 func (r ReviewRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
@@ -41,9 +47,23 @@ func (r ReviewRepoImpl) GetByIdTx(tx *sqlx.Tx, id string) (review *dbmodel.Revie
 	return review, nil
 }
 
+func (r ReviewRepoImpl) GetForUserIdMilestoneId(milestoneId, userId string) (*dbmodel.Review, error) {
+	review := &dbmodel.Review{}
+	err := r.db.QueryRowx(selectReviewByMilestoneIdUserId, milestoneId, userId).StructScan(review)
+	if err != nil {
+		return nil, err
+	}
+	return review, nil
+}
+
 func (r ReviewRepoImpl) Add(tx *sqlx.Tx, review dbmodel.Review) (result *dbmodel.Review, err error) {
 	result = &dbmodel.Review{}
 	if err = tx.QueryRowx(insertReview, review.Rating, review.Remark, review.MilestoneId, review.UserId).StructScan(result); err != nil {
+		pqErr := err.(*pq.Error)
+		// 23505 is the error code for unique key constraint violations
+		if pqErr.Code == "23505" {
+			return nil, custom_errors.ErrAlreadyExists
+		}
 		return nil, err
 	}
 	return result, nil
@@ -67,7 +87,8 @@ func (r ReviewRepoImpl) Delete(tx *sqlx.Tx, id string) (review *dbmodel.Review, 
 
 const (
 	selectReviewById = "select * from reviews where id = $1 and is_deleted=false"
+	selectReviewByMilestoneIdUserId = "select * from reviews where milestone_id = $1 and user_id = $2"
 	insertReview     = "insert into reviews(rating, remark, milestone_id, user_id) values ($1, $2, $3, $4) returning *"
 	updateReview     = "update reviews set rating=$1, remark=$2, time_updated=$3 where id=$4 and is_deleted=false returning *"
-	deleteReview     = "delete from reviews where id=$1 and is_deleted=false returning *"
+	deleteReview     = "update reviews set is_deleted=false where id=$1 returning *"
 )

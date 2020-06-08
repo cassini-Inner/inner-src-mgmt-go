@@ -487,15 +487,19 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 			}
 		}
 	} else {
-		err = j.milestonesRepo.ForceAutoUpdateMilestoneStatusByMilestoneId(ctx, tx, milestoneID)
-		if err != nil {
-			_ = tx.Rollback()
-			return nil, err
-		}
-		_, err := j.jobsRepo.ForceAutoUpdateJobStatus(ctx, tx, milestoneData.JobId)
-		if err != nil {
-			_ = tx.Rollback()
-			return nil, err
+		if !milestoneData.AssignedTo.Valid {
+			err = j.milestonesRepo.ForceAutoUpdateMilestoneStatusByMilestoneId(ctx, tx, milestoneID)
+			if err != nil {
+				_ = tx.Rollback()
+				return nil, err
+			}
+			_, err := j.jobsRepo.ForceAutoUpdateJobStatus(ctx, tx, milestoneData.JobId)
+			if err != nil {
+				_ = tx.Rollback()
+				return nil, err
+			}
+		} else {
+			return nil, custom_errors.ErrCannotToggleMilestone
 		}
 	}
 	err = tx.Commit()

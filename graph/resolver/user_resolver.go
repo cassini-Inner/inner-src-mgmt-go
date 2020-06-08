@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 )
 
@@ -58,4 +59,8 @@ func (r *userResolver) AppliedJobs(ctx context.Context, obj *gqlmodel.User) ([]*
 	}
 
 	return result, nil
+}
+
+func (r *userResolver) Reviews(ctx context.Context, obj *gqlmodel.User) ([]*gqlmodel.JobReview, error) {
+	panic(fmt.Errorf("not implemented"))
 }

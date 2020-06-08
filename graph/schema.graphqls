@@ -55,7 +55,8 @@ type Mutation {
     refreshToken(token: String!): UserAuthenticationPayload
     toggleMilestoneCompleted(milestoneID: String!) : Milestone
     toggleJobCompleted(jobID: String!) : Job
-    createReview(review: ReviewInput, userId: ID!, milestoneId: ID!): MilestoneReview
+    createMilestonePerformanceReview(review: ReviewInput!, milestoneId: ID!): Review
+    updateMilestonePerformanceReview(review: ReviewInput!, id: ID!): Review
 }
 
 input ReviewInput {
@@ -146,10 +147,12 @@ type Job {
 }
 
 type Review {
-    rating: Int!,
-    remark: String,
+    id: ID!
+    rating: Int!
+    remark: String
+    createdFor: User!
     timeCreated: String!
-    timeUpdates: String!
+    timeUpdated: String!
 }
 
 type Discussions {

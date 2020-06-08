@@ -40,6 +40,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	discussionsRepo := impl.NewDiscussionsRepo(DB)
 	applicationsRepo := impl.NewApplicationsRepo(DB)
 	milestonesRepo := impl.NewMilestonesRepoImpl(DB)
+	reviewsRepo := impl.NewReviewRepoImpl(DB)
 
 	jobsService := impl2.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo, milestonesRepo)
 	applicationsService := impl2.NewApplicationsService(jobsRepo, applicationsRepo, milestonesRepo)
@@ -47,29 +48,36 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	githubOauthService := impl2.NewGithubOauthService()
 	authService := impl2.NewAuthenticationService(usersRepo, githubOauthService)
 	skillsService := impl2.NewSkillsService(skillsRepo)
+	reviewsService := impl2.NewReviewsService(reviewsRepo, jobsRepo, milestonesRepo)
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &resolver.Resolver{
-		ApplicationsRepo:      applicationsRepo,
-		DiscussionsRepo:       discussionsRepo,
-		JobsRepo:              jobsRepo,
-		SkillsRepo:            skillsRepo,
-		JobsService:           jobsService,
-		ApplicationsService:   applicationsService,
-		UserService:           userService,
-		AuthenticationService: authService,
-		SkillsService:         skillsService,
-	}}))
+	srv := handler.NewDefaultServer(
+		generated.NewExecutableSchema(
+			generated.Config{Resolvers: &resolver.Resolver{
+				ApplicationsRepo:      applicationsRepo,
+				DiscussionsRepo:       discussionsRepo,
+				JobsRepo:              jobsRepo,
+				SkillsRepo:            skillsRepo,
+				JobsService:           jobsService,
+				ApplicationsService:   applicationsService,
+				UserService:           userService,
+				AuthenticationService: authService,
+				SkillsService:         skillsService,
+				ReviewsService:        reviewsService,
+			},
+			},
+		),
+	)
 
 	restAuthHandler := rest.NewAuthenticationHandler(authService)
 
 	router := chi.NewRouter()
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://10.176.20.185", "http://localhost:3000", "http://localhost:8080", "http://10.176.5.190"},
-		AllowedMethods:   []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete, http.MethodConnect,
+		AllowedOrigins: []string{"http://10.176.20.185", "http://localhost:3000", "http://localhost:8080", "http://10.176.5.190"},
+		AllowedMethods: []string{http.MethodPut, http.MethodPost, http.MethodGet, http.MethodOptions, http.MethodDelete, http.MethodConnect,
 			http.MethodTrace, http.MethodHead, http.MethodPatch},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-		Debug: true,
+		Debug:            true,
 	}).Handler)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)

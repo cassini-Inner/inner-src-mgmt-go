@@ -100,3 +100,7 @@ models:
         resolver: true
       jobStats:
         resolver: true
+  Review:
+    fields:
+      createdFor:
+        resolver: true

@@ -22,4 +22,5 @@ type Resolver struct {
 	UserService           service.UserProfileService
 	AuthenticationService service.AuthenticationService
 	SkillsService         service.SkillsService
+	ReviewsService        service.ReviewsService
 }

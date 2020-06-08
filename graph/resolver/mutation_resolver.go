@@ -138,3 +138,23 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, refreshToken string
 		RefreshToken: *newRefreshToken,
 	}, nil
 }
+
+func (r *mutationResolver) CreateMilestonePerformanceReview(ctx context.Context, review gqlmodel.ReviewInput, milestoneID string) (*gqlmodel.Review, error) {
+	createdReview, err := r.ReviewsService.ReviewAssignedUser(ctx, review.Rating, review.Remark, milestoneID)
+	if err != nil {
+		return nil, err
+	}
+	gqlReview := &gqlmodel.Review{}
+	gqlReview.MapDbToGql(*createdReview)
+	return gqlReview, nil
+}
+
+func (r *mutationResolver) UpdateMilestonePerformanceReview(ctx context.Context, review gqlmodel.ReviewInput, id string) (*gqlmodel.Review, error) {
+	updatedReview, err := r.ReviewsService.UpdateReview(ctx, review.Rating, review.Remark, id)
+	if err != nil {
+		return nil, err
+	}
+	gqlReview := &gqlmodel.Review{}
+	gqlReview.MapDbToGql(*updatedReview)
+	return gqlReview, nil
+}

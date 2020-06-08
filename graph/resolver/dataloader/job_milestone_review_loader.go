@@ -1,32 +1,38 @@
 package dataloader
 
 import (
-	"database/sql"
+	"fmt"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/generated"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
-	"strings"
 	"time"
 )
 
-func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoader {
-	return generated.NewApplicationsByJobIdLoader(generated.ApplicationsByJobIdLoaderConfig{
-		Fetch: func(keys []string) (i []*gqlmodel.Applications, errors []error) {
-			applicationsMap := make(map[string][]*gqlmodel.Application)
-			acceptedMap := make(map[string]int)
-			rejectedMap := make(map[string]int)
-			pendingMap := make(map[string]int)
+func NewJobMilestoneReviewLoader(db *sqlx.DB) *generated.JobMilestoneReviewLoader {
+	return generated.NewJobMilestoneReviewLoader(generated.JobMilestoneReviewLoaderConfig{
+		Fetch: func(keys []string) (i []*gqlmodel.Review, errors []error) {
+			var userIds []string
+			var milestoneIds []string
+			resultMap := make(map[string]*gqlmodel.Review)
 
-			applicationsQuery, applicationsArgs, err := sqlx.In(applicationsQuery, keys)
+			for _, key := range keys {
+				var milestoneId, assignedTo string
+				_, err := fmt.Sscan(key, &milestoneId, &assignedTo)
+				if err != nil {
+					return nil, []error{err}
+				}
+				userIds = append(userIds, assignedTo)
+				milestoneIds = append(milestoneIds, milestoneId)
+			}
+			stmt, args, err := sqlx.In(selectMilestoneReviewsQuery, milestoneIds, userIds)
+			stmt = db.Rebind(stmt)
 			if err != nil {
 				return nil, []error{err}
 			}
-
-			applicationsQuery = db.Rebind(applicationsQuery)
 			resultChan := make(chan *FetchStruct)
-
 			go func(result chan *FetchStruct) {
-				rows, err := db.Queryx(applicationsQuery, applicationsArgs...)
+				rows, err := db.Queryx(stmt, args...)
 				result <- &FetchStruct{
 					rows: rows,
 					err:  err,
@@ -34,25 +40,21 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 			}(resultChan)
 			res := <-resultChan
 			if res.err != nil {
-				return nil, []error{err}
+				return nil, []error{res.err}
 			}
-			defer res.rows.Close()
-
-			errors = mapApplicationRowsToGqlModel(res.rows, applicationsMap, &acceptedMap, &rejectedMap, &pendingMap)
-			if errors != nil {
-				return nil, errors
+			for res.rows.Next() {
+				review := &dbmodel.Review{}
+				err = res.rows.StructScan(review)
+				if err != nil {
+					return nil, []error{err}
+				}
+				var gqlReview gqlmodel.Review
+				gqlReview.MapDbToGql(*review)
+				resultMap[fmt.Sprintf("%v %v", review.MilestoneId, review.UserId)] = &gqlReview
 			}
 
 			for _, key := range keys {
-				pendingCount := pendingMap[key]
-				acceptedCount := acceptedMap[key]
-				rejectedCount := rejectedMap[key]
-				i = append(i, &gqlmodel.Applications{
-					PendingCount:  &pendingCount,
-					AcceptedCount: &acceptedCount,
-					RejectedCount: &rejectedCount,
-					Applications:  applicationsMap[key],
-				})
+				i = append(i, resultMap[key])
 			}
 			return i, nil
 		},
@@ -61,56 +63,6 @@ func NewApplicationByJobIdLoader(db *sqlx.DB) *generated.ApplicationsByJobIdLoad
 	})
 }
 
-func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap map[string][]*gqlmodel.Application, acceptedCountMap, rejectedCountMap, pendingCountMap *map[string]int) []error {
-	applicationCountsMap := make(map[string]map[string]bool)
-	for applicationRows.Next() {
-		var jobId, id, milestoneId, applicantId, status, timeCreated, timeUpdated string
-		var note sql.NullString
-		err := applicationRows.Scan(&jobId, &id, &milestoneId, &applicantId, &status, &note, &timeCreated, &timeUpdated)
-		if err != nil {
-			return []error{err}
-		}
-		_, ok := applicationsMap[jobId]
-		if !ok {
-			applicationsMap[jobId] = make([]*gqlmodel.Application, 0)
-		}
-
-		application := &gqlmodel.Application{
-			ID:          id,
-			ApplicantID: applicantId,
-			MilestoneID: milestoneId,
-			Status:      gqlmodel.ApplicationStatus(status),
-			CreatedOn:   timeCreated,
-		}
-
-		_, ok = applicationCountsMap[jobId][applicantId]
-		if !ok {
-			applicationCountsMap[jobId] = make(map[string]bool)
-			_, ok = applicationCountsMap[jobId][applicantId]
-			if !ok {
-				applicationCountsMap[jobId][applicantId] = true;
-				switch application.Status.String() {
-				case strings.ToLower(gqlmodel.ApplicationStatusAccepted.String()):
-					(*acceptedCountMap)[jobId]++
-				case strings.ToLower(gqlmodel.ApplicationStatusPending.String()):
-					(*pendingCountMap)[jobId]++
-				case strings.ToLower(gqlmodel.ApplicationStatusRejected.String()):
-					(*rejectedCountMap)[jobId]++
-				}
-			}
-		}
-
-		if note.Valid {
-			application.Note = &note.String
-		}
-		applicationsMap[jobId] = append(applicationsMap[jobId], application)
-	}
-	return nil
-}
-
 const (
-	applicationsQuery = `select m.job_id, applications.id, applications.milestone_id, applications.applicant_id, applications.status, applications.note, applications.time_created, applications.time_updated
-			from applications
-					 join milestones m on applications.milestone_id = m.id
-			where m.job_id in (?) and applications.status <> 'withdrawn'`
+	selectMilestoneReviewsQuery = "select * from reviews where milestone_id in (?) and user_id in (?)"
 )
