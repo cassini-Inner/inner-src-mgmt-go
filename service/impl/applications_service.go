@@ -14,12 +14,19 @@ import (
 type ApplicationsService struct {
 	jobsRepo         repository.JobsRepo
 	applicationsRepo repository.ApplicationsRepo
+	milestonesRepo   repository.MilestonesRepo
 }
 
-func NewApplicationsService(jobsRepo repository.JobsRepo, applicationsRepo repository.ApplicationsRepo) *ApplicationsService {
-	return &ApplicationsService{jobsRepo: jobsRepo, applicationsRepo: applicationsRepo}
+func NewApplicationsService(jobsRepo repository.JobsRepo, applicationsRepo repository.ApplicationsRepo, milestonesRepo repository.MilestonesRepo) *ApplicationsService {
+	return &ApplicationsService{
+		jobsRepo:         jobsRepo,
+		applicationsRepo: applicationsRepo,
+		milestonesRepo:   milestonesRepo,
+	}
 }
 
+// creates a job application of currently signed in user. This applies to a whole job
+// TODO: allow people to apply to individual milestones
 func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobId string) ([]*gqlmodel.Application, error) {
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 
@@ -45,10 +52,22 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 		return nil, custom_errors.ErrOwnerApplyToOwnJob
 	}
 
-	milestones, err := a.jobsRepo.GetMilestonesByJobId(tx, jobId)
+	milestones, err := a.milestonesRepo.GetByJobId(tx, jobId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
+	}
+
+	totalUnassignedCount := 0
+	for _, milestone := range milestones {
+		// if a milestone is not assigned to anyone field is not valid as the table value is null
+		if !milestone.AssignedTo.Valid {
+			totalUnassignedCount++
+		}
+	}
+
+	if totalUnassignedCount != len(milestones) {
+		return nil, custom_errors.ErrJobAlreadyAssigned
 	}
 
 	// get all the pending or accepted applications of a user
@@ -109,10 +128,20 @@ func (a *ApplicationsService) DeleteUserJobApplication(ctx context.Context, jobI
 		return nil, err
 	}
 
-	jobMilestones, err := a.jobsRepo.GetMilestonesByJobId(tx, jobId)
+	jobMilestones, err := a.milestonesRepo.GetByJobId(tx, jobId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
+	}
+
+	// if the user is withdrawing an application where they were previously accepted into a job/milestone
+	for _, milestone := range jobMilestones {
+		if milestone.AssignedTo.Valid && milestone.AssignedTo.String == user.Id {
+			_, err = a.milestonesRepo.SetMilestoneAssignedTo(tx, milestone.Id, nil)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	applications, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(ctx, tx, jobMilestones, dbmodel.ApplicationStatusWithdrawn, nil, jobId, user.Id)
@@ -178,7 +207,7 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 		return nil, custom_errors.ErrInvalidNewApplicationState
 	}
 
-	milestones, err := a.jobsRepo.GetMilestonesByJobId(tx, jobId)
+	milestones, err := a.milestonesRepo.GetByJobId(tx, jobId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -188,6 +217,19 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
+	}
+	var idToBeAssigned *string
+	if status.String() == "ACCEPTED" {
+		idToBeAssigned = &applicantId
+	} else {
+		idToBeAssigned = nil
+	}
+	for _, milestone := range milestones {
+		_, err = a.milestonesRepo.SetMilestoneAssignedTo(tx, milestone.Id, idToBeAssigned)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
 	}
 	err = tx.Commit()
 	if err != nil {
@@ -202,4 +244,8 @@ func (a *ApplicationsService) GetApplicationStatusForUserAndJob(ctx context.Cont
 		return "", err
 	}
 	return a.applicationsRepo.GetApplicationStatusForUserAndJob(userId, tx, joinId)
+}
+
+func (a *ApplicationsService) GetAppliedJobs(ctx context.Context, userId string) ([]*dbmodel.Job, error) {
+	return a.applicationsRepo.GetUserJobApplications(userId)
 }

@@ -26,8 +26,6 @@ func NewSkillByJobIdLoader(db *sqlx.DB) *generated.SkillByJobIdLoader {
 
 			query = db.Rebind(query)
 
-
-
 			rows, err := db.Queryx(query, args...)
 			if err != nil {
 				return nil, []error{err}

@@ -59,3 +59,70 @@ func (r *userResolver) AppliedJobs(ctx context.Context, obj *gqlmodel.User) ([]*
 
 	return result, nil
 }
+
+func (r *userResolver) Reviews(ctx context.Context, obj *gqlmodel.User) (result []*gqlmodel.JobReview, err error) {
+	// get applied jobs
+	appliedJobs, err := r.ApplicationsService.GetAppliedJobs(ctx, obj.ID)
+	var mappedJobs []*gqlmodel.Job
+	for _, job := range appliedJobs {
+		tempJob := &gqlmodel.Job{}
+		tempJob.MapDbToGql(*job)
+		mappedJobs = append(mappedJobs, tempJob)
+	}
+
+	// map milestones to job
+	jobMilestones := make(map[string][]*gqlmodel.Milestone)
+	if err != nil {
+		return nil, err
+	}
+	var jobIds []string
+	for _, job := range appliedJobs {
+		jobIds = append(jobIds, job.Id)
+	}
+
+	// if the user has not applied to any jobs
+	if len(jobIds) == 0 {
+		return result, nil
+	}
+	milestones, err := r.JobsService.GetByMilestonesForJobIds(jobIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, milestone := range milestones {
+		if _, ok := jobMilestones[milestone.JobId]; !ok {
+			jobMilestones[milestone.JobId] = make([]*gqlmodel.Milestone, 0)
+		}
+		mappedMilestone := gqlmodel.Milestone{}
+		mappedMilestone.MapDbToGql(*milestone)
+		jobMilestones[milestone.JobId] = append(jobMilestones[milestone.JobId], &mappedMilestone)
+	}
+
+	// a map of milestoneId -> review
+	reviewMilestoneMap := make(map[string]*gqlmodel.Review)
+	reviews, err := r.ReviewsService.GetForUserId(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	for _, review := range reviews {
+		gqlReview := &gqlmodel.Review{}
+		gqlReview.MapDbToGql(*review)
+		reviewMilestoneMap[review.MilestoneId] = gqlReview
+	}
+
+	for _, job := range mappedJobs {
+		var milestoneReviews []*gqlmodel.MilestoneReview
+		for _, milestone := range jobMilestones[job.ID] {
+			milestoneReviews = append(milestoneReviews, &gqlmodel.MilestoneReview{
+				Review:    reviewMilestoneMap[milestone.ID],
+				Milestone: milestone,
+			})
+		}
+		result = append(result, &gqlmodel.JobReview{
+			Job:             job,
+			MilestoneReview: milestoneReviews,
+		})
+	}
+
+	return result, nil
+}

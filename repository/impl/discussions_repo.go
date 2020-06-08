@@ -10,42 +10,50 @@ type DiscussionsRepoImpl struct {
 	db *sqlx.DB
 }
 
-func (d *DiscussionsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
-	return d.db.BeginTxx(ctx, nil)
-}
-
 func NewDiscussionsRepo(db *sqlx.DB) *DiscussionsRepoImpl {
 	return &DiscussionsRepoImpl{db: db}
 }
 
-//TODO: Implement
-func (d *DiscussionsRepoImpl) CreateComment(ctx context.Context, tx *sqlx.Tx, jobId, comment, userId string) (*dbmodel.Discussion, error) {
-	var newDiscussion dbmodel.Discussion
-	err := tx.QueryRowxContext(ctx, `insert into discussions(job_id, created_by, content) values ($1,$2, $3) returning *`, jobId, userId, comment).StructScan(&newDiscussion)
-	if err != nil {
-		return nil, err
-	}
-	return &newDiscussion, nil
+func (d *DiscussionsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	return d.db.BeginTxx(ctx, nil)
 }
-func (d *DiscussionsRepoImpl) UpdateComment(ctx context.Context, tx *sqlx.Tx, discussionId, content string) (*dbmodel.Discussion, error) {
-	var discussion dbmodel.Discussion
 
-	err := tx.QueryRowxContext(ctx, updateDiscussionById, content, discussionId).StructScan(&discussion)
+func (d *DiscussionsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil {
+		err = tx.Rollback()
+	}
+	return err
+}
+
+func (d *DiscussionsRepoImpl) CreateComment(ctx context.Context, tx *sqlx.Tx, jobId, comment, userId string) (*dbmodel.Discussion, error) {
+	newDiscussion := &dbmodel.Discussion{}
+	err := tx.QueryRowxContext(ctx, `insert into discussions(job_id, created_by, content) values ($1,$2, $3) returning *`, jobId, userId, comment).StructScan(newDiscussion)
+	if err != nil {
+		return nil, err
+	}
+	return newDiscussion, nil
+}
+
+func (d *DiscussionsRepoImpl) UpdateComment(ctx context.Context, tx *sqlx.Tx, discussionId, content string) (*dbmodel.Discussion, error) {
+	updatedDiscussion := &dbmodel.Discussion{}
+
+	err := tx.QueryRowxContext(ctx, updateDiscussionById, content, discussionId).StructScan(updatedDiscussion)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &discussion, nil
+	return updatedDiscussion, nil
 }
 
 func (d *DiscussionsRepoImpl) DeleteComment(ctx context.Context, tx *sqlx.Tx, discussionId string) (*dbmodel.Discussion, error) {
-	var discussion dbmodel.Discussion
-	err := tx.QueryRowxContext(ctx, deleteDiscussionById, discussionId).StructScan(&discussion)
+	deletedComment := &dbmodel.Discussion{}
+	err := tx.QueryRowxContext(ctx, deleteDiscussionById, discussionId).StructScan(deletedComment)
 	if err != nil {
 		return nil, err
 	}
-	return &discussion, nil
+	return deletedComment, nil
 }
 
 func (d *DiscussionsRepoImpl) GetByJobId(jobId string) ([]*dbmodel.Discussion, error) {
@@ -56,22 +64,22 @@ func (d *DiscussionsRepoImpl) GetByJobId(jobId string) ([]*dbmodel.Discussion, e
 
 	var result []*dbmodel.Discussion
 	for rows != nil && rows.Next() {
-		var discussion dbmodel.Discussion
-		rows.StructScan(&discussion)
-		result = append(result, &discussion)
+		discussion := &dbmodel.Discussion{}
+		rows.StructScan(discussion)
+		result = append(result, discussion)
 	}
 
 	return result, nil
 }
 
 func (d *DiscussionsRepoImpl) GetById(tx *sqlx.Tx, discussionId string) (*dbmodel.Discussion, error) {
-	var discussion dbmodel.Discussion
+	discussion := &dbmodel.Discussion{}
 	err := tx.QueryRowx(getDiscussionById, discussionId).StructScan(&discussion)
 	if err != nil {
 		return nil, err
 	}
 
-	return &discussion, nil
+	return discussion, nil
 }
 
 func (d *DiscussionsRepoImpl) DeleteAllCommentsForJob(tx *sqlx.Tx, jobID string) error {

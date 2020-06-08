@@ -20,12 +20,20 @@ type UsersRepoImpl struct {
 	db *sqlx.DB
 }
 
+func NewUsersRepo(db *sqlx.DB) *UsersRepoImpl {
+	return &UsersRepoImpl{db: db}
+}
+
 func (u *UsersRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return u.db.BeginTxx(ctx, nil)
 }
 
-func NewUsersRepo(db *sqlx.DB) *UsersRepoImpl {
-	return &UsersRepoImpl{db: db}
+func (u *UsersRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil {
+		err = tx.Rollback()
+	}
+	return err
 }
 
 func (u *UsersRepoImpl) UpdateUser(tx *sqlx.Tx, updatedUserInformation *dbmodel.User) (*dbmodel.User, error) {
@@ -52,39 +60,39 @@ func (u *UsersRepoImpl) GetByIdTx(tx *sqlx.Tx, userId string) (*dbmodel.User, er
 	if err != nil {
 		return nil, customErrors.ErrInvalidId
 	}
-	var user dbmodel.User
-	err = tx.QueryRowx(selectUserByIdQuery, userId).StructScan(&user)
+	user := &dbmodel.User{}
+	err = tx.QueryRowx(selectUserByIdQuery, userId).StructScan(user)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (u *UsersRepoImpl) GetById(userId string) (*dbmodel.User, error) {
-	var user dbmodel.User
-	err := u.db.QueryRowx(selectUserByIdQuery, userId).StructScan(&user)
+	user := &dbmodel.User{}
+	err := u.db.QueryRowx(selectUserByIdQuery, userId).StructScan(user)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (u *UsersRepoImpl) GetByEmailId(emailId string) (*dbmodel.User, error) {
-	var user dbmodel.User
-	err := u.db.QueryRowx(selectUsersByEmailIdQuery, emailId).StructScan(&user)
+	user := &dbmodel.User{}
+	err := u.db.QueryRowx(selectUsersByEmailIdQuery, emailId).StructScan(user)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (u *UsersRepoImpl) GetByGithubId(githubId string) (*dbmodel.User, error) {
-	var user dbmodel.User
-	err := u.db.QueryRowx(SelectUsersByGithubIdQuery, githubId).StructScan(&user)
+	user := &dbmodel.User{}
+	err := u.db.QueryRowx(SelectUsersByGithubIdQuery, githubId).StructScan(user)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (u *UsersRepoImpl) CreateNewUser(tx *sqlx.Tx, user *dbmodel.User) (*dbmodel.User, error) {
@@ -121,9 +129,9 @@ func (u *UsersRepoImpl) GetByName(userName string, limit *int) ([]dbmodel.User, 
 
 	var users []dbmodel.User
 	for rows != nil && rows.Next() {
-		var tempUser dbmodel.User
-		rows.StructScan(&tempUser)
-		users = append(users, tempUser)
+		tempUser := &dbmodel.User{}
+		rows.StructScan(tempUser)
+		users = append(users, *tempUser)
 	}
 
 	return users, nil

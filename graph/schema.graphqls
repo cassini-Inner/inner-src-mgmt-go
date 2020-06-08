@@ -29,21 +29,6 @@ type Query {
     ): SearchResult
 }
 
-type JobsConnection {
-    totalCount: Int!
-    edges: [JobEdge!]!
-    pageInfo: JobPageInfo
-}
-
-type JobPageInfo {
-    hasNextPage: Boolean!,
-    endCursor: String
-}
-
-type JobEdge {
-    node: Job!
-    cursor: ID!
-}
 
 type Mutation {
     # To update the user information like name, email ...
@@ -70,6 +55,29 @@ type Mutation {
     refreshToken(token: String!): UserAuthenticationPayload
     toggleMilestoneCompleted(milestoneID: String!) : Milestone
     toggleJobCompleted(jobID: String!) : Job
+    createMilestonePerformanceReview(review: ReviewInput!, milestoneId: ID!): Review
+    updateMilestonePerformanceReview(review: ReviewInput!, id: ID!): Review
+}
+
+input ReviewInput {
+    rating: Int!
+    remark: String
+}
+
+type JobsConnection {
+    totalCount: Int!
+    edges: [JobEdge!]!
+    pageInfo: JobPageInfo
+}
+
+type JobPageInfo {
+    hasNextPage: Boolean!,
+    endCursor: String
+}
+
+type JobEdge {
+    node: Job!
+    cursor: ID!
 }
 
 type UserAuthenticationPayload {
@@ -120,6 +128,7 @@ input UpdateUserInput {
     contact: String
     skills: [String]
 }
+
 type Job {
     id: ID!
     title: String!
@@ -135,6 +144,15 @@ type Job {
     milestones: Milestones
     applications: Applications
     viewerHasApplied: Boolean!
+}
+
+type Review {
+    id: ID!
+    rating: Int!
+    remark: String
+    createdFor: User!
+    timeCreated: String!
+    timeUpdated: String!
 }
 
 type Discussions {
@@ -186,6 +204,17 @@ type User {
     appliedJobs: [UserJobApplication!]
     # Number of jobs the user has taken/working on/completed
     jobStats: UserStats!
+    reviews: [JobReview]!
+}
+
+type JobReview {
+    job: Job!,
+    milestoneReview: [MilestoneReview]!,
+}
+
+type MilestoneReview {
+    review : Review,
+    milestone: Milestone!
 }
 
 type SearchResult {
@@ -219,6 +248,7 @@ type Milestone {
     duration: String!
     status: JobStatus
     assignedTo: User
+    review: Review
     skills: [Skill]!
 }
 

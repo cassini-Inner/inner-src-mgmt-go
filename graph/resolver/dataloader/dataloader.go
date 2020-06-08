@@ -14,26 +14,21 @@ const (
 	skillsByJobIdLoaderKey       = "skillsByJobIdLoader"
 	applicationsByJobIdLoaderKey = "applicationsByJobIdLoaderKey"
 	dataloadersKey               = "dataloadersKey"
-	viewerHasAppliedLoaderKey = "viewerHasAppliedLoaderKey"
+	viewerHasAppliedLoaderKey    = "viewerHasAppliedLoaderKey"
+	jobMilestoneReviewLoaderKey  = "jobMilestoneReviewLoaderKey"
 )
 
 func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userloader := NewUserByUserIdLoader(db)
-		milestoneByJobIdLoader := NewMilestoneByJobIdLoader(db)
-		skillsByMilestoneIdLoader := NewSkillByMilestoneIdLoader(db)
-		skillsByJobIdLoader := NewSkillByJobIdLoader(db)
-		viewerHasAppliedLoader := NewViewerHasAppliedByUserIdLoader(db)
-		applicationsByJobIdLoader := NewApplicationByJobIdLoader(db)
 
 		loaderMap := make(map[string]interface{})
-		loaderMap[userLoaderKey] = userloader
-		loaderMap[milestoneByJobIdLoaderKey] = milestoneByJobIdLoader
-		loaderMap[skillsByMilestoneIdLoaderKey] = skillsByMilestoneIdLoader
-		loaderMap[viewerHasAppliedLoaderKey] = viewerHasAppliedLoader
-		loaderMap[skillsByJobIdLoaderKey] = skillsByJobIdLoader
-		loaderMap[applicationsByJobIdLoaderKey] = applicationsByJobIdLoader
-
+		loaderMap[userLoaderKey] = NewUserByUserIdLoader(db)
+		loaderMap[milestoneByJobIdLoaderKey] = NewMilestoneByJobIdLoader(db)
+		loaderMap[skillsByMilestoneIdLoaderKey] = NewSkillByMilestoneIdLoader(db)
+		loaderMap[skillsByJobIdLoaderKey] = NewSkillByJobIdLoader(db)
+		loaderMap[viewerHasAppliedLoaderKey] = NewViewerHasAppliedByUserIdLoader(db)
+		loaderMap[applicationsByJobIdLoaderKey] = NewApplicationByJobIdLoader(db)
+		loaderMap[jobMilestoneReviewLoaderKey] = NewJobMilestoneReviewLoader(db)
 
 		ctxWithLoaders := context.WithValue(r.Context(), dataloadersKey, loaderMap)
 
@@ -63,6 +58,10 @@ func GetApplicationsByJobIdLoader(ctx context.Context) *generated.ApplicationsBy
 	return ctx.Value(dataloadersKey).(map[string]interface{})[applicationsByJobIdLoaderKey].(*generated.ApplicationsByJobIdLoader)
 }
 
-func GetViewerHasAppliedLoader(ctx context.Context) *generated.ViewerHasAppliedLoader{
-	return ctx.Value(dataloadersKey).(map[string]interface{})[viewerHasAppliedLoaderKey].(*generated.ViewerHasAppliedLoader);
+func GetViewerHasAppliedLoader(ctx context.Context) *generated.ViewerHasAppliedLoader {
+	return ctx.Value(dataloadersKey).(map[string]interface{})[viewerHasAppliedLoaderKey].(*generated.ViewerHasAppliedLoader)
+}
+
+func GetJobMilestoneReviewLoader(ctx context.Context) *generated.JobMilestoneReviewLoader {
+	return ctx.Value(dataloadersKey).(map[string]interface{})[jobMilestoneReviewLoaderKey].(*generated.JobMilestoneReviewLoader)
 }

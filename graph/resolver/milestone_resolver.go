@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
@@ -19,4 +20,11 @@ func (r *milestoneResolver) AssignedTo(ctx context.Context, obj *gqlmodel.Milest
 
 func (r *milestoneResolver) Skills(ctx context.Context, obj *gqlmodel.Milestone) ([]*gqlmodel.Skill, error) {
 	return dataloader.GetSkillByMilestoneIdLoader(ctx).Load(obj.ID)
+}
+
+func (r *milestoneResolver) Review(ctx context.Context, obj *gqlmodel.Milestone) (*gqlmodel.Review, error) {
+	if obj.AssignedTo == "" {
+		return nil, nil
+	}
+	return dataloader.GetJobMilestoneReviewLoader(ctx).Load(fmt.Sprintf("%v %v", obj.ID, obj.AssignedTo))
 }

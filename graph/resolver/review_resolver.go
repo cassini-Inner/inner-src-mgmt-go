@@ -6,6 +6,6 @@ import (
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
 
-func (r *commentResolver) CreatedBy(ctx context.Context, obj *gqlmodel.Comment) (*gqlmodel.User, error) {
-	return dataloader.GetUserByUserIdLoader(ctx).Load(obj.CreatedBy)
+func (r *reviewResolver) CreatedFor(ctx context.Context, obj *gqlmodel.Review) (*gqlmodel.User, error) {
+	return dataloader.GetUserByUserIdLoader(ctx).Load(obj.CreatedFor)
 }

@@ -28,6 +28,14 @@ func (a *ApplicationsRepoImpl) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return a.db.BeginTxx(ctx, nil)
 }
 
+func (a *ApplicationsRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err error) {
+	err = tx.Commit()
+	if err != nil {
+		err = tx.Rollback()
+	}
+	return err
+}
+
 // GetExistingUserApplications return existing user applications on the basis a applicationStatus filter
 // if the number of applications is equal to the number of milestones then the user has properly applied to
 // all the milestones. Returns ErrNoExistingApplications if this is not the case
@@ -192,9 +200,9 @@ func (a *ApplicationsRepoImpl) GetUserJobApplications(userId string) ([]*dbmodel
 
 	var result []*dbmodel.Job
 	for rows != nil && rows.Next() {
-		var job dbmodel.Job
-		rows.StructScan(&job)
-		result = append(result, &job)
+		job := &dbmodel.Job{}
+		rows.StructScan(job)
+		result = append(result, job)
 	}
 	return result, nil
 }
@@ -222,12 +230,12 @@ func scanApplicationRowsById(rows *sql.Rows) (result []string, err error) {
 func scanApplicationRowsx(rows *sqlx.Rows) ([]*dbmodel.Application, error) {
 	var result []*dbmodel.Application
 	for rows != nil && rows.Next() {
-		var application dbmodel.Application
-		err := rows.StructScan(&application)
+		application := &dbmodel.Application{}
+		err := rows.StructScan(application)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, &application)
+		result = append(result, application)
 	}
 
 	return result, nil

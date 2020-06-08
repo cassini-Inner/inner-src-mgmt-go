@@ -88,7 +88,7 @@ func mapApplicationRowsToGqlModel(applicationRows *sqlx.Rows, applicationsMap ma
 			applicationCountsMap[jobId] = make(map[string]bool)
 			_, ok = applicationCountsMap[jobId][applicantId]
 			if !ok {
-				applicationCountsMap[jobId][applicantId] = true;
+				applicationCountsMap[jobId][applicantId] = true
 				switch application.Status.String() {
 				case strings.ToLower(gqlmodel.ApplicationStatusAccepted.String()):
 					(*acceptedCountMap)[jobId]++

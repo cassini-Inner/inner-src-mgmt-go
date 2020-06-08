@@ -60,7 +60,7 @@ func NewMilestoneByJobIdLoader(db *sqlx.DB) *generated.MilestoneByJobIdLoader {
 				tempJob := resultMap[key]
 				length := len(tempJob)
 				milestones = append(milestones, &gqlmodel.Milestones{
-					TotalCount: &length ,
+					TotalCount: &length,
 					Milestones: tempJob,
 				})
 			}
