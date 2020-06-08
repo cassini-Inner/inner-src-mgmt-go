@@ -9,3 +9,4 @@ import (
 func (r *reviewResolver) CreatedFor(ctx context.Context, obj *gqlmodel.Review) (*gqlmodel.User, error) {
 	return dataloader.GetUserByUserIdLoader(ctx).Load(obj.CreatedFor)
 }
+

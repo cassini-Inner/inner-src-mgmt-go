@@ -516,3 +516,7 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 	gqlMilestone.MapDbToGql(*updatedMilestone)
 	return &gqlMilestone, nil
 }
+
+func (j JobsService) GetByMilestonesForJobIds(jobIds ...string) ([]*dbmodel.Milestone, error) {
+	return j.milestonesRepo.GetByJobIds(jobIds...)
+}

@@ -245,3 +245,7 @@ func (a *ApplicationsService) GetApplicationStatusForUserAndJob(ctx context.Cont
 	}
 	return a.applicationsRepo.GetApplicationStatusForUserAndJob(userId, tx, joinId)
 }
+
+func (a *ApplicationsService) GetAppliedJobs(ctx context.Context, userId string) ([]*dbmodel.Job, error) {
+	return a.applicationsRepo.GetUserJobApplications(userId)
+}

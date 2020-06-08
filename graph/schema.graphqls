@@ -209,11 +209,11 @@ type User {
 
 type JobReview {
     job: Job!,
-    milestoneReview: [MilestoneReview!]!,
+    milestoneReview: [MilestoneReview]!,
 }
 
 type MilestoneReview {
-    review : Review!,
+    review : Review,
     milestone: Milestone!
 }
 

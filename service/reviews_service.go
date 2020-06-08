@@ -10,4 +10,5 @@ type ReviewsService interface {
 	ReviewAssignedUser(ctx context.Context, rating int, remark *string, milestoneId string) (*dbmodel.Review, error)
 	// update a review based on it's ID
 	UpdateReview(ctx context.Context, rating int, remark *string, reviewId string) (*dbmodel.Review, error)
+	GetForUserId(ctx context.Context, userId string) ([]*dbmodel.Review, error)
 }

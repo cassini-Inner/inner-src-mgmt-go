@@ -122,3 +122,7 @@ func (r ReviewsService) validatedReviewData(userId, milestoneId string, rating i
 	}
 	return true, nil
 }
+
+func (r ReviewsService) GetForUserId(ctx context.Context, userId string) ([]*dbmodel.Review, error) {
+	return r.reviewsRepo.GetForUserId(userId)
+}

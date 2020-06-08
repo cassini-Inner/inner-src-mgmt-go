@@ -52,6 +52,28 @@ func (m MilestonesRepoImpl) CreateMilestones(ctx context.Context, tx *sqlx.Tx, j
 	return createdMilestones, nil
 }
 
+func (m MilestonesRepoImpl) GetByJobIds(jobIds ...string) (result []*dbmodel.Milestone, err error) {
+	stmt, args, err := sqlx.In(getMilestonesByJobIds, jobIds)
+	if err != nil {
+		return nil, err
+	}
+	stmt = m.db.Rebind(stmt)
+	rows, err := m.db.Queryx(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		scannedMilestone := &dbmodel.Milestone{}
+		err = rows.StructScan(scannedMilestone)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, scannedMilestone)
+	}
+	return result, nil
+}
+
 func (m MilestonesRepoImpl) GetByJobId(tx sqlx.Ext, jobId string) ([]*dbmodel.Milestone, error) {
 	rows, err := tx.Queryx(selectMilestonesByJobId, jobId)
 	if err != nil {
@@ -161,4 +183,5 @@ func (m MilestonesRepoImpl) getInsertMilestonesStatement(milestoneInputs []*dbmo
 
 const (
 	setMilestoneAssignedTo = "update milestones set assigned_to=$1 where id=$2 returning *"
+	getMilestonesByJobIds  = "select * from milestones where job_id in (?)"
 )

@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"database/sql"
 	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
@@ -85,10 +86,32 @@ func (r ReviewRepoImpl) Delete(tx *sqlx.Tx, id string) (review *dbmodel.Review, 
 	return review, nil
 }
 
+func (r ReviewRepoImpl) GetForUserId(userId string) ([]*dbmodel.Review, error) {
+	var result []*dbmodel.Review
+	rows, err := r.db.Queryx(selectReviewByUserId, userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, custom_errors.ErrNoEntityMatchingId
+		}
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		tempReview := &dbmodel.Review{}
+		err := rows.StructScan(tempReview)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, tempReview)
+	}
+	return result, nil
+}
+
 const (
-	selectReviewById = "select * from reviews where id = $1 and is_deleted=false"
+	selectReviewById                = "select * from reviews where id = $1 and is_deleted=false"
 	selectReviewByMilestoneIdUserId = "select * from reviews where milestone_id = $1 and user_id = $2"
-	insertReview     = "insert into reviews(rating, remark, milestone_id, user_id) values ($1, $2, $3, $4) returning *"
-	updateReview     = "update reviews set rating=$1, remark=$2, time_updated=$3 where id=$4 and is_deleted=false returning *"
-	deleteReview     = "update reviews set is_deleted=false where id=$1 returning *"
+	selectReviewByUserId            = "select * from reviews where user_id = $1"
+	insertReview                    = "insert into reviews(rating, remark, milestone_id, user_id) values ($1, $2, $3, $4) returning *"
+	updateReview                    = "update reviews set rating=$1, remark=$2, time_updated=$3 where id=$4 and is_deleted=false returning *"
+	deleteReview                    = "update reviews set is_deleted=false where id=$1 returning *"
 )
