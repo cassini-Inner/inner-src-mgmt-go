@@ -80,6 +80,7 @@ func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInpu
 			JobId:       newJob.Id,
 			Resolution:  milestone.Resolution,
 			Duration:    milestone.Duration,
+			Status:      "open",
 		})
 	}
 	createdMilestones, err := j.milestonesRepo.CreateMilestones(ctx, tx, newJob.Id, newMilestones)
