@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
+	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
 )
 
 func (r *userResolver) Skills(ctx context.Context, obj *gqlmodel.User) ([]*gqlmodel.Skill, error) {
@@ -125,4 +126,8 @@ func (r *userResolver) Reviews(ctx context.Context, obj *gqlmodel.User) (result 
 	}
 
 	return result, nil
+}
+
+func (r *userResolver) OverallRating(ctx context.Context, obj *gqlmodel.User) (*int, error) {
+	return dataloader.GetUserAverageRatingLoader(ctx).Load(obj.ID)
 }

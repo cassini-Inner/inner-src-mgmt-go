@@ -16,6 +16,7 @@ const (
 	dataloadersKey               = "dataloadersKey"
 	viewerHasAppliedLoaderKey    = "viewerHasAppliedLoaderKey"
 	jobMilestoneReviewLoaderKey  = "jobMilestoneReviewLoaderKey"
+	userAverageRatingLoaderKey   = "userAverageRatingLoaderKey"
 )
 
 func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
@@ -29,7 +30,7 @@ func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
 		loaderMap[viewerHasAppliedLoaderKey] = NewViewerHasAppliedByUserIdLoader(db)
 		loaderMap[applicationsByJobIdLoaderKey] = NewApplicationByJobIdLoader(db)
 		loaderMap[jobMilestoneReviewLoaderKey] = NewJobMilestoneReviewLoader(db)
-
+		loaderMap[userAverageRatingLoaderKey] = NewUserAverageRatingLoader(db)
 		ctxWithLoaders := context.WithValue(r.Context(), dataloadersKey, loaderMap)
 
 		next.ServeHTTP(w, r.WithContext(ctxWithLoaders))
@@ -39,6 +40,11 @@ func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
 func GetUserByUserIdLoader(ctx context.Context) *generated.UserLoader {
 	userLoader := ctx.Value(dataloadersKey).(map[string]interface{})[userLoaderKey].(*generated.UserLoader)
 	return userLoader
+}
+
+func GetUserAverageRatingLoader(ctx context.Context) *generated.UserAverageRatingLoader {
+	userAverageRatingLoader := ctx.Value(dataloadersKey).(map[string]interface{})[userAverageRatingLoaderKey].(*generated.UserAverageRatingLoader)
+	return userAverageRatingLoader
 }
 
 func GetMilestonesByJobIdLoader(ctx context.Context) *generated.MilestoneByJobIdLoader {

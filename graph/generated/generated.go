@@ -193,25 +193,26 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AppliedJobs func(childComplexity int) int
-		Bio         func(childComplexity int) int
-		Contact     func(childComplexity int) int
-		CreatedJobs func(childComplexity int) int
-		Department  func(childComplexity int) int
-		Email       func(childComplexity int) int
-		GithubId    func(childComplexity int) int
-		GithubName  func(childComplexity int) int
-		GithubURL   func(childComplexity int) int
-		ID          func(childComplexity int) int
-		JobStats    func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Onboarded   func(childComplexity int) int
-		PhotoURL    func(childComplexity int) int
-		Reviews     func(childComplexity int) int
-		Role        func(childComplexity int) int
-		Skills      func(childComplexity int) int
-		TimeCreated func(childComplexity int) int
-		TimeUpdated func(childComplexity int) int
+		AppliedJobs   func(childComplexity int) int
+		Bio           func(childComplexity int) int
+		Contact       func(childComplexity int) int
+		CreatedJobs   func(childComplexity int) int
+		Department    func(childComplexity int) int
+		Email         func(childComplexity int) int
+		GithubId      func(childComplexity int) int
+		GithubName    func(childComplexity int) int
+		GithubURL     func(childComplexity int) int
+		ID            func(childComplexity int) int
+		JobStats      func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Onboarded     func(childComplexity int) int
+		OverallRating func(childComplexity int) int
+		PhotoURL      func(childComplexity int) int
+		Reviews       func(childComplexity int) int
+		Role          func(childComplexity int) int
+		Skills        func(childComplexity int) int
+		TimeCreated   func(childComplexity int) int
+		TimeUpdated   func(childComplexity int) int
 	}
 
 	UserAuthenticationPayload struct {
@@ -297,6 +298,7 @@ type UserResolver interface {
 	AppliedJobs(ctx context.Context, obj *model.User) ([]*model.UserJobApplication, error)
 	JobStats(ctx context.Context, obj *model.User) (*model.UserStats, error)
 	Reviews(ctx context.Context, obj *model.User) ([]*model.JobReview, error)
+	OverallRating(ctx context.Context, obj *model.User) (*int, error)
 }
 
 type executableSchema struct {
@@ -1152,6 +1154,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Onboarded(childComplexity), true
 
+	case "User.overallRating":
+		if e.complexity.User.OverallRating == nil {
+			break
+		}
+
+		return e.complexity.User.OverallRating(childComplexity), true
+
 	case "User.photoUrl":
 		if e.complexity.User.PhotoURL == nil {
 			break
@@ -1528,6 +1537,7 @@ type User {
     # Number of jobs the user has taken/working on/completed
     jobStats: UserStats!
     reviews: [JobReview]!
+    overallRating: Int
 }
 
 type JobReview {
@@ -5900,6 +5910,37 @@ func (ec *executionContext) _User_reviews(ctx context.Context, field graphql.Col
 	return ec.marshalNJobReview2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobReview(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _User_overallRating(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "User",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().OverallRating(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _UserAuthenticationPayload_profile(ctx context.Context, field graphql.CollectedField, obj *model.UserAuthenticationPayload) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -8577,6 +8618,17 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "overallRating":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_overallRating(ctx, field, obj)
 				return res
 			})
 		default:
