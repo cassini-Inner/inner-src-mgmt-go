@@ -74,7 +74,7 @@ func (d *DiscussionsRepoImpl) GetByJobId(jobId string) ([]*dbmodel.Discussion, e
 
 func (d *DiscussionsRepoImpl) GetById(tx *sqlx.Tx, discussionId string) (*dbmodel.Discussion, error) {
 	discussion := &dbmodel.Discussion{}
-	err := tx.QueryRowx(getDiscussionById, discussionId).StructScan(&discussion)
+	err := tx.QueryRowx(getDiscussionById, discussionId).StructScan(discussion)
 	if err != nil {
 		return nil, err
 	}
