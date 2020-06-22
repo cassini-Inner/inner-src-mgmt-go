@@ -33,26 +33,7 @@ func NewJobsService(jobsRepo repository.JobsRepo, skillsRepo repository.SkillsRe
 	}
 }
 
-func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (result *gqlmodel.Job, err error) {
-	// validate the input
-	if len(job.Desc) < 5 {
-		return nil, errors.New("description not long enough")
-	}
-	if len(job.Title) < 5 {
-		return nil, errors.New("title not long enough")
-	}
-	if len(job.Difficulty) == 5 {
-		return nil, errors.New("diff not long enough")
-	}
-	if len(job.Milestones) == 0 {
-		return nil, errors.New("just must have at least one milestone")
-	}
-
-	for _, milestone := range job.Milestones {
-		if len(milestone.Skills) == 0 {
-			return nil, errors.New("milestone must have at least one skill")
-		}
-	}
+func (j *JobsService) CreateJobs(ctx context.Context, jobs ...*gqlmodel.CreateJobInput) (result []*gqlmodel.Job, err error) {
 
 	user, err := middleware.GetCurrentUserFromContext(ctx)
 	if err != nil {
@@ -64,57 +45,81 @@ func (j *JobsService) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInpu
 		return nil, err
 	}
 
-	// create the job
-	newJob, err := j.jobsRepo.CreateJob(ctx, tx, job, user)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-
-	// create the milestones
-	var newMilestones []*dbmodel.Milestone
-	for _, milestone := range job.Milestones {
-		newMilestones = append(newMilestones, &dbmodel.Milestone{
-			Title:       milestone.Title,
-			Description: milestone.Desc,
-			JobId:       newJob.Id,
-			Resolution:  milestone.Resolution,
-			Duration:    milestone.Duration,
-			Status:      "open",
-		})
-	}
-	createdMilestones, err := j.milestonesRepo.CreateMilestones(ctx, tx, newJob.Id, newMilestones)
-	if err != nil {
-		return nil, err
-	}
-
-	// find or create skills
-	var newSkillsList []string
-	for _, milestone := range job.Milestones {
-		for _, s := range milestone.Skills {
-			val := *s
-			newSkillsList = append(newSkillsList, val)
+	for _, job := range jobs {
+		// validate the input
+		if len(job.Desc) < 5 {
+			return nil, errors.New("description not long enough")
 		}
-	}
-	newSkills, err := j.skillsRepo.FindOrCreateSkills(ctx, tx, newSkillsList, user.Id)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
+		if len(job.Title) < 5 {
+			return nil, errors.New("title not long enough")
+		}
+		if len(job.Difficulty) == 5 {
+			return nil, errors.New("diff not long enough")
+		}
+		if len(job.Milestones) == 0 {
+			return nil, errors.New("just must have at least one milestone")
+		}
 
-	// map skills to new milestones
-	err = j.skillsRepo.MapSkillsToMilestones(ctx, tx, newSkills, job, createdMilestones)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
+		for _, milestone := range job.Milestones {
+			if len(milestone.Skills) == 0 {
+				return nil, errors.New("milestone must have at least one skill")
+			}
+		}
+
+		// create the job
+		newJob, err := j.jobsRepo.CreateJob(ctx, tx, job, user)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+
+		// create the milestones
+		var newMilestones []*dbmodel.Milestone
+		for _, milestone := range job.Milestones {
+			newMilestones = append(newMilestones, &dbmodel.Milestone{
+				Title:       milestone.Title,
+				Description: milestone.Desc,
+				JobId:       newJob.Id,
+				Resolution:  milestone.Resolution,
+				Duration:    milestone.Duration,
+				Status:      "open",
+			})
+		}
+		createdMilestones, err := j.milestonesRepo.CreateMilestones(ctx, tx, newJob.Id, newMilestones)
+		if err != nil {
+			return nil, err
+		}
+
+		// find or create skills
+		var newSkillsList []string
+		for _, milestone := range job.Milestones {
+			for _, s := range milestone.Skills {
+				val := *s
+				newSkillsList = append(newSkillsList, val)
+			}
+		}
+		newSkills, err := j.skillsRepo.FindOrCreateSkills(ctx, tx, newSkillsList, user.Id)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+
+		// map skills to new milestones
+		err = j.skillsRepo.MapSkillsToMilestones(ctx, tx, newSkills, job, createdMilestones)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+
+		creationResult := &gqlmodel.Job{}
+		creationResult.MapDbToGql(*newJob)
+		result = append(result, creationResult)
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
-	result = &gqlmodel.Job{}
-	result.MapDbToGql(*newJob)
 	return result, nil
 }
 

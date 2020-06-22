@@ -153,6 +153,7 @@ type ComplexityRoot struct {
 		DeleteJob                        func(childComplexity int, jobID string) int
 		DeleteJobApplication             func(childComplexity int, jobID string) int
 		RefreshToken                     func(childComplexity int, token string) int
+		RestoreJobsBackup                func(childComplexity int, jobs []*model.CreateJobInput) int
 		ToggleJobCompleted               func(childComplexity int, jobID string) int
 		ToggleMilestoneCompleted         func(childComplexity int, milestoneID string) int
 		UpdateComment                    func(childComplexity int, id string, comment string) int
@@ -276,6 +277,7 @@ type MutationResolver interface {
 	ToggleJobCompleted(ctx context.Context, jobID string) (*model.Job, error)
 	CreateMilestonePerformanceReview(ctx context.Context, review model.ReviewInput, milestoneID string) (*model.Review, error)
 	UpdateMilestonePerformanceReview(ctx context.Context, review model.ReviewInput, id string) (*model.Review, error)
+	RestoreJobsBackup(ctx context.Context, jobs []*model.CreateJobInput) ([]*model.Job, error)
 }
 type QueryResolver interface {
 	AllJobs(ctx context.Context, filter *model.JobsFilterInput) ([]*model.Job, error)
@@ -823,6 +825,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RefreshToken(childComplexity, args["token"].(string)), true
 
+	case "Mutation.restoreJobsBackup":
+		if e.complexity.Mutation.RestoreJobsBackup == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_restoreJobsBackup_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RestoreJobsBackup(childComplexity, args["jobs"].([]*model.CreateJobInput)), true
+
 	case "Mutation.toggleJobCompleted":
 		if e.complexity.Mutation.ToggleJobCompleted == nil {
 			break
@@ -1363,32 +1377,40 @@ var sources = []*ast.Source{
 
 
 type Mutation {
-    # To update the user information like name, email ...
     updateProfile(user: UpdateUserInput): User
-    # To create a new job
+
     createJob(job: CreateJobInput): Job
-    # To update a job
+
     updateJob(job: UpdateJobInput): Job
-    # To delete a job
+
     deleteJob(jobID: ID!): Job
-    # To add a comment to a job
+
     addCommentToJob(comment: String!, jobID: ID!): Comment
-    # To update a comment based on a comment id
+
     updateComment(id: ID!, comment: String!): Comment
-    # To delete a comment based on comment id
+
     deleteComment(id: ID!) : Comment
-    # Create an application to a job, user id obtained through auth
+
     createJobApplication(jobID: ID!): [Application]
-    # To withdraw application from a job
+
     deleteJobApplication(jobID: ID!): [Application]
-    # create, accept or reject applicants
-    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus, note: String): [Application]
+
+    updateJobApplication(applicantID: ID!, jobID: ID!, status:
+    ApplicationStatus, note: String): [Application]
+
     authenticate(githubCode: String!): UserAuthenticationPayload
+
     refreshToken(token: String!): UserAuthenticationPayload
+
     toggleMilestoneCompleted(milestoneID: String!) : Milestone
+
     toggleJobCompleted(jobID: String!) : Job
+
     createMilestonePerformanceReview(review: ReviewInput!, milestoneId: ID!): Review
+
     updateMilestonePerformanceReview(review: ReviewInput!, id: ID!): Review
+
+    restoreJobsBackup(jobs: [CreateJobInput!]!): [Job!]!
 }
 
 input ReviewInput {
@@ -1773,6 +1795,20 @@ func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context
 		}
 	}
 	args["token"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_restoreJobsBackup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []*model.CreateJobInput
+	if tmp, ok := rawArgs["jobs"]; ok {
+		arg0, err = ec.unmarshalNCreateJobInput2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInputᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["jobs"] = arg0
 	return args, nil
 }
 
@@ -4578,6 +4614,47 @@ func (ec *executionContext) _Mutation_updateMilestonePerformanceReview(ctx conte
 	res := resTmp.(*model.Review)
 	fc.Result = res
 	return ec.marshalOReview2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_restoreJobsBackup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_restoreJobsBackup_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RestoreJobsBackup(rctx, args["jobs"].([]*model.CreateJobInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Job)
+	fc.Result = res
+	return ec.marshalNJob2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_allJobs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8239,6 +8316,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_createMilestonePerformanceReview(ctx, field)
 		case "updateMilestonePerformanceReview":
 			out.Values[i] = ec._Mutation_updateMilestonePerformanceReview(ctx, field)
+		case "restoreJobsBackup":
+			out.Values[i] = ec._Mutation_restoreJobsBackup(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9021,6 +9103,38 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateJobInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx context.Context, v interface{}) (model.CreateJobInput, error) {
+	return ec.unmarshalInputCreateJobInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNCreateJobInput2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInputᚄ(ctx context.Context, v interface{}) ([]*model.CreateJobInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*model.CreateJobInput, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalNCreateJobInput2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNCreateJobInput2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx context.Context, v interface{}) (*model.CreateJobInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalNCreateJobInput2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐCreateJobInput(ctx, v)
+	return &res, err
+}
+
 func (ec *executionContext) unmarshalNDifficulty2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐDifficulty(ctx context.Context, v interface{}) (model.Difficulty, error) {
 	var res model.Difficulty
 	return res, res.UnmarshalGQL(v)
@@ -9060,6 +9174,43 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 
 func (ec *executionContext) marshalNJob2githubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v model.Job) graphql.Marshaler {
 	return ec._Job(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNJob2ᚕᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJobᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Job) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNJob2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalNJob2ᚖgithubᚗcomᚋcassiniᚑInnerᚋinnerᚑsrcᚑmgmtᚑgoᚋgraphᚋmodelᚐJob(ctx context.Context, sel ast.SelectionSet, v *model.Job) graphql.Marshaler {
