@@ -27,7 +27,11 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, updatedUserDetails
 }
 
 func (r *mutationResolver) CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (*gqlmodel.Job, error) {
-	return r.JobsService.CreateJob(ctx, job)
+	createdJob, err := r.JobsService.CreateJobs(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+	return createdJob[0], nil
 }
 
 func (r *mutationResolver) ToggleMilestoneCompleted(ctx context.Context, milestoneID string) (*gqlmodel.Milestone, error) {
@@ -157,4 +161,8 @@ func (r *mutationResolver) UpdateMilestonePerformanceReview(ctx context.Context,
 	gqlReview := &gqlmodel.Review{}
 	gqlReview.MapDbToGql(*updatedReview)
 	return gqlReview, nil
+}
+
+func (r *mutationResolver) RestoreJobsBackup(ctx context.Context, jobs []*gqlmodel.CreateJobInput) ([]*gqlmodel.Job, error) {
+	return r.JobsService.CreateJobs(ctx, jobs...)
 }

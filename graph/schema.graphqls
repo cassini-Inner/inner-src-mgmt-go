@@ -31,32 +31,40 @@ type Query {
 
 
 type Mutation {
-    # To update the user information like name, email ...
     updateProfile(user: UpdateUserInput): User
-    # To create a new job
+
     createJob(job: CreateJobInput): Job
-    # To update a job
+
     updateJob(job: UpdateJobInput): Job
-    # To delete a job
+
     deleteJob(jobID: ID!): Job
-    # To add a comment to a job
+
     addCommentToJob(comment: String!, jobID: ID!): Comment
-    # To update a comment based on a comment id
+
     updateComment(id: ID!, comment: String!): Comment
-    # To delete a comment based on comment id
+
     deleteComment(id: ID!) : Comment
-    # Create an application to a job, user id obtained through auth
+
     createJobApplication(jobID: ID!): [Application]
-    # To withdraw application from a job
+
     deleteJobApplication(jobID: ID!): [Application]
-    # create, accept or reject applicants
-    updateJobApplication(applicantID: ID!, jobID: ID!, status: ApplicationStatus, note: String): [Application]
+
+    updateJobApplication(applicantID: ID!, jobID: ID!, status:
+    ApplicationStatus, note: String): [Application]
+
     authenticate(githubCode: String!): UserAuthenticationPayload
+
     refreshToken(token: String!): UserAuthenticationPayload
+
     toggleMilestoneCompleted(milestoneID: String!) : Milestone
+
     toggleJobCompleted(jobID: String!) : Job
+
     createMilestonePerformanceReview(review: ReviewInput!, milestoneId: ID!): Review
+
     updateMilestonePerformanceReview(review: ReviewInput!, id: ID!): Review
+
+    restoreJobsBackup(jobs: [CreateJobInput!]!): [Job!]!
 }
 
 input ReviewInput {
@@ -205,6 +213,7 @@ type User {
     # Number of jobs the user has taken/working on/completed
     jobStats: UserStats!
     reviews: [JobReview]!
+    overallRating: Int
 }
 
 type JobReview {

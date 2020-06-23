@@ -8,7 +8,7 @@ import (
 )
 
 type JobsService interface {
-	CreateJob(ctx context.Context, job *gqlmodel.CreateJobInput) (result *gqlmodel.Job, err error)
+	CreateJobs(ctx context.Context, jobs ...*gqlmodel.CreateJobInput) (result []*gqlmodel.Job, err error)
 	GetAllJobs(ctx context.Context, skills, status []string) ([]dbmodel.Job, error)
 	GetAllJobsPaginated(ctx context.Context, skills, status []string, limit int, cursor *string) ([]*gqlmodel.Job, error)
 	UpdateJobDiscussion(ctx context.Context, commentId, comment string) (*gqlmodel.Comment, error)

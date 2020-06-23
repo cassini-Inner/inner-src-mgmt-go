@@ -29,7 +29,7 @@ func (m *MilestonesRepoImpl) CommitTx(ctx context.Context, tx *sqlx.Tx) (err err
 	return err
 }
 
-func (m MilestonesRepoImpl) CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId string, milestones []*dbmodel.Milestone) (createdMilestones []*dbmodel.Milestone, err error) {
+func (m MilestonesRepoImpl) 	CreateMilestones(ctx context.Context, tx *sqlx.Tx, jobId string, milestones []*dbmodel.Milestone) (createdMilestones []*dbmodel.Milestone, err error) {
 	stmt, valueArgs := m.getInsertMilestonesStatement(milestones, jobId)
 	stmt = tx.Rebind(stmt)
 
