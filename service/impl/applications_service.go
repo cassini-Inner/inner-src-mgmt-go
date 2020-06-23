@@ -12,16 +12,18 @@ import (
 )
 
 type ApplicationsService struct {
-	jobsRepo         repository.JobsRepo
-	applicationsRepo repository.ApplicationsRepo
-	milestonesRepo   repository.MilestonesRepo
+	jobsRepo          repository.JobsRepo
+	applicationsRepo  repository.ApplicationsRepo
+	milestonesRepo    repository.MilestonesRepo
+	notificationsRepo repository.NotificationsRepo
 }
 
-func NewApplicationsService(jobsRepo repository.JobsRepo, applicationsRepo repository.ApplicationsRepo, milestonesRepo repository.MilestonesRepo) *ApplicationsService {
+func NewApplicationsService(jobsRepo repository.JobsRepo, applicationsRepo repository.ApplicationsRepo, milestonesRepo repository.MilestonesRepo, notificationRepo repository.NotificationsRepo) *ApplicationsService {
 	return &ApplicationsService{
-		jobsRepo:         jobsRepo,
-		applicationsRepo: applicationsRepo,
-		milestonesRepo:   milestonesRepo,
+		jobsRepo:          jobsRepo,
+		applicationsRepo:  applicationsRepo,
+		milestonesRepo:    milestonesRepo,
+		notificationsRepo: notificationRepo,
 	}
 }
 
@@ -81,17 +83,29 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 
 	// if no applications exist where status = pending or accepted
 	if err == custom_errors.ErrNoExistingApplications {
+		// get applications of user that were withdrawn or rejected
 		existingApplications, err = a.applicationsRepo.GetExistingUserApplications(tx, milestones, user.Id, dbmodel.ApplicationStatusWithdrawn, dbmodel.ApplicationStatusRejected)
 		if err != nil && err != custom_errors.ErrNoExistingApplications {
 			_ = tx.Rollback()
 			return nil, err
 		}
 		if err == custom_errors.ErrNoExistingApplications {
+			// if the user hasn't applied to the job ever, create new application
 			createdApplications, err := a.applicationsRepo.CreateApplication(ctx, tx, milestones, user.Id)
 			if err != nil {
 				_ = tx.Rollback()
 				return nil, err
 			}
+
+			_, err = a.notificationsRepo.CreateWithTx(tx, user.Id, job.CreatedBy, dbmodel.NotificationTypeApplicationCreated, job.Id)
+			if err != nil {
+				err = tx.Rollback()
+				if err != nil {
+					return nil, err
+				}
+				return nil, err
+			}
+
 			err = tx.Commit()
 			if err != nil {
 				return nil, err
@@ -100,16 +114,34 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 		}
 		note := ""
 		existingApplications, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(ctx, tx, milestones, dbmodel.ApplicationStatusPending, &note, jobId, user.Id)
+
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
+		_, err = a.notificationsRepo.CreateWithTx(tx, user.Id, job.CreatedBy, dbmodel.NotificationTypeApplicationCreated, job.Id)
+		if err != nil {
+			err = tx.Rollback()
+			if err != nil {
+				return nil, err
+			}
+			return nil, err
+		}
+
 		err = tx.Commit()
 		if err != nil {
 			return nil, err
 		}
 		return gqlmodel.MapDBApplicationListToGql(existingApplications), nil
 	}
+	_, err = a.notificationsRepo.CreateWithTx(tx, user.Id, job.CreatedBy, dbmodel.NotificationTypeApplicationCreated, job.Id)
+	if err != nil {
+		err = tx.Rollback()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -195,9 +227,9 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 	}
 
 	// owner cannot modify the status of application what was withdrawn by applicant
-	// owner can only move an application from p
+	// owner can only move an application from
 	// - pending->accepted, pending->rejected, accepted->rejected
-	if currentStatus == "withdrawn" {
+	if currentStatus == dbmodel.ApplicationStatusWithdrawn || currentStatus == dbmodel.ApplicationStatusRejected {
 		_ = tx.Rollback()
 		return nil, custom_errors.ErrApplicationWithdrawnOrRejected
 	}
@@ -213,6 +245,20 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 		return nil, err
 	}
 
+	// if a new user is being assigned to a job then check if there is someone
+	// already assigned to that job
+	if status.String() == "ACCEPTED" {
+		for _, milestone := range milestones {
+			if milestone.AssignedTo.Valid {
+				err := tx.Rollback()
+				if err != nil {
+					return nil, err
+				}
+				return nil, custom_errors.ErrMilestoneAlreadyAssignedOrCompleted
+			}
+		}
+	}
+
 	updateResult, err := a.applicationsRepo.SetApplicationStatusForUserAndJob(ctx, tx, milestones, strings.ToLower(status.String()), note, jobId, applicantId)
 	if err != nil {
 		_ = tx.Rollback()
@@ -224,13 +270,29 @@ func (a *ApplicationsService) UpdateJobApplicationStatus(ctx context.Context, ap
 	} else {
 		idToBeAssigned = nil
 	}
+
+	updatedMilestones := make([]*dbmodel.Milestone, 0)
 	for _, milestone := range milestones {
-		_, err = a.milestonesRepo.SetMilestoneAssignedTo(tx, milestone.Id, idToBeAssigned)
+		updatedMilestone, err := a.milestonesRepo.SetMilestoneAssignedTo(tx, milestone.Id, idToBeAssigned)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
+		updatedMilestones = append(updatedMilestones, updatedMilestone)
 	}
+
+	var notificationToBeSentType string
+
+	if status.String() == "ACCEPTED" {
+		notificationToBeSentType = dbmodel.NotificationTypeApplicationAccepted
+	} else {
+		notificationToBeSentType = dbmodel.NotificationTypeApplicationRejected
+	}
+	_, err = a.notificationsRepo.CreateWithTx(tx, applicantId, currentJob.CreatedBy, notificationToBeSentType, currentJob.Id)
+	if err != nil {
+		return nil, err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
