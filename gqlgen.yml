@@ -77,6 +77,16 @@ models:
         resolver: true
       viewerHasApplied:
         resolver: true
+
+  NotificationItem:
+    fields:
+      recipient:
+        resolver: true
+      sender:
+        resolver: true
+      job:
+        resolver: true
+
   Milestone:
     fields:
       job:

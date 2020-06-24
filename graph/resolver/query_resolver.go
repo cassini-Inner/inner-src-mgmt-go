@@ -139,9 +139,10 @@ func (r *queryResolver) Jobs(ctx context.Context, filter *gqlmodel.JobsFilterInp
 		endCursor = &edges[len(edges)-1].Cursor
 	}
 	return &gqlmodel.JobsConnection{
+		//TODO: Implement
 		TotalCount: 10,
 		Edges:      edges,
-		PageInfo: &gqlmodel.JobPageInfo{
+		PageInfo: &gqlmodel.PageInfo{
 			HasNextPage: len(jobs) > limit,
 			EndCursor:   endCursor,
 		},

@@ -109,3 +109,13 @@ type Review struct {
 	TimeUpdated string `db:"time_updated"`
 	IsDeleted   bool   `db:"is_deleted"`
 }
+
+type Notification struct {
+	Id          string
+	RecipientId string `db:"recipient_id"`
+	SenderId    string `db:"sender_id"`
+	Type        string
+	Read        bool
+	JobId       string `db:"job_id"`
+	TimeCreated string `db:"time_created"`
+}

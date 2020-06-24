@@ -26,15 +26,10 @@ type JobEdge struct {
 	Cursor string `json:"cursor"`
 }
 
-type JobPageInfo struct {
-	HasNextPage bool    `json:"hasNextPage"`
-	EndCursor   *string `json:"endCursor"`
-}
-
 type JobsConnection struct {
-	TotalCount int          `json:"totalCount"`
-	Edges      []*JobEdge   `json:"edges"`
-	PageInfo   *JobPageInfo `json:"pageInfo"`
+	TotalCount int        `json:"totalCount"`
+	Edges      []*JobEdge `json:"edges"`
+	PageInfo   *PageInfo  `json:"pageInfo"`
 }
 
 type JobsFilterInput struct {
@@ -50,6 +45,22 @@ type MilestoneInput struct {
 	Duration   string     `json:"duration"`
 	Status     *JobStatus `json:"status"`
 	Skills     []*string  `json:"skills"`
+}
+
+type NotificationConnection struct {
+	TotalCount int                 `json:"totalCount"`
+	Edges      []*NotificationEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+}
+
+type NotificationEdge struct {
+	Node   *NotificationItem `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
+type PageInfo struct {
+	HasNextPage bool    `json:"hasNextPage"`
+	EndCursor   *string `json:"endCursor"`
 }
 
 type SearchResult struct {
@@ -210,6 +221,57 @@ func (e *JobStatus) UnmarshalGQL(v interface{}) error {
 }
 
 func (e JobStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type NotificationType string
+
+const (
+	NotificationTypeApplicationCreated   NotificationType = "APPLICATION_CREATED"
+	NotificationTypeApplicationAccepted  NotificationType = "APPLICATION_ACCEPTED"
+	NotificationTypeApplicationRejected  NotificationType = "APPLICATION_REJECTED"
+	NotificationTypeApplicationWithdrawn NotificationType = "APPLICATION_WITHDRAWN"
+	NotificationTypeApplicationRemoved   NotificationType = "APPLICATION_REMOVED"
+	NotificationTypeCommentAdded         NotificationType = "COMMENT_ADDED"
+	NotificationTypeMilestoneCompleted   NotificationType = "MILESTONE_COMPLETED"
+)
+
+var AllNotificationType = []NotificationType{
+	NotificationTypeApplicationCreated,
+	NotificationTypeApplicationAccepted,
+	NotificationTypeApplicationRejected,
+	NotificationTypeApplicationWithdrawn,
+	NotificationTypeApplicationRemoved,
+	NotificationTypeCommentAdded,
+	NotificationTypeMilestoneCompleted,
+}
+
+func (e NotificationType) IsValid() bool {
+	switch e {
+	case NotificationTypeApplicationCreated, NotificationTypeApplicationAccepted, NotificationTypeApplicationRejected, NotificationTypeApplicationWithdrawn, NotificationTypeApplicationRemoved, NotificationTypeCommentAdded, NotificationTypeMilestoneCompleted:
+		return true
+	}
+	return false
+}
+
+func (e NotificationType) String() string {
+	return string(e)
+}
+
+func (e *NotificationType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = NotificationType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid NotificationType", str)
+	}
+	return nil
+}
+
+func (e NotificationType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

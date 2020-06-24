@@ -83,7 +83,6 @@ func (a *ApplicationsRepoImpl) GetExistingUserApplications(tx *sqlx.Tx, mileston
 }
 
 func (a *ApplicationsRepoImpl) CreateApplication(ctx context.Context, tx *sqlx.Tx, milestones []*dbmodel.Milestone, userId string) ([]*dbmodel.Application, error) {
-	// if the user has not applied to a job already then begin a new transaction to create new applications
 	var applicationInsertArgs []interface{}
 	var applicationInsertValues []string
 
@@ -150,7 +149,6 @@ func (a *ApplicationsRepoImpl) SetApplicationStatusForUserAndJob(ctx context.Con
 	for _, milestone := range milestones {
 		milestoneIds = append(milestoneIds, milestone.Id)
 	}
-
 	updateApplicationsQuery, updateApplicationArgs, err := sqlx.In(updateApplicationsForMilestonesUser, applicationStatus, note, time.Now(), milestoneIds, userId)
 	if err != nil {
 		return nil, err

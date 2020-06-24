@@ -21,15 +21,17 @@ type JobsService struct {
 	discussionsRepo  repository.DiscussionsRepo
 	applicationsRepo repository.ApplicationsRepo
 	milestonesRepo   repository.MilestonesRepo
+	notificationRepo repository.NotificationsRepo
 }
 
-func NewJobsService(jobsRepo repository.JobsRepo, skillsRepo repository.SkillsRepo, discussionsRepo repository.DiscussionsRepo, applicationsRepo repository.ApplicationsRepo, milestonesRepo repository.MilestonesRepo) *JobsService {
+func NewJobsService(jobsRepo repository.JobsRepo, skillsRepo repository.SkillsRepo, discussionsRepo repository.DiscussionsRepo, applicationsRepo repository.ApplicationsRepo, milestonesRepo repository.MilestonesRepo, notificationsRepo repository.NotificationsRepo) *JobsService {
 	return &JobsService{
 		jobsRepo:         jobsRepo,
 		skillsRepo:       skillsRepo,
 		discussionsRepo:  discussionsRepo,
 		applicationsRepo: applicationsRepo,
 		milestonesRepo:   milestonesRepo,
+		notificationRepo: notificationsRepo,
 	}
 }
 
@@ -210,6 +212,13 @@ func (j *JobsService) GetAllJobsPaginated(ctx context.Context, skills, status []
 }
 
 func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId string) (*gqlmodel.Comment, error) {
+	job, err := j.jobsRepo.GetById(jobId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, custom_errors.ErrNoEntityMatchingId
+		}
+	}
+
 	tx, err := j.discussionsRepo.BeginTx(ctx)
 	if err != nil {
 		return nil, err
@@ -222,6 +231,16 @@ func (j *JobsService) AddDiscussionToJob(ctx context.Context, comment, jobId str
 	newComment, err := j.discussionsRepo.CreateComment(ctx, tx, jobId, comment, user.Id)
 	if err != nil {
 		_ = tx.Rollback()
+		return nil, err
+	}
+	if user.Id != job.CreatedBy {
+		_, err = j.notificationRepo.CreateWithTx(tx, job.CreatedBy, user.Id, dbmodel.NotificationTypeCommentAdded, job.Id)
+	}
+	if err != nil {
+		err = tx.Rollback()
+		if err != nil {
+			return nil, err
+		}
 		return nil, err
 	}
 	err = tx.Commit()
@@ -468,7 +487,7 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 		return nil, err
 	}
 	// if the milestone status was already completed we will need to modify on the
-	if milestoneData.Status != "completed" {
+	if milestoneData.Status != dbmodel.MilestoneStatusCompleted {
 		err = j.milestonesRepo.MarkMilestonesCompleted(tx, ctx, milestoneID)
 		if err != nil {
 			return nil, err
@@ -481,7 +500,7 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 		}
 		completedMilestonesCount := 0
 		for _, milestone := range jobMilestones {
-			if milestone.Status == "completed" {
+			if milestone.Status == dbmodel.MilestoneStatusCompleted {
 				completedMilestonesCount++
 			}
 		}
@@ -489,6 +508,13 @@ func (j *JobsService) ToggleMilestoneCompleted(ctx context.Context, milestoneID 
 			_, err := j.jobsRepo.MarkJobCompleted(ctx, tx, milestoneData.JobId)
 			if err != nil {
 				_ = tx.Rollback()
+				return nil, err
+			}
+		}
+		if milestoneData.AssignedTo.Valid {
+			_, err = j.notificationRepo.CreateWithTx(tx, milestoneData.AssignedTo.String, milestoneAuthor.Id, dbmodel.NotificationTypeMilestoneCompleted, milestoneData.JobId)
+			if err != nil {
+				err = tx.Rollback()
 				return nil, err
 			}
 		}

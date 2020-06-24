@@ -27,8 +27,12 @@ type Query {
         query: String!,
         limit: Int
     ): SearchResult
-}
 
+    ViewerNotifications(
+        limit: Int!
+        after: ID
+    ):NotificationConnection
+}
 
 type Mutation {
     updateProfile(user: UpdateUserInput): User
@@ -65,6 +69,9 @@ type Mutation {
     updateMilestonePerformanceReview(review: ReviewInput!, id: ID!): Review
 
     restoreJobsBackup(jobs: [CreateJobInput!]!): [Job!]!
+
+    markAllViewerNotificationsRead: [NotificationItem!]!
+    markViewerNotificationsRead(ids: [ID!]!): [NotificationItem!]!
 }
 
 input ReviewInput {
@@ -75,12 +82,12 @@ input ReviewInput {
 type JobsConnection {
     totalCount: Int!
     edges: [JobEdge!]!
-    pageInfo: JobPageInfo
+    pageInfo: PageInfo
 }
 
-type JobPageInfo {
+type PageInfo {
     hasNextPage: Boolean!,
-    endCursor: String
+    endCursor: ID
 }
 
 type JobEdge {
@@ -274,6 +281,31 @@ type UserStats {
     created: Int!
 }
 
+
+type NotificationConnection {
+    totalCount: Int!
+    edges: [NotificationEdge!]!
+    pageInfo: PageInfo
+}
+
+type NotificationEdge {
+    node: NotificationItem!
+    cursor: ID!
+}
+
+
+type NotificationItem {
+    id: ID!
+    recipient: User!
+    sender: User!
+    type: NotificationType!
+    read: Boolean!
+    job: Job!
+    timeCreated: String!
+}
+
+
+
 input JobsFilterInput {
     status: [JobStatus]
     skills: [String]
@@ -283,6 +315,16 @@ input JobsFilterInput {
 enum SortOrder {
     NEWEST
     OLDEST
+}
+
+enum NotificationType {
+    APPLICATION_CREATED
+    APPLICATION_ACCEPTED
+    APPLICATION_REJECTED
+    APPLICATION_WITHDRAWN
+    APPLICATION_REMOVED
+    COMMENT_ADDED
+    MILESTONE_COMPLETED
 }
 
 enum JobStatus {

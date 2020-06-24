@@ -22,6 +22,11 @@ func (r *Resolver) Milestone() generated.MilestoneResolver { return &milestoneRe
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
+// NotificationItem returns generated.NotificationItemResolver implementation.
+func (r *Resolver) NotificationItem() generated.NotificationItemResolver {
+	return &notificationItemResolver{r}
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
@@ -39,6 +44,7 @@ type commentResolver struct{ *Resolver }
 type jobResolver struct{ *Resolver }
 type milestoneResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type notificationItemResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reviewResolver struct{ *Resolver }
 type skillResolver struct{ *Resolver }

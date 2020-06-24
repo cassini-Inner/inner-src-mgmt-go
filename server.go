@@ -41,14 +41,16 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	applicationsRepo := impl.NewApplicationsRepo(DB)
 	milestonesRepo := impl.NewMilestonesRepoImpl(DB)
 	reviewsRepo := impl.NewReviewRepoImpl(DB)
+	notificationRepo := impl.NewNotificationsRepo(DB)
 
-	jobsService := impl2.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo, milestonesRepo)
-	applicationsService := impl2.NewApplicationsService(jobsRepo, applicationsRepo, milestonesRepo)
+	jobsService := impl2.NewJobsService(jobsRepo, skillsRepo, discussionsRepo, applicationsRepo, milestonesRepo, notificationRepo)
+	applicationsService := impl2.NewApplicationsService(jobsRepo, applicationsRepo, milestonesRepo, notificationRepo)
 	userService := impl2.NewUserProfileService(usersRepo, skillsRepo)
 	githubOauthService := impl2.NewGithubOauthService()
 	authService := impl2.NewAuthenticationService(usersRepo, githubOauthService)
 	skillsService := impl2.NewSkillsService(skillsRepo)
 	reviewsService := impl2.NewReviewsService(reviewsRepo, jobsRepo, milestonesRepo)
+	notificationsService := impl2.NewNotificationsService(notificationRepo)
 
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(
@@ -63,6 +65,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 				AuthenticationService: authService,
 				SkillsService:         skillsService,
 				ReviewsService:        reviewsService,
+				NotificationsService:  notificationsService,
 			},
 			},
 		),
@@ -88,7 +91,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	router.HandleFunc("/logout", rest.SignoutHandler)
 	router.HandleFunc("/read-cookie", rest.GetUIDFromCookie)
 	router.HandleFunc("/ping", func(writer http.ResponseWriter, request *http.Request) {
-		writer.Write([]byte("pong"))
+		_, _ = writer.Write([]byte("pong"))
 		writer.WriteHeader(http.StatusOK)
 	})
 	return router, nil
