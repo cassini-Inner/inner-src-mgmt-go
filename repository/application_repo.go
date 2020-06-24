@@ -21,5 +21,6 @@ type ApplicationsRepo interface {
 	SetApplicationStatusForUserAndJob(ctx context.Context, tx *sqlx.Tx, milestones []*dbmodel.Milestone, applicationStatus string, note *string, jobId, userId string) ([]*dbmodel.Application, error)
 	GetAcceptedApplicationsByJobId(jobId string) ([]*dbmodel.Application, error)
 	GetUserJobApplications(userId string) ([]*dbmodel.Job, error)
+	GetUserAcceptedJobApplications(userId string) ([]*dbmodel.Job, error)
 	DeleteAllJobApplications(tx *sqlx.Tx, jobId string) error
 }

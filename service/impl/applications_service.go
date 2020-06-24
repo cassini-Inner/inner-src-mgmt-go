@@ -97,7 +97,7 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 				return nil, err
 			}
 
-			_, err = a.notificationsRepo.CreateWithTx(tx, user.Id, job.CreatedBy, dbmodel.NotificationTypeApplicationCreated, job.Id)
+			_, err = a.notificationsRepo.CreateWithTx(tx, job.CreatedBy, user.Id, dbmodel.NotificationTypeApplicationCreated, job.Id)
 			if err != nil {
 				err = tx.Rollback()
 				if err != nil {
@@ -119,7 +119,7 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 			_ = tx.Rollback()
 			return nil, err
 		}
-		_, err = a.notificationsRepo.CreateWithTx(tx, user.Id, job.CreatedBy, dbmodel.NotificationTypeApplicationCreated, job.Id)
+		_, err = a.notificationsRepo.CreateWithTx(tx, job.CreatedBy, user.Id, dbmodel.NotificationTypeApplicationCreated, job.Id)
 		if err != nil {
 			err = tx.Rollback()
 			if err != nil {
@@ -134,7 +134,7 @@ func (a *ApplicationsService) CreateUserJobApplication(ctx context.Context, jobI
 		}
 		return gqlmodel.MapDBApplicationListToGql(existingApplications), nil
 	}
-	_, err = a.notificationsRepo.CreateWithTx(tx, user.Id, job.CreatedBy, dbmodel.NotificationTypeApplicationCreated, job.Id)
+	_, err = a.notificationsRepo.CreateWithTx(tx, job.CreatedBy, user.Id, dbmodel.NotificationTypeApplicationCreated, job.Id)
 	if err != nil {
 		err = tx.Rollback()
 		if err != nil {
@@ -310,4 +310,8 @@ func (a *ApplicationsService) GetApplicationStatusForUserAndJob(ctx context.Cont
 
 func (a *ApplicationsService) GetAppliedJobs(ctx context.Context, userId string) ([]*dbmodel.Job, error) {
 	return a.applicationsRepo.GetUserJobApplications(userId)
+}
+
+func (a *ApplicationsService) GetAcceptedAppliedJobs(ctx context.Context, userId string) ([]*dbmodel.Job, error) {
+	return a.applicationsRepo.GetUserAcceptedJobApplications(userId)
 }

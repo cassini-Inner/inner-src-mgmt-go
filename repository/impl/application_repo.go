@@ -205,6 +205,21 @@ func (a *ApplicationsRepoImpl) GetUserJobApplications(userId string) ([]*dbmodel
 	return result, nil
 }
 
+func (a *ApplicationsRepoImpl) GetUserAcceptedJobApplications(userId string) ([]*dbmodel.Job, error) {
+	rows, err := a.db.Queryx(selectAppliedAcceptedJobsByUserIdQuery, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*dbmodel.Job
+	for rows != nil && rows.Next() {
+		job := &dbmodel.Job{}
+		rows.StructScan(job)
+		result = append(result, job)
+	}
+	return result, nil
+}
+
 func (a *ApplicationsRepoImpl) DeleteAllJobApplications(tx *sqlx.Tx, jobId string) error {
 	_, err := tx.Exec(deleteJobApplicationsByJobId, jobId)
 	if err != nil {
@@ -278,6 +293,20 @@ const (
 		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
 		join jobs on milestones.job_id = jobs.id and jobs.is_deleted = false
 		where applicant_id = $1 and applications.status in ('pending', 'accepted', 'rejected')`
+
+	selectAppliedAcceptedJobsByUserIdQuery = `select distinct jobs.id,
+		jobs.created_by,
+		jobs.title,
+		jobs.description,
+		jobs.difficulty,
+		jobs.status,
+		jobs.time_created,
+		jobs.time_updated,
+		jobs.is_deleted
+		from applications
+		join milestones on milestones.id = applications.milestone_id and milestones.is_deleted = false
+		join jobs on milestones.job_id = jobs.id and jobs.is_deleted = false
+		where applicant_id = $1 and applications.status in ('accepted')`
 
 	selectApplicationStatusByUserIdJobId = `select applications.status from milestones join applications on milestones.id = applications.milestone_id
 where milestones.job_id = $1 and applications.applicant_id = $2 and milestones.is_deleted = false limit 1`

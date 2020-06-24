@@ -57,7 +57,7 @@ func (r *queryResolver) ViewerNotifications(ctx context.Context, limit int, afte
 		TotalCount: totalNotificationsForUser,
 		Edges:      notificationEdges,
 		PageInfo: &gqlmodel.PageInfo{
-			HasNextPage: len(notificationEdges) > limit,
+			HasNextPage: len(notifications) > limit,
 			EndCursor:   endCursor,
 		},
 	}, nil
