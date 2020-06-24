@@ -63,7 +63,7 @@ func (r *userResolver) AppliedJobs(ctx context.Context, obj *gqlmodel.User) ([]*
 
 func (r *userResolver) Reviews(ctx context.Context, obj *gqlmodel.User) (result []*gqlmodel.JobReview, err error) {
 	// get applied jobs
-	appliedJobs, err := r.ApplicationsService.GetAppliedJobs(ctx, obj.ID)
+	appliedJobs, err := r.ApplicationsService.GetAcceptedAppliedJobs(ctx, obj.ID)
 	var mappedJobs []*gqlmodel.Job
 	for _, job := range appliedJobs {
 		tempJob := &gqlmodel.Job{}

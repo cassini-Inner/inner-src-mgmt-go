@@ -16,4 +16,5 @@ type ApplicationsService interface {
 	DeleteUserJobApplication(ctx context.Context, jobId string) ([]*gqlmodel.Application, error)
 
 	GetAppliedJobs(ctx context.Context, userId string) ([]*dbmodel.Job, error)
+	GetAcceptedAppliedJobs(ctx context.Context, userId string) ([]*dbmodel.Job, error)
 }
