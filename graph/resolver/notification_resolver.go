@@ -3,7 +3,6 @@ package resolver
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	gqlmodel "github.com/cassini-Inner/inner-src-mgmt-go/graph/model"
 	"github.com/cassini-Inner/inner-src-mgmt-go/graph/resolver/dataloader"
@@ -77,9 +76,19 @@ func (r *notificationItemResolver) Job(ctx context.Context, obj *gqlmodel.Notifi
 }
 
 func (r *mutationResolver) MarkAllViewerNotificationsRead(ctx context.Context) ([]*gqlmodel.NotificationItem, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, custom_errors.ErrUserNotAuthenticated
+	}
+
+	return r.NotificationsService.MarkAllNotificationsRead(ctx, user.Id)
 }
 
 func (r *mutationResolver) MarkViewerNotificationsRead(ctx context.Context, ids []string) ([]*gqlmodel.NotificationItem, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := middleware.GetCurrentUserFromContext(ctx)
+	if err != nil {
+		return nil, custom_errors.ErrUserNotAuthenticated
+	}
+
+	return r.NotificationsService.MarkNotificationsReadById(ctx, user.Id, ids...)
 }

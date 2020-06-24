@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"errors"
 	customErrors "github.com/cassini-Inner/inner-src-mgmt-go/custom_errors"
 	dbmodel "github.com/cassini-Inner/inner-src-mgmt-go/repository/model"
 	"github.com/jmoiron/sqlx"
@@ -94,21 +95,6 @@ func (n NotificationsRepo) GetAllByReceiverId(receiverId string, afterId *string
 
 	return scanNotificationRows(rows)
 }
-
-func scanNotificationRows(rows *sqlx.Rows) (result []*dbmodel.Notification, err error) {
-	for rows.Next() {
-		scannedNotification := &dbmodel.Notification{}
-		err = rows.StructScan(scannedNotification)
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, scannedNotification)
-	}
-
-	return result, nil
-}
-
 func (n NotificationsRepo) GetNotificationCountForReceiver(receiverId string) (count int, err error) {
 	err = n.db.QueryRowx(getNotificationCountForRecipient, receiverId).Scan(&count)
 	if err != nil {
@@ -116,6 +102,36 @@ func (n NotificationsRepo) GetNotificationCountForReceiver(receiverId string) (c
 	}
 
 	return count, nil
+}
+
+func (n NotificationsRepo) MarkAllUserNotificationsReadWithTx(tx *sqlx.Tx, recipientId string) ([]*dbmodel.Notification, error) {
+	if tx == nil {
+		return nil, errors.New("null transaction")
+	}
+
+	rows, err := tx.Queryx(updateAllNotificationsToRead, recipientId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return scanNotificationRows(rows)
+}
+
+func (n NotificationsRepo) MarkUserNotificationsReadWithTx(tx *sqlx.Tx, recipientId string, notificationIds ...string) ([]*dbmodel.Notification, error) {
+	query, args, err := sqlx.In(updateNotificationsToReadByIds, recipientId, notificationIds)
+	if err != nil {
+		return nil, err
+	}
+
+	query = tx.Rebind(query)
+	rows, err := tx.Queryx(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return scanNotificationRows(rows)
 }
 
 func validNotificationType(notificationType string) bool {
@@ -131,6 +147,20 @@ func validNotificationType(notificationType string) bool {
 	return false
 }
 
+func scanNotificationRows(rows *sqlx.Rows) (result []*dbmodel.Notification, err error) {
+	for rows.Next() {
+		scannedNotification := &dbmodel.Notification{}
+		err = rows.StructScan(scannedNotification)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, scannedNotification)
+	}
+
+	return result, nil
+}
+
 const (
 	createNotificationQuery = "insert into notifications(recipient_id, sender_id, type, job_id) values ($1,$2, $3, $4) returning *"
 
@@ -141,4 +171,8 @@ const (
 	getNotificationsByReceiverIdWithoutAfter = "select * from notifications where recipient_id = ? order by time_created desc fetch first ? rows only"
 
 	getNotificationCountForRecipient = "select count(*) from notifications where recipient_id = $1"
+
+	updateAllNotificationsToRead = "update notifications set read = true where recipient_id = $1 and read = false returning *"
+
+	updateNotificationsToReadByIds = "update notifications set read = true where recipient_id = ? and id in (?) and read = false returning *"
 )
