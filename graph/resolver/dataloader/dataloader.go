@@ -8,15 +8,17 @@ import (
 )
 
 const (
-	userLoaderKey                = "userloader"
-	milestoneByJobIdLoaderKey    = "milestoneByIdLoader"
-	skillsByMilestoneIdLoaderKey = "skillsByMilestoneIdLoader"
-	skillsByJobIdLoaderKey       = "skillsByJobIdLoader"
+	dataloadersKey = "dataloadersKey"
+
 	applicationsByJobIdLoaderKey = "applicationsByJobIdLoaderKey"
-	dataloadersKey               = "dataloadersKey"
-	viewerHasAppliedLoaderKey    = "viewerHasAppliedLoaderKey"
 	jobMilestoneReviewLoaderKey  = "jobMilestoneReviewLoaderKey"
+	jobByJobIdLoaderKey          = "jobByJobIdLoaderKey"
+	milestoneByJobIdLoaderKey    = "milestoneByIdLoader"
+	skillsByJobIdLoaderKey       = "skillsByJobIdLoader"
+	skillsByMilestoneIdLoaderKey = "skillsByMilestoneIdLoader"
 	userAverageRatingLoaderKey   = "userAverageRatingLoaderKey"
+	userLoaderKey                = "userloader"
+	viewerHasAppliedLoaderKey    = "viewerHasAppliedLoaderKey"
 )
 
 func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
@@ -31,6 +33,7 @@ func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
 		loaderMap[applicationsByJobIdLoaderKey] = NewApplicationByJobIdLoader(db)
 		loaderMap[jobMilestoneReviewLoaderKey] = NewJobMilestoneReviewLoader(db)
 		loaderMap[userAverageRatingLoaderKey] = NewUserAverageRatingLoader(db)
+		loaderMap[jobByJobIdLoaderKey] = NewJobByIdLoader(db)
 		ctxWithLoaders := context.WithValue(r.Context(), dataloadersKey, loaderMap)
 
 		next.ServeHTTP(w, r.WithContext(ctxWithLoaders))
@@ -40,6 +43,11 @@ func DataloaderMiddleware(db *sqlx.DB, next http.Handler) http.Handler {
 func GetUserByUserIdLoader(ctx context.Context) *generated.UserLoader {
 	userLoader := ctx.Value(dataloadersKey).(map[string]interface{})[userLoaderKey].(*generated.UserLoader)
 	return userLoader
+}
+
+func GetJobByJobIdLoader(ctx context.Context) *generated.JobByIdLoader {
+	jobByIdLoader := ctx.Value(dataloadersKey).(map[string]interface{})[jobByJobIdLoaderKey].(*generated.JobByIdLoader)
+	return jobByIdLoader
 }
 
 func GetUserAverageRatingLoader(ctx context.Context) *generated.UserAverageRatingLoader {

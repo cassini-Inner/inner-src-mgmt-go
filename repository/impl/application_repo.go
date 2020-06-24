@@ -147,7 +147,7 @@ func (a *ApplicationsRepoImpl) GetApplicationStatusForUserAndJob(userId string, 
 func (a *ApplicationsRepoImpl) SetApplicationStatusForUserAndJob(ctx context.Context, tx *sqlx.Tx, milestones []*dbmodel.Milestone, applicationStatus string, note *string, jobId, userId string) ([]*dbmodel.Application, error) {
 	var milestoneIds []string
 	for _, milestone := range milestones {
-			milestoneIds = append(milestoneIds, milestone.Id)
+		milestoneIds = append(milestoneIds, milestone.Id)
 	}
 	updateApplicationsQuery, updateApplicationArgs, err := sqlx.In(updateApplicationsForMilestonesUser, applicationStatus, note, time.Now(), milestoneIds, userId)
 	if err != nil {

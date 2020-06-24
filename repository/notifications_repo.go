@@ -11,5 +11,6 @@ type NotificationsRepo interface {
 	CreateWithTx(tx *sqlx.Tx, recipientId, senderId, notificationType, jobId string) (*dbmodel.Notification, error)
 
 	Get(notificationId string) (*dbmodel.Notification, error)
-	GetAllByReceiverId(receiverId string) ([]*dbmodel.Notification, error)
+	GetAllByReceiverId(receiverId string, afterId *string, limit int) ([]*dbmodel.Notification, error)
+	GetNotificationCountForReceiver(receiverId string) (count int, err error)
 }

@@ -50,6 +50,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 	authService := impl2.NewAuthenticationService(usersRepo, githubOauthService)
 	skillsService := impl2.NewSkillsService(skillsRepo)
 	reviewsService := impl2.NewReviewsService(reviewsRepo, jobsRepo, milestonesRepo)
+	notificationsService := impl2.NewNotificationsService(notificationRepo)
 
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(
@@ -64,6 +65,7 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 				AuthenticationService: authService,
 				SkillsService:         skillsService,
 				ReviewsService:        reviewsService,
+				NotificationsService:  notificationsService,
 			},
 			},
 		),

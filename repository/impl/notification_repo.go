@@ -70,24 +70,52 @@ func (n NotificationsRepo) Get(notificationId string) (*dbmodel.Notification, er
 	return fetchedNotification, err
 }
 
-func (n NotificationsRepo) GetAllByReceiverId(receiverId string) ([]*dbmodel.Notification, error) {
-	var result []*dbmodel.Notification
-	rows, err := n.db.Queryx(getNotificationsByReceiverId, receiverId)
+func (n NotificationsRepo) GetAllByReceiverId(receiverId string, afterId *string, limit int) ([]*dbmodel.Notification, error) {
+	var rows *sqlx.Rows
+
+	if afterId == nil {
+		query := n.db.Rebind(getNotificationsByReceiverIdWithoutAfter)
+		rows, err := n.db.Queryx(query, receiverId, limit)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		return scanNotificationRows(rows)
+	}
+
+	query := n.db.Rebind(getNotificationsByReceiverIdWithAfter)
+
+	rows, err := n.db.Queryx(query, receiverId, *afterId, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	return scanNotificationRows(rows)
+}
+
+func scanNotificationRows(rows *sqlx.Rows) (result []*dbmodel.Notification, err error) {
 	for rows.Next() {
-		var notification *dbmodel.Notification
-		err = rows.StructScan(notification)
+		scannedNotification := &dbmodel.Notification{}
+		err = rows.StructScan(scannedNotification)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, notification)
+
+		result = append(result, scannedNotification)
 	}
 
 	return result, nil
+}
+
+func (n NotificationsRepo) GetNotificationCountForReceiver(receiverId string) (count int, err error) {
+	err = n.db.QueryRowx(getNotificationCountForRecipient, receiverId).Scan(&count)
+	if err != nil {
+		return 0, nil
+	}
+
+	return count, nil
 }
 
 func validNotificationType(notificationType string) bool {
@@ -108,5 +136,9 @@ const (
 
 	getNotificationByIdQuery = "select * from notification where id = $1"
 
-	getNotificationsByReceiverId = "select * from notifications where receiver_id = $1"
+	getNotificationsByReceiverIdWithAfter = "select * from notifications where recipient_id = ? and id < ? order by time_created desc fetch first ? rows only"
+
+	getNotificationsByReceiverIdWithoutAfter = "select * from notifications where recipient_id = ? order by time_created desc fetch first ? rows only"
+
+	getNotificationCountForRecipient = "select count(*) from notifications where recipient_id = $1"
 )
