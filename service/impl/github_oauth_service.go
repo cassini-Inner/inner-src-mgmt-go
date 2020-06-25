@@ -21,8 +21,8 @@ func NewGithubOauthService() *GithubOauthService {
 }
 
 func (g *GithubOauthService) Authenticate(code string) (string, error) {
-	urlStr := fmt.Sprintf(
-		"https://%v/login/oauth/access_token?client_id=%v&client_secret=%v&code=%v",
+	url := fmt.Sprintf(
+		"http://%v/login/oauth/access_token?client_id=%v&client_secret=%v&code=%v",
 		os.Getenv("GITHUB_DOMAIN"),
 		os.Getenv("CLIENT_ID"),
 		os.Getenv("CLIENT_SECRET"),
@@ -30,7 +30,11 @@ func (g *GithubOauthService) Authenticate(code string) (string, error) {
 	)
 
 	client := http.Client{}
-	request, _ := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(""))
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		req.Header.Add("Authorization", via[0].Header.Get("Authorization"))
+		return nil
+	}
+	request, _ := http.NewRequest(http.MethodPost, url, strings.NewReader(""))
 	request.Header.Add("Accept", "application/json")
 	response, err := client.Do(request)
 	if err != nil {
@@ -59,8 +63,18 @@ func (g GithubOauthService) GetUserInfo() (*dbmodel.User, error) {
 	}
 
 	client := http.Client{}
-	request, _ := http.NewRequest(http.MethodGet, "https://api.github.com/user", strings.NewReader(""))
-	request.Header.Set("Authorization", fmt.Sprintf(
+
+	var apiUrl string
+	if os.Getenv("GITHUB_DOMAIN") == "github.com" {
+		apiUrl = fmt.Sprintf("https://api.github.com/user")
+	} else {
+		apiUrl = fmt.Sprintf("https://%v/api/v3/user", os.Getenv("GITHUB_DOMAIN"))
+	}
+	request, _ := http.NewRequest(http.MethodGet,
+		apiUrl,
+		strings.NewReader(""),
+	)
+	request.Header.Add("Authorization", fmt.Sprintf(
 		"token %v", g.accessToken))
 
 	response, err := client.Do(request)

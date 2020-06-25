@@ -80,7 +80,6 @@ func SetupRouter(DB *sqlx.DB) (*chi.Mux, error) {
 			http.MethodTrace, http.MethodHead, http.MethodPatch},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-		Debug:            true,
 	}).Handler)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
