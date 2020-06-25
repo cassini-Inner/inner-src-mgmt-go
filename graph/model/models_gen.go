@@ -48,9 +48,10 @@ type MilestoneInput struct {
 }
 
 type NotificationConnection struct {
-	TotalCount int                 `json:"totalCount"`
-	Edges      []*NotificationEdge `json:"edges"`
-	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount  int                 `json:"totalCount"`
+	UnreadCount int                 `json:"unreadCount"`
+	Edges       []*NotificationEdge `json:"edges"`
+	PageInfo    *PageInfo           `json:"pageInfo"`
 }
 
 type NotificationEdge struct {

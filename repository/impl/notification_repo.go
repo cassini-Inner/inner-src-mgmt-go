@@ -12,6 +12,15 @@ type NotificationsRepo struct {
 	db *sqlx.DB
 }
 
+func (n NotificationsRepo) GetUnreadNotificationCountForReceiver(recipientId string) (int, error) {
+	count := 0
+	err := n.db.QueryRowx(getUnreadNotificationCount, recipientId).Scan(&count)
+	if err != nil {
+		return 0, nil
+	}
+	return count, nil
+}
+
 func NewNotificationsRepo(db *sqlx.DB) *NotificationsRepo {
 	return &NotificationsRepo{db: db}
 }
@@ -175,4 +184,6 @@ const (
 	updateAllNotificationsToRead = "update notifications set read = true where recipient_id = $1 and read = false returning *"
 
 	updateNotificationsToReadByIds = "update notifications set read = true where recipient_id = ? and id in (?) and read = false returning *"
+
+	getUnreadNotificationCount = "select count(*) from notifications where recipient_id=$1 and read = false"
 )

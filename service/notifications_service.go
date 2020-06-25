@@ -10,4 +10,5 @@ type NotificationsService interface {
 	GetNotificationCountForReceiver(receiverId string) (count int, err error)
 	MarkAllNotificationsRead(ctx context.Context, id string) ([]*gqlmodel.NotificationItem, error)
 	MarkNotificationsReadById(ctx context.Context, recipientId string, notificationIds ...string) ([]*gqlmodel.NotificationItem, error)
+	GetUnreadNotificationCountForReceiver(recipientId string) (int, error)
 }

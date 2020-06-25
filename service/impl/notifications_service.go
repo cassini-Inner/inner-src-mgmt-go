@@ -14,6 +14,12 @@ func NewNotificationsService(notificationsRepo repository.NotificationsRepo) *No
 	return &NotificationsService{notificationsRepo: notificationsRepo}
 }
 
+
+func (n NotificationsService) GetUnreadNotificationCountForReceiver(recipientId string) (int, error) {
+	return n.notificationsRepo.GetUnreadNotificationCountForReceiver(recipientId)
+}
+
+
 func (n NotificationsService) GetAllPaginated(receiverId string, afterId *string, limit int) (result []*gqlmodel.NotificationItem, err error) {
 
 	notifications, err := n.notificationsRepo.GetAllByReceiverId(receiverId, afterId, limit)
