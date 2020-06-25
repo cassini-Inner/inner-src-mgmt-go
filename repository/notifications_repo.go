@@ -15,4 +15,5 @@ type NotificationsRepo interface {
 	GetNotificationCountForReceiver(receiverId string) (count int, err error)
 	MarkAllUserNotificationsReadWithTx(tx *sqlx.Tx, recipientId string) ([]*dbmodel.Notification, error)
 	MarkUserNotificationsReadWithTx(tx *sqlx.Tx, recipientId string, notificationIds ...string) ([]*dbmodel.Notification, error)
+	GetUnreadNotificationCountForReceiver(recipientId string) (int, error)
 }

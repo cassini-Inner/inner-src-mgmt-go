@@ -284,6 +284,7 @@ type UserStats {
 
 type NotificationConnection {
     totalCount: Int!
+    unreadCount: Int!
     edges: [NotificationEdge!]!
     pageInfo: PageInfo
 }

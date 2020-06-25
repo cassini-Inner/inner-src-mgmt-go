@@ -33,7 +33,11 @@ func (r *queryResolver) ViewerNotifications(ctx context.Context, limit int, afte
 	}
 
 	totalNotificationsForUser, err := r.NotificationsService.GetNotificationCountForReceiver(user.Id)
+	if err != nil {
+		return nil, err
+	}
 
+	totalUnreadCountForUser, err := r.NotificationsService.GetUnreadNotificationCountForReceiver(user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +60,7 @@ func (r *queryResolver) ViewerNotifications(ctx context.Context, limit int, afte
 	return &gqlmodel.NotificationConnection{
 		TotalCount: totalNotificationsForUser,
 		Edges:      notificationEdges,
+		UnreadCount: totalUnreadCountForUser,
 		PageInfo: &gqlmodel.PageInfo{
 			HasNextPage: len(notifications) > limit,
 			EndCursor:   endCursor,

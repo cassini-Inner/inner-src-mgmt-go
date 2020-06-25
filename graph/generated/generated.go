@@ -162,9 +162,10 @@ type ComplexityRoot struct {
 	}
 
 	NotificationConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
+		Edges       func(childComplexity int) int
+		PageInfo    func(childComplexity int) int
+		TotalCount  func(childComplexity int) int
+		UnreadCount func(childComplexity int) int
 	}
 
 	NotificationEdge struct {
@@ -981,6 +982,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.NotificationConnection.TotalCount(childComplexity), true
 
+	case "NotificationConnection.unreadCount":
+		if e.complexity.NotificationConnection.UnreadCount == nil {
+			break
+		}
+
+		return e.complexity.NotificationConnection.UnreadCount(childComplexity), true
+
 	case "NotificationEdge.cursor":
 		if e.complexity.NotificationEdge.Cursor == nil {
 			break
@@ -1779,6 +1787,7 @@ type UserStats {
 
 type NotificationConnection {
     totalCount: Int!
+    unreadCount: Int!
     edges: [NotificationEdge!]!
     pageInfo: PageInfo
 }
@@ -4912,6 +4921,40 @@ func (ec *executionContext) _NotificationConnection_totalCount(ctx context.Conte
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _NotificationConnection_unreadCount(ctx context.Context, field graphql.CollectedField, obj *model.NotificationConnection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "NotificationConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UnreadCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9071,6 +9114,11 @@ func (ec *executionContext) _NotificationConnection(ctx context.Context, sel ast
 			out.Values[i] = graphql.MarshalString("NotificationConnection")
 		case "totalCount":
 			out.Values[i] = ec._NotificationConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "unreadCount":
+			out.Values[i] = ec._NotificationConnection_unreadCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

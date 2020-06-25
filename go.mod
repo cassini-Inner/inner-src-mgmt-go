@@ -2,6 +2,7 @@ module github.com/cassini-Inner/inner-src-mgmt-go
 
 go 1.14
 
+
 require (
 	github.com/99designs/gqlgen v0.11.3
 	github.com/DATA-DOG/go-sqlmock v1.4.1
